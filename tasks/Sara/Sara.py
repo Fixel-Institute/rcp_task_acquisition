@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
-from psychopy import visual
-import os
 from tasks import bases
-# from utils.logging import logger
-from utils.stimulus_utils import thread_event
 from utils.logger import get_logger
 logger = get_logger("./tasks/Sara")
 
@@ -23,9 +19,9 @@ class Sara(bases.StimulusBase):
         self.display.switch_patch()
         self.display.draw_patch()
         self.display.flip()
-        #wait for "cancel session" button to be pressed in the main gui to stop session
-        thread_event.wait()
-        thread_event.clear()
+        while self.finish.value == 0:
+            self.display.draw_patch()
+            self.display.flip()
         
         #turn the patch to off and flip the display to black
         self.display.switch_patch()

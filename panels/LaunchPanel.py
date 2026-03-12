@@ -46,7 +46,7 @@ class LaunchPanel():
         self.hardware_size = wx.Size(650,800)
         button_width = wx.Size(200, -1)
         self.dialog = wx.Dialog(parent, id= wx.ID_ANY, title= 'Select Protocol',
-                            size = self.regular_size, pos = wx.DefaultPosition)
+                            size = self.regular_size, pos = (660, 275))
         
         self.panel = scrolled.ScrolledPanel(self.dialog, -1,style=wx.SUNKEN_BORDER)
         self.panel.SetupScrolling(scroll_x=False, scroll_y=False, scrollToTop=False, scrollIntoView=False)
@@ -116,6 +116,7 @@ class LaunchPanel():
 
     def exit_event(self):
         logger.debug("exit")
+        self.panel.Destroy()
         self.dialog.Destroy()
     
     
@@ -124,6 +125,7 @@ class LaunchPanel():
         Bound to select protocol event. Triggers starting the aquisition
         gui.
         '''
+       
         self.metadata = {"task": None,
                          "administrator_id": None,
                          "participant_id": None,
@@ -183,7 +185,8 @@ class LaunchPanel():
         
     
     def hide(self):
-
+        self.hardware_button.SetValue(False)
+        self.hardware_button.SetLabel("Update Hardware")
         print(self.metadata)
         self.dialog.Hide()
     

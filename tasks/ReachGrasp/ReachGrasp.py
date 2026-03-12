@@ -17,12 +17,12 @@ PARAMS = {
 
 
 class ReachGrasp(bases.StimulusBase):
-    def __init__(self, window, frame, show_panel):
+    def __init__(self, window, frame, finish):
         super().__init__(window, frame)
-        self.show_panel = show_panel
         self.trial_count = 0
         self.hand = None
         self.grasp_object = None
+        self.finish = finish
         
     def present(self):        
         self.trial_count+=1
@@ -33,10 +33,9 @@ class ReachGrasp(bases.StimulusBase):
         self.display.draw_patch()
         self.display.flip()
 
-
-        thread_event.wait()
-        thread_event.clear()
-        
+        while self.finish.value == 0:
+            self.display.draw_patch()
+            self.display.flip()        
 
         self.display.switch_patch()
         self.display.draw_patch()
@@ -45,9 +44,9 @@ class ReachGrasp(bases.StimulusBase):
 
         
         
-    def update_values(self, hand, grasp_object):
-        self.hand = hand    
-        self.grasp_object = grasp_object   
+    def update_data(self, data):
+        self.hand = data[0]    
+        self.grasp_object = data[1]   
                  
         
     def saveMetadata(self, name, sessionFolder):

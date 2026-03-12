@@ -42,7 +42,7 @@ class VerbalFluency(bases.StimulusBase):
         self.display.flip()
         self.play_tone() 
 
-    def get_choices(self, choices):
+    def update_data(self, choices):
         print(choices)
         self.trial = choices
         

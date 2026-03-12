@@ -62,11 +62,16 @@ class VowelSpacePanel(TrialPanel):
         self.continue_button.SetValue(True)
         self.repeat_trial.Enable(False)
     
-
+    def get_result(self):
+        return self.repeat
     
     def reset(self, number):
         self.timestamps = {}
         
+    def run_trial(self, count):
+        self.repeat = False
+        self.continue_button.SetLabel("Stop Trial")
+        self.repeat_trial.Enable(False)
         
     def on_timer(self, event):
         self.seconds+=1

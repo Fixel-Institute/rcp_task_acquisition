@@ -278,12 +278,11 @@ def pull_stimuli_2back(trial_num: int) -> Tuple[List[Path], List[Answer]]:
 
 
 class N_back(bases.StimulusBase):
-    def __init__(self, window, frame, button, show_panel, is_finished):
+    def __init__(self, window, frame, button, is_finished):
         self.parameters = {}
         super().__init__(window, frame)
         self.button = button
         self.trial = 0
-        self.show_panel = show_panel
         self.is_real = None
         self.type = None
         self.button_press = False
@@ -371,11 +370,7 @@ class N_back(bases.StimulusBase):
         self.instructions = cfg.ONE_BACK_DISPLAY if self.type == 1 else cfg.TWO_BACK_DISPLAY
         event.globalKeys.clear()
         end_text = visual.TextStim(self.display, text="Task Finished. Thank you.", name="Finish", height=50)
-        # shorter name for the global clock
-        # gClock = core.monotonicClock
         
-        # task stage variable
-        # stageVar = 0
         # Initialize the display window
         fixation, texts, ims = self.setupWinStims(imdir)
         # Set up a dataframe to hold time data
@@ -415,7 +410,8 @@ class N_back(bases.StimulusBase):
             # while self.button.value:
             #     time.sleep(0.05)
             if self.finished.value == 2:
-                break
+                self.display.flip()
+                return
         self.play_tone()
         core.wait(0.05)
         timeData, fixFlipTime =self.showAndLog(self.display, timeData, 0, fixation, PARAMS["ISITime"], "Initial_Fixation_Shown")
@@ -426,7 +422,8 @@ class N_back(bases.StimulusBase):
         for index, trial_set in enumerate(trial_list):
             for t_index, trial in enumerate(trial_set):
                 if self.finished.value == 2:
-                    break
+                    self.display.flip()
+                    return
                 trial_vis = self.letters[trial]
                 self.button_press = False
                 timeData, fixFlipTime =self.showAndLog(self.display, timeData, 0, trial_vis, PARAMS["stimTime"], "Trial_Shown", True) 

@@ -335,7 +335,6 @@ class HardwarePanel(wx.Panel):
                 
     
     def update_options(self, event):
-        print(self.select_protocol)
         for hardware in self.hardware_list:
             if self.hardware_radio.GetValue():
                 if hardware.in_use.GetValue():
@@ -536,7 +535,6 @@ class HardwarePanel(wx.Panel):
     
     def update_task(self):
         if self.task == None:
-            print(self.task)
             for hardware in self.hardware_list:
                 hardware.in_use.Enable(False)
                 hardware.name.Enable(False)

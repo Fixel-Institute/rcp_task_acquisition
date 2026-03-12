@@ -15,7 +15,7 @@ class StimulusBase():
     """
     """
 
-    def __init__(self, display, frame, video_status=None, finish=None):
+    def __init__(self, display, frame, finish=None, video_status=None):
         self.display = display
         self.frame = frame
         self.prev_flip_time = None
@@ -216,7 +216,6 @@ class StimulusBase():
         self.display.draw_patch()
         self.display.flip()
         self.play_tone()
-
 
 
 

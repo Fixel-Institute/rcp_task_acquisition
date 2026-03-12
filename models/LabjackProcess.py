@@ -4,10 +4,24 @@ import ctypes
 from models.Warnings import Warning
 from labjack import ljm
 from utils.constants import SCANS_PER_READ
+from labjack.ljm import constants as LJMC
 from utils.logger import get_logger
 logger = get_logger("./models/LabjackProcess") 
+import time
+import os
+log_path = r"/home/rcp-2/Desktop/ljm_test_usb.log"   # change if needed
+# Optional: clear old file
+try:
+    os.remove(log_path)
+except FileNotFoundError:
+    pass
+# Enable debug logging
+ljm.writeLibraryConfigStringS("LJM_DEBUG_LOG_FILE", log_path)
+ljm.writeLibraryConfigS("LJM_DEBUG_LOG_MODE", 2)   # CONTINUOUS
+ljm.writeLibraryConfigS("LJM_DEBUG_LOG_LEVEL", 1)  # LJM_STREAM_PACKET
+ljm.writeLibraryConfigS("LJM_DEBUG_LOG_FILE_MAX_SIZE", 123456789)
 
-
+ 
 
 
 class LabJackDataStream(Process):
@@ -64,7 +78,7 @@ class LabJackDataStream(Process):
         aScanList = ljm.namesToAddresses(len(self.scan_list), self.scan_list)[0]
         if self.digital_inputs:
             aScanList.append(2500)
-    
+        print("PID: ", os.getpid())
         if self.extended_inputs:
             aScanList.append(2501)
             self.extended = True
@@ -77,6 +91,15 @@ class LabJackDataStream(Process):
             voltage_ranges.append(float(self.voltage_range[key][1]))
         input_names.append("STREAM_CLOCK_SOURCE")
         voltage_ranges.append(0)
+        
+        # ########
+        # ljm.eWriteName(
+        #     self.handle,
+        #     "STREAM_BUFFER_SIZE_BYTES",
+        #     1)# 16384)
+        
+        # ########
+        ljm.writeLibraryConfigS("LJM_STREAM_TCP_RECEIVE_BUFFER_SIZE", 65535)
         try:
             ljm.eWriteNames(self.handle, len(input_names), input_names, voltage_ranges)
         except:
@@ -86,6 +109,7 @@ class LabJackDataStream(Process):
             ljm.eStreamStop(self.handle)
             
             ljm.eWriteNames(self.handle, len(input_names), input_names, voltage_ranges)
+        
     
     def start_stream(self):
         aScanList = ljm.namesToAddresses(len(self.scan_list), self.scan_list)[0]
@@ -98,24 +122,38 @@ class LabJackDataStream(Process):
         logger.debug(aScanList)
         numAddresses = len(aScanList)
         self.actualscanRate.value = ljm.eStreamStart(self.handle, SCANS_PER_READ, numAddresses, aScanList, self.attemptedscanRate)
-
+        print( ljm.eReadName(
+            self.handle,
+            "STREAM_BUFFER_SIZE_BYTES"))
 
     def run(self):
         first_write = True
         logger.debug("Start labjack stream.")
         write_to_csv = False
-        
+        data_1= None
+        data_2 = None
         debounce = 0
         min_off_samples = int(round(self.attemptedscanRate*0.01)) # minimum button release duration
         self.start_stream()
         self.stream_started.value = True
         while not self.finished.value:
-            if self.create_csv.value:
-                self.labjack_csv = self.folder_queue.get()
-                write_to_csv = True
-                self.create_csv.value = False
-            
-            self.results[:] = np.asarray(ljm.eStreamRead(self.handle)[0])
+            # if self.create_csv.value:
+            #     self.labjack_csv = self.folder_queue.get()
+            #     write_to_csv = True
+            #     self.create_csv.value = False
+            data = ljm.eStreamRead(self.handle)
+            self.results[:] = np.asarray(data[0])
+            if int(-9999) in self.results:
+                print("ERROR!! OVERFLOW!!")
+                # return
+                print(f"prev data[1]: {data_1}")
+                print(f"prev data[2]: {data_2}")
+                print(f"data[1]: {data[1]}")
+                print(f"data[2]: {data[2]}")
+            data_1 = data[1]
+            data_2 = data[2]
+            # if int(data[1]) != 48:
+            # print(f"buffer value: ", data[1])
             results = self.results.reshape((self.scan_num, SCANS_PER_READ), order="F")
             if self.extended:
                 extended_vals = np.array(results[-1], dtype=np.uint8)

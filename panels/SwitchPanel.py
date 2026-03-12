@@ -1,15 +1,12 @@
 from  panels.LaunchPanel import LaunchPanel
-from multiCam_DLC.multiCam_DLC_videoAcquisition_v1 import MainFrame
+from panels.MainFrame import MainFrame
 import time
-import multiCam_DLC.multiCam_DLC_utils_v2 as clara
 
 import multiCam_DLC.compressVideos_v3 as compressVideos
 import wx
 from models.Warnings import Warning
-import logging
-# Get a logger instance (or the root logger)
-logger = logging.getLogger(__name__) # Or logging.getLogger() for the root logger
-logger.setLevel(logging.DEBUG)
+from utils.logger import get_logger
+logger = get_logger("./panels/SwitchPanel") 
 
 
 class SwitchPanel():
@@ -19,19 +16,17 @@ class SwitchPanel():
         self.task_frame = MainFrame(None)
         self.warning = Warning() 
         self.launch_panel.show()
-        # self.launch_panel.protocol_button.Bind(wx.EVT_BUTTON, self.switch_panel)
         self.launch_panel.protocol_button.Bind(wx.EVT_BUTTON, self.disable_panel)
         self.launch_panel.exit_button.Bind(wx.EVT_BUTTON, self.exit_event)
-        # self.task_frame.quit.Bind(wx.EVT_BUTTON, self.switch_panel)
         self.task_frame.quit.Bind(wx.EVT_BUTTON, self.disable_panel)
         self.launch_panel.compress_button.Bind(wx.EVT_BUTTON, self.compress_video)
         self.task_frame.Bind(wx.EVT_CLOSE, self.disable_panel)
         self.launch_panel.dialog.Bind(wx.EVT_CLOSE, self.exit_event)
-        #timer for disabling gui during load
         self.disable_timer = wx.Timer(self.launch_panel.panel, wx.ID_ANY)
         self.launch_panel.panel.Bind(wx.EVT_TIMER, self.switch_panel, self.disable_timer)
-        # self.task_timer = wx.Timer(sel1f.task_frame.panel, wx.ID_ANY)
         self.task_frame.Bind(wx.EVT_TIMER, self.switch_panel, self.disable_timer)
+        self.launch_panel.panel.SetFocus()
+        self.launch_panel.compress_button.Enable(False)
         
     def switch_panel(self, event):
         if not self.launch_showing:
@@ -39,7 +34,6 @@ class SwitchPanel():
             self.launch_panel.protocol_button.SetLabel("Select Protocol")
             self.launch_panel.hardware_button.Enable(True)
             self.launch_panel.protocol_button.Enable(True)
-            # self.launch_panel.protocol_button.SetLabel("Select Protocol")
             self.task_frame.hide(event)
             self.launch_panel.show()
         else:
@@ -58,8 +52,7 @@ class SwitchPanel():
         else:
             self.launch_panel.protocol_button.SetLabel("Loading...")
             self.launch_panel.panel.Disable()
-        self.disable_timer.StartOnce(100)
-        
+        self.disable_timer.StartOnce(80)
         
         
     def exit_event(self, event):
@@ -95,8 +88,7 @@ class SwitchPanel():
             
         if ok2compress:
             self.warning.update_error("compress")
-            # logger.info('\n\n---- Please DO NOT close this GUI until compression is complete!!! ----\n\n')
-            print('\n\n---- Please DO NOT close this GUI until compression is complete!!! ----\n\n')
+            logger.info('\n\n---- Please DO NOT close this GUI until compression is complete!!! ----\n\n')
             self.compressThread = compressVideos.CLARA_compress()
             self.compressThread.start()
             self.launch_panel.compress_button.Enable(False)

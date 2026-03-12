@@ -96,11 +96,11 @@ class DdkPanel(TrialPanel):
         self.continue_button.SetValue(False)
         
 
-    def get_results(self): 
+    def get_result(self): 
         return self.syllable
     
     
-    def get_result(self):
+    def get_results(self, count):
         if self.syllable_start_video_button.GetValue():
             key_end = "_1" if self.trial_number_%3 == 1 else ""
             value = f"{self.syllable}{key_end}"
@@ -110,7 +110,7 @@ class DdkPanel(TrialPanel):
         return value
     
     
-    def run_trial(self):
+    def run_trial(self, count):
         self.seconds = DDK_TRIAL_TIME
         self.trial_is_active = True
         self.continue_button.SetLabel("Stop Trial")

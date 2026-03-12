@@ -1,7 +1,6 @@
 from tasks import bases
 import numpy as np
 import os
-from  utils.stimulus_utils import thread_event
 from  tasks.VowelSpace import constants as c
 from utils.logger import get_logger
 logger = get_logger("./tasks/VowelSpace") 
@@ -9,13 +8,14 @@ logger = get_logger("./tasks/VowelSpace")
 
 
 class VowelSpace(bases.StimulusBase):
-    def __init__(self, window, frame):
+    def __init__(self, window, frame, finish):
         super().__init__(window, frame)
         self.generated_trials = None
         self.completed_trials_dict = {}
         self.create_trial_data()
         self.repeat_num = 0
-        self.finish = False
+        self.finish = finish
+        self.is_finished = False
       
         
     def present(self):
@@ -26,25 +26,30 @@ class VowelSpace(bases.StimulusBase):
         
         self.trial_bookends()
         self.play_vowel_phrase(str(self.current_trial))
-        thread_event.wait()
-        thread_event.clear()
+        
+        while self.finish.value == 0:
+            self.display.draw_patch()
+            self.display.flip()
+
+        # thread_event.wait()
+        # thread_event.clear()
         self.trial_bookends()
 
 
 
     def get_trial(self):
         if self.trial >= (len(self.generated_trials)-1):
-            self.finish=True
-        return self.trial, self.generated_trials[self.trial], self.finish
+            self.is_finished=True
+        return self.trial, self.generated_trials[self.trial], self.is_finished
     
     
-    def update_trial(self, is_repeated):
+    def update_data(self, is_repeated):
         if is_repeated:
             self.repeat_num+=1
         else:
             self.trial+=1
             if self.trial >= len(self.generated_trials)-1:
-                self.finish = True
+                self.is_finished = True
         
         
     def create_trial_data(self):
@@ -65,7 +70,7 @@ class VowelSpace(bases.StimulusBase):
     def reset_task(self):
         self.trial = 0
         self.repeat_num = 0
-        self.finish = False
+        self.is_finished = False
         self.create_trial_data()
 
 

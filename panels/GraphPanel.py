@@ -301,7 +301,11 @@ class GraphPanel(wx.Panel):
     def set_constants(self, constants: list[str]) -> None:
         self.constant_labels = constants
 
-
+    def reset(self):
+        self.color_index = 0
+        
+        
+        
     def update_label(self, index: int, new_label:str) -> None:
         if new_label == -1:    
             self.legend_labels[index+len(self.constants)] = ""

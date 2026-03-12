@@ -50,6 +50,8 @@ class Warning():
             return "Please add a serial number before continuing."
         elif error == "compress":
             "Please DO NOT close this GUI until compression is complete!!!"
+        elif error == "frames":
+            f"Warning! {info}"
         else:
             return None
         

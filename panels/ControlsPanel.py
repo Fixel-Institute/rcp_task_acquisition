@@ -10,6 +10,7 @@ from tasks.NBack.panel import NbackPanel
 from tasks.ReachGrasp.panel import ReachGraspPanel
 from tasks.ToneTaps.panel import ToneTapsClosedPanel
 from tasks.Sara.panel import SaraPanel
+from tasks.VerbGeneration.panel import VerbGenerationPanel
 
 class ControlsPanel(wx.Panel):
     def __init__(self,parent, ctrl_panel, task="task"):
@@ -62,17 +63,18 @@ class ControlsPanel(wx.Panel):
         self.task_sizer.Add(self.task_panel, pos=(vertical_position,0), span=(0,5), flag=wx.RESERVE_SPACE_EVEN_IF_HIDDEN | wx.ALIGN_LEFT | wx.ALL, border=0)
         vertical_position+=1
         
-        self.slider = wx.Slider(self, -1, 0, 0, 100, size=(320, -1), style=wx.SL_HORIZONTAL | wx.SL_AUTOTICKS | wx.SL_LABELS )
-        self.task_sizer.Add(self.slider, pos=(vertical_position,0), span=(0,4), flag=wx.LEFT, border=white_space)
-        self.slider.Enable(False)
-        vertical_position+=1
+        
+        self.camera_toggle = wx.Button(self, label="Toggle Cameras", size=(button_width*2, -1))
+        self.task_sizer.Add(self.camera_toggle, pos=(vertical_position,0), span=(0,2), flag=wx.LEFT, border=white_space)
+
         
         self.hardware_button = wx.ToggleButton(self, id=wx.ID_ANY, label="Hardware Test",size=(button_width*2, -1))
-        self.task_sizer.Add(self.hardware_button, pos=(vertical_position,0), span=(0,2), flag=wx.LEFT, border=white_space)
+        self.task_sizer.Add(self.hardware_button, pos=(vertical_position,2), span=(0,2), flag=wx.LEFT, border=white_space)
         
+        vertical_position+=1
         
-        self.session_button = wx.ToggleButton(self, id=wx.ID_ANY, label="Begin Task",size=(button_width*2, -1))
-        self.task_sizer.Add(self.session_button, pos=(vertical_position,2), span=(0,2), flag=wx.LEFT, border=white_space)
+        self.session_button = wx.ToggleButton(self, id=wx.ID_ANY, label="Start Task",size=(button_width*4+15, -1))
+        self.task_sizer.Add(self.session_button, pos=(vertical_position,0), span=(0,4), flag=wx.LEFT, border=white_space)
         
         vertical_position+=1
 
@@ -90,7 +92,8 @@ class ControlsPanel(wx.Panel):
         return (self.hardware_buttons[0], self.hardware_buttons[1], self.hardware_test)
     
     def get_task_handles(self):
-        return (self.slider, self.hardware_button, self.session_button, self.quit)
+        # return (self.slider, self.hardware_button, self.session_button, self.quit)
+        return (self.camera_toggle, self.hardware_button, self.session_button, self.quit)
     
 
     def update_task(self, task):
@@ -130,12 +133,15 @@ class ControlsPanel(wx.Panel):
             return ToneTapsClosedPanel(self)
         elif task == "sara":
             return SaraPanel(self)
+        elif task == "verb_generation":
+            return VerbGenerationPanel(self)
         else:
             basic_panel = TrialPanel(self)
             basic_panel.continue_button.Show()
             return basic_panel #TrialPanel(self)
     
-    
+    def close_task_panel(self):
+        self.task_panel.Destroy()
     
 class CameraControlPanel(wx.Panel):
     def __init__(self, parent, button_width):

@@ -44,9 +44,9 @@ cameras:
     nickname: leftCamB
     gain: 15
     gamma: 0.8
-    in_use: false
+    in_use: true
   rightCamB:
-    serial: '25504067'
+    serial: '25504068'
     ismaster: false
     crop:
     - 40
@@ -59,9 +59,68 @@ cameras:
     nickname: rightCamB
     gain: 15
     gamma: 0.8
-    in_use: false
+    in_use: true
+    leftCamC:
+      serial: '25476392'
+      ismaster: true
+      crop:
+      - 40
+      - 640
+      - 30
+      - 480
+      exposure: 1000
+      framerate: 240
+      bin: 2
+      nickname: leftCamC
+      gain: 15
+      gamma: 0.8
+      in_use: true
+    rightCamC:
+      serial: '23531686'
+      ismaster: true
+      crop:
+      - 40
+      - 640
+      - 30
+      - 480
+      exposure: 1000
+      framerate: 240
+      bin: 2
+      nickname: rightCamC
+      gain: 15
+      gamma: 0.8
+      in_use: true
+    leftCamD:
+      serial: '24043993'
+      ismaster: true
+      crop:
+      - 40
+      - 640
+      - 30
+      - 480
+      exposure: 1000
+      framerate: 240
+      bin: 2
+      nickname: leftCamD
+      gain: 15
+      gamma: 0.8
+      in_use: true
+    rightCamB:
+      serial: '24044011'
+      ismaster: true
+      crop:
+      - 40
+      - 640
+      - 30
+      - 480
+      exposure: 1000
+      framerate: 240
+      bin: 2
+      nickname: rightCamD
+      gain: 15
+      gamma: 0.8
+      in_use: true
 unitRef: unitME
-
 screen_settings:
   fullScreen: 1
   screenNumber: 1
@@ -80,10 +139,10 @@ hardware:
     - 1.2
     graph: ''
   Button:
-    labjack_input: FIO2
+    labjack_input: AIN4
     voltage_range:
-    - 0
-    - 1
+    - -11.0
+    - 11.0
     graph: ''
   Photodiode:
     labjack_input: FIO3

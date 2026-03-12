@@ -7,9 +7,6 @@ from utils.logger import get_logger
 logger = get_logger("./tasks/NaturalisticSpeech") 
 
 
-# basedir = "/home/rld/task-acquisition/tasks"
-# imdir = os.path.join(basedir, "PhotoTest_Stimuli")
-
 # Sets up display window, fixation cross, text pages and image stimuli
 class NaturalisticSpeech(bases.StimulusBase):
     def __init__(self, window, frame, finish):
@@ -27,7 +24,6 @@ class NaturalisticSpeech(bases.StimulusBase):
         
         self.trial+=1
         logger.debug(self.photo)
-        print(self.trial)
         self.photo_dict[f"trial_{self.trial}"] = self.photo
         stim = visual.ImageStim(self.display, image=self.photo, name=self.photo, size=[1200, 1200])
         stim.draw()
@@ -36,13 +32,16 @@ class NaturalisticSpeech(bases.StimulusBase):
         self.display.switch_patch()
         self.display.draw_patch()
         self.display.flip()
-        #wait for "cancel session" button to be pressed in the main gui to stop session
-        thread_event.wait()
-        thread_event.clear()
+        while self.finish.value == 0:
+            stim.draw()
+            self.display.draw_patch()
+            self.display.flip()
+
         
         #turn the patch to off and flip the display to black
         self.display.switch_patch()
         self.display.draw_patch()
+        self.display.flip()
         
     def saveMetadata(self, name, sessionFolder):
         data = {"photo_paths": self.photo_dict}

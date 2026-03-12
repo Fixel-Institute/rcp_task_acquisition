@@ -148,5 +148,7 @@ class VerbalFluencyPanel(TrialPanel):
             if self.seconds >= 0:
                 self.seconds_text.SetLabel(f"Time: {self.seconds} secs")
 
-        
+    def run_trial(self, count):
+        self.seconds = 60
+        super().start_trial()
         

@@ -2,24 +2,21 @@
 
 from math import floor
 from multiprocessing import Process
-from queue import Empty
+from queue import Queue, Empty
 import numpy as np
 import PySpin
-from PIL import Image
 from multiCam_DLC import multiCam_DLC_utils_v2 as clara
 import sys, linecache
 import time
 from utils.camera_utils import identify_dropped_frames
-from models.Warnings import Warning
-import cv2
+from models.VideoThread import VideoThread
 from utils.logger import get_logger
 logger = get_logger("./multiCam_DLC/multiCam_DLC_PySpin_v1") 
 
         
 class multiCam_DLC_Cam(Process):
     def __init__(self, camq, camq_p2read, camID,
-                 idList, cpt, bs, aq, frm, array4feed, frmGrab):
-        
+                 idList, cpt, aq, frm, array4feed, frmGrab):
         
         super().__init__()
         self.camID = camID
@@ -27,34 +24,29 @@ class multiCam_DLC_Cam(Process):
         self.camq_p2read = camq_p2read
         self.idList = idList
         self.cpt = cpt
-        self.bs = bs
         self.aq = aq
         self.frm = frm
         self.array4feed = array4feed
         self.frmGrab = frmGrab
         self.actual_exposure = None
         self.actual_frame_rate = None
+        self.video_queue = Queue()
+        self.video_list = []
+        self.video_thread = None
         
     def run(self):
-        benchmark = False
         record = False
         ismaster = False
         isunconnected = False
         record_frame_rate = 30
         exposure_max = 4000
         user_cfg = clara.read_config()["cameras"]
-        
+        test_num = 0
         camStrList = list()
-        # if self.user_cfg['isunconnected']:
-        #     self.unconnected = [str(self.cam_cfg[s]['serial']) for s in self.camStrList]
         
         for s in user_cfg:
             if not user_cfg[s]["in_use"]:
                 continue
-            # if not self.cam_cfg[s]['ismaster']:
-            #     self.slist.append(str(self.cam_cfg[s]['serial']))
-            # else:
-            #     self.master_list.append(str(self.cam_cfg[s]['serial']))
             camStrList.append(s)
             if self.camID == str(user_cfg[s]['serial']):
                 camStr = s
@@ -81,39 +73,21 @@ class multiCam_DLC_Cam(Process):
             try:
                 msg = self.camq.get(block=False)
                 logger.debug(f"{camStr} msg: {msg}")
-                # print(f"{camStr} msg: {msg}")
-                # print(f"aq val: {self.aq.value}")
                 try:
                     if msg == 'InitM':
                         ismaster = True
                         
                         logger.debug(f"{camStr} m here")
                         cam.Init()
+                        self.create_primary(cam)
                         logger.debug(f'{camStr} m here')
-                        cam.CounterSelector.SetValue(PySpin.CounterSelector_Counter0)
-                        cam.CounterEventSource.SetValue(PySpin.CounterEventSource_ExposureStart)
-                        cam.CounterEventActivation.SetValue(PySpin.CounterEventActivation_RisingEdge)
-                        cam.CounterTriggerSource.SetValue(PySpin.CounterTriggerSource_ExposureStart)
-                        cam.CounterTriggerActivation.SetValue(PySpin.CounterTriggerActivation_RisingEdge)
-                        cam.LineSelector.SetValue(PySpin.LineSelector_Line2)
-                        cam.V3_3Enable.SetValue(True)
-                        cam.LineSelector.SetValue(PySpin.LineSelector_Line1)
-                        cam.LineSource.SetValue(PySpin.LineSource_Counter0Active)
-                        cam.LineInverter.SetValue(False)
-                        cam.TriggerMode.SetValue(PySpin.TriggerMode_Off)
-                        cam.TriggerSource.SetValue(PySpin.TriggerSource_Software)
-                        cam.TriggerOverlap.SetValue(PySpin.TriggerOverlap_Off)
-                        cam.TriggerMode.SetValue(PySpin.TriggerMode_On)
                         self.camq_p2read.put('done')
                         logger.debug(f'{camStr} initialized as primary')
                     if msg == 'InitS':
                         logger.debug(f"{camStr} s here")
                         cam.Init()
+                        self.create_secondary(cam)
                         logger.debug(f'{camStr} s here')
-                        cam.TriggerSource.SetValue(PySpin.TriggerSource_Line3)
-                        cam.TriggerOverlap.SetValue(PySpin.TriggerOverlap_ReadOut)
-                        cam.TriggerActivation.SetValue(PySpin.TriggerActivation_AnyEdge)
-                        cam.TriggerMode.SetValue(PySpin.TriggerMode_On)
                         self.camq_p2read.put('done')
                         logger.debug(f'{camStr} initialized as secondary')
                     if msg == 'InitC':
@@ -146,50 +120,43 @@ class multiCam_DLC_Cam(Process):
                             return
                         handling_mode_entry = handling_mode.GetEntryByName('OldestFirst')
                         handling_mode.SetIntValue(handling_mode_entry.GetValue())
-                        
-                        avi = PySpin.SpinVideo()
-                        option = PySpin.AVIOption()
-                        option.frameRate = write_frame_rate
-                        
                         logger.debug(path_base)
-                        avi.Open(path_base, option)
+                        self.video_thread = VideoThread(self.video_queue, path_base, aqW, aqH, write_frame_rate)
+                        self.video_thread.start()
                         file_path = f'{path_base}_timestamps.txt'
                         f = open(file_path, 'w')
-                        g= open(file_path, 'w')
                         start_time = 0
                         capture_duration = 0
                         record = True
                         self.camq_p2read.put('done')
                     elif msg == 'Start':
-                        # print("starting aq")
                         cam.BeginAcquisition()
-                        # print("after begin aq")
                         if ismaster or isunconnected:
                             self.frm.value = 0
                             self.camq.get()
                             cam.TriggerMode.SetValue(PySpin.TriggerMode_Off)
-                        bc = 0
-                        if benchmark:
-                            bA = 0
-                            bB = 0
-                            pre = time.perf_counter()
-                        # print(f"before while: {self.aq.value}")
                         while self.aq.value > 0:
-                            # print(f"aq value in while: {self.aq.value}")
                             try:
                                 image_result = cam.GetNextImage(100) #trying with timeout
                             except PySpin.SpinnakerException as e:
+                                # when doing hardware test, pass value to parent 
+                                # and alert that sync cable error
                                 logger.error(f"timeout error: {e}")
-                                cam.EndAcquisition()
-                                cam.DeInit()
-                                print(self.camID)
+                                # cam.EndAcquisition()
+                                # cam.DeInit()
+                                continue
                             image_result = processor.Convert(image_result, PySpin.PixelFormat_RGB8)
+                            frame_results = image_result.GetNDArray()
                             if record:
                                 # image_bayer_array = image_result.GetNDArray()
-                                # # image_result.Release()
+                                # # 
                                 # image_rgb = cv2.cvtColor(image_bayer_array, cv2.COLOR_BAYER_RG2BGR)
-                                # print(image_rgb)
-                                avi.Append(image_result)
+                                # avi.Append(image_result)
+                                test_num+=1
+                                self.video_list.append(frame_results)
+                                if len(self.video_list) >= 30:
+                                    self.video_queue.put(self.video_list)
+                                    self.video_list = []
                                 # avi.Append(image_rgb)
                                 if start_time == 0:
                                     start_time = image_result.GetTimeStamp()
@@ -198,56 +165,43 @@ class multiCam_DLC_Cam(Process):
                                     capture_duration = time_test- start_time
                                     start_time = time_test #image_result.GetTimeStamp()
                                     f.write("%s\n" % round(capture_duration))
-                                 
+                            
+                            image_result.Release()     
                             if self.aq.value == 1:
-                                # print("aq")
                                 # Live feed array
                                 if self.frmGrab.value == 0:
-                                    
-                                    # print("aq1")
-                                    results = image_result.GetNDArray()
-                                    if np.shape(results)[2] == 3:
-                                        frame[:,:,:] = results
+                                    if np.shape(frame_results)[2] == 3:
+                                        frame[:,:,:] = frame_results
                                         self.array4feed[0:aqH*aqW*3] = frame.flatten()
                                     self.frmGrab.value = 1
-                                
-                                # print("aq2")
-                            
-                                
                             if ismaster:
                                 self.frm.value+=1
-                            bc+=1
-                            if bc >= self.bs:
-                                bc = 0
-                                if benchmark:
-                                    bA+=1
-                                    bB+=time.perf_counter()-pre
-                                    pre = time.perf_counter()
+                            
                         self.camq.get()
                         percentage_dropped = 0
-                        # print("Stopping")
                         if record:
-                            # print("Here")
-                            avi.Close()
                             f.close()
-                            dropped_frame, total_frames = identify_dropped_frames(file_path, 
+                            dropped_frame, total_frames, files_len = identify_dropped_frames(file_path, 
                                                                     int(user_cfg[camStr]['framerate']))
-                            percentage_dropped = int(np.ceil((dropped_frame/total_frames)*100))
-                            # print("Here1")
+                            logger.debug(f"{self.camID}: total: {total_frames}, dropped: {dropped_frame}, len: {files_len}")
                             logger.debug(f"{dropped_frame} of camera frames dropped for {self.camID}")
                             logger.debug(f"{percentage_dropped}% of camera frames dropped for {self.camID}")
+                            self.video_queue.put(self.video_list)
+                            self.video_list = []
+                            # # self.video_queurue.put([])
+                            self.video_thread.cancel()
+                            self.video_thread.join()
+                            video_frames = self.video_queue.get()
+                            if video_frames != files_len+1:
+                                self.camq_p2read.put("video")
+                                warn_str = f"{self.camID}: Mismatch in video frames and timestamp files. Video frames: {video_frames} and Timestamps: {files_len}"
+
+                                self.camq_p2read.put(warn_str)
                             self.camq_p2read.put(percentage_dropped)
-                            # print("Here2")
                             record = False
-                            if benchmark:
-                                was = round(bB/bA*1000*1000)
-                                tried = round(1/record_frame_rate*1000*1000)
-                                logger.debug(user_cfg[camStr]['nickname'] + ' actual: ' + str(was) + ' - target: ' + str(tried))
                             
-                        # print("Here3")
                         cam.EndAcquisition()
                         cam.TriggerMode.SetValue(PySpin.TriggerMode_On)
-                        # print("Here4")
                         self.frmGrab.value = 0
                         if ismaster:
                             cam.LineSelector.SetValue(PySpin.LineSelector_Line1)
@@ -255,12 +209,7 @@ class multiCam_DLC_Cam(Process):
                             cam.LineInverter.SetValue(True)
                             cam.LineSelector.SetValue(PySpin.LineSelector_Line1)
                             cam.LineSource.SetValue(PySpin.LineSource_Counter0Active)
-                        # print("Here5")
                         self.camq_p2read.put('done')
-                    
-                        
-                    elif msg == "setExposure":
-                        cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Continuous)
                     
                     elif msg == 'updateSettings':
                         nodemap = cam.GetNodeMap()
@@ -338,7 +287,7 @@ class multiCam_DLC_Cam(Process):
                         else:
                             logger.warn('Height not available...')
                         cam.GainAuto.SetValue(PySpin.GainAuto_Off)
-                        # cam.BalanceWhiteAuto.SetValue(PySpin.BalanceWhiteAuto_Off)
+                        cam.BalanceWhiteAuto.SetValue(PySpin.BalanceWhiteAuto_Off)
                         
                         # cam.AdcBitDepth.SetValue(PySpin.AdcBitDepth_Bit8)
                         user_cfg = clara.read_config()["cameras"]
@@ -434,24 +383,38 @@ class multiCam_DLC_Cam(Process):
                         self.camq_p2read.put(record_frame_rate)
                         self.camq_p2read.put(node_width.GetValue())
                         self.camq_p2read.put(node_height.GetValue())
+                    
+                    elif msg == "setExposure":
+                        cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Continuous)
+                    
                     elif msg == 'getExposure':
+                        
                         logger.info(f"Current exposure: {current_exposure_time}" )
                         current_exposure_time = cam.ExposureTime.GetValue()*.9
                         cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Off)
                         current_exposure_time = min(current_exposure_time,exposure_max)
                         cam.ExposureTime.SetValue(current_exposure_time)
                         logger.info(f"Auto-exposure result {camStr}: {current_exposure_time}")
+                        logger.debug(f"exposure: {cam.ExposureTime.GetValue()}")
+                        self.camq_p2read.put(cam.ExposureTime.GetValue())
+                    elif msg == "setBalance":
+                        cam.BalanceWhiteAuto.SetValue(PySpin.BalanceWhiteAuto_Continuous)
+                    
+                    elif msg == 'getBalance':
+                        
+                        cam.BalanceWhiteAuto.SetValue(PySpin.BalanceWhiteAuto_Off)
                         cam.Gain.SetValue(user_cfg[camStr]['gain'])
                         cam.Gamma.SetValue(user_cfg[camStr]['gamma'])
                         cam.AcquisitionFrameRate.SetValue(frmrate_time_to_set)
                         record_frame_rate = cam.AcquisitionFrameRate.GetValue()
                         logger.debug(f"fps: {record_frame_rate}")
-                        logger.debug(f"exposure: {cam.ExposureTime.GetValue()}")
+                        
                         self.camq_p2read.put(record_frame_rate)
-                        self.camq_p2read.put(cam.ExposureTime.GetValue())
                         logger.info(f"Auto-exposure frame rate {camStr}: {record_frame_rate}")
+                        
+                        
 
-                except PySpin.SpinnakerException as ex:
+                except PySpin.SpinnakerException:
                     exc_type, exc_obj, tb = sys.exc_info()
                     f = tb.tb_frame
                     lineno = tb.tb_lineno
@@ -470,6 +433,28 @@ class multiCam_DLC_Cam(Process):
             except Empty:
                 pass
         
-        
-
+    
+    def create_primary(self, cam):
+        # logger.debug(f'{camStr} m here')
+        cam.CounterSelector.SetValue(PySpin.CounterSelector_Counter0)
+        cam.CounterEventSource.SetValue(PySpin.CounterEventSource_ExposureStart)
+        cam.CounterEventActivation.SetValue(PySpin.CounterEventActivation_RisingEdge)
+        cam.CounterTriggerSource.SetValue(PySpin.CounterTriggerSource_ExposureStart)
+        cam.CounterTriggerActivation.SetValue(PySpin.CounterTriggerActivation_RisingEdge)
+        cam.LineSelector.SetValue(PySpin.LineSelector_Line2)
+        cam.V3_3Enable.SetValue(True)
+        cam.LineSelector.SetValue(PySpin.LineSelector_Line1)
+        cam.LineSource.SetValue(PySpin.LineSource_Counter0Active)
+        cam.LineInverter.SetValue(False)
+        cam.TriggerMode.SetValue(PySpin.TriggerMode_Off)
+        cam.TriggerSource.SetValue(PySpin.TriggerSource_Software)
+        cam.TriggerOverlap.SetValue(PySpin.TriggerOverlap_Off)
+        cam.TriggerMode.SetValue(PySpin.TriggerMode_On)
+    
+    def create_secondary(self, cam):
+        # logger.debug(f'{camStr} s here')
+        cam.TriggerSource.SetValue(PySpin.TriggerSource_Line3)
+        cam.TriggerOverlap.SetValue(PySpin.TriggerOverlap_ReadOut)
+        cam.TriggerActivation.SetValue(PySpin.TriggerActivation_AnyEdge)
+        cam.TriggerMode.SetValue(PySpin.TriggerMode_On)
     

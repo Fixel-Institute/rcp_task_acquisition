@@ -21,9 +21,6 @@ class LabjackFrontend():
     def __init__(self, array_length, ctrl_panel, timer, args, button_pressed, press_count, hardware_test):
         
         self.constants = []
-        #getting labjack constants
-        # print(f"args: {args[1]}")
-             
         self.button_pressed = button_pressed #Value(ctypes.c_bool, False)
         self.labjack_list = [item for item in list(args[1]) if item not in self.constants] #list(args[1])
         self.hardware = [item for item in list(args[0]) if item not in PLOT_CONSTANTS] #list(args[0])
@@ -133,14 +130,11 @@ class LabjackFrontend():
                                                  self.stream_started,
                                                  self.scan_rate,
                                                  self.handshake)
+
         if self.labjack_process.is_successful():
-            self.labjack_csv = "test.csv"
-            self.labjack_queue.put(self.labjack_csv)
-            self.labjack_is_csv.value = True
             self.labjack_process.start()
             self.labjack_timer.Start(200)
             return True
-
         else:
             Warning("labjack").display()
             labjack_button = self.graph_panel.get_graph_button()
@@ -149,18 +143,14 @@ class LabjackFrontend():
         
 
 
+
     def stop_labjack(self):
-        # print(self.labjack_process.actualscanRate)
-        # labjack_rate = self.labjack_process.actualscanRate
         self.labjack_is_finished.value = True
         self.labjack_is_csv.value = False
         self.stream_started.value = False
-        # print(labjack_rate, "Process rate")
         self.labjack_timer.Stop()
         for index, lj_input in enumerate(self.hardware_indices):
             self.graph_panel.update_yaxis([np.nan]*self.array_length, index, lj_input.value)
-        # print(f"constants: {self.constant_index}")
-        # print(self.constants)
         for index, constant_inputs in enumerate(self.constants):
             
             self.graph_panel.update_constants([np.nan]*self.array_length, index, self.constant_index[index])
@@ -178,7 +168,6 @@ class LabjackFrontend():
         return self.scan_rate.value
 
     def labjack_event(self, event):
-        
             if not self.labjack_is_finished.value and self.stream_started.value:
                 arr_step = 0
                 if self.handshake.value == 1:
@@ -195,14 +184,12 @@ class LabjackFrontend():
                 
                     
                 if not self.hardware_test.value:
-                    # print("Start: array test")
                     for index, lj_input in enumerate(self.hardware_indices):
                         if lj_input.value == -1:
                             self.graph_panel.update_yaxis([np.nan]*self.array_length, index, lj_input.value)
                             y_plot_points[arr_step:arr_step+self.array_length] = np.nan
                             # arr_step+= self.array_length
                             self.graph_panel.set_visible(index, False)
-                            # print("in -1")
                         else:
                             if lj_input.value != self.prev_graph_list[index]:
                                 self.prev_graph_list[index] = lj_input.value
@@ -210,17 +197,14 @@ class LabjackFrontend():
                                 self.graph_panel.update_yaxis([np.nan]*self.array_length, index, lj_input.value)
                             self.graph_panel.update_yaxis(y_plot_points[arr_step:arr_step+self.array_length], index, lj_input.value)
                             self.graph_panel.set_visible(index)
-                            # print("in else")
                         arr_step+= self.array_length
                 else:
                     
                     for index, lj_input in enumerate(self.hardware_indices):
-                        # print("in hardware")
                         self.graph_panel.set_visible(index, False)
                         arr_step += self.array_length
                      
                 for index, constants_input in enumerate(self.constants):
-                    # print("in constants")
                     self.graph_panel.update_constants(y_plot_points[arr_step:arr_step+self.array_length], index, self.constant_index[index])
                     self.graph_panel.set_visible_const(index)
                     arr_step+= self.array_length
@@ -262,7 +246,6 @@ class LabjackFrontend():
                     choices =  choice.GetStrings()
                     selection = choices[selection]
                     original_selection = self.hardware.index(selection)
-                    # print(f"choice: {choice}, original_selection: {original_selection}")
                 else:
                     original_selection = -1
                 new_options = [hardware for index, hardware in enumerate(self.hardware) if index not in selected_list or index == original_selection]
@@ -271,9 +254,7 @@ class LabjackFrontend():
                 
                 if selection !=-1:
                     choice.SetSelection(new_options.index(selection))
-                #set the value to all hardware list
                 self.hardware_indices[index].value = original_selection
-                # print(f"choice = {self.labjack_choices}, index= {index}")
                 self.graph_panel.update_label(index, selection)
             except Exception as e:
                 logger.error(e)

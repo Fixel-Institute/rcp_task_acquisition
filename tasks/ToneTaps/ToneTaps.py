@@ -34,11 +34,10 @@ PARAMS = {
 
 
 class ToneTapsClosed(bases.StimulusBase):
-    def __init__(self, window, frame, show_panel, press_count, is_finished):
+    def __init__(self, window, frame, press_count, is_finished):
         super().__init__(window, frame)
         self.hand_list = []
         self.hand = None
-        self.show_panel = show_panel
         self.finish = is_finished
         self.trial_count = 0
         self.first_tap = True
@@ -113,7 +112,7 @@ class ToneTapsClosed(bases.StimulusBase):
         self.first_tap = True
 
         
-    def update_hand(self, hand):
+    def update_data(self, hand):
             self.hand = hand    
         
     def play_tap(self):

@@ -118,3 +118,6 @@ class TrialPanel(wx.Panel):
         
     def start_new_trial(self):
         self.trial_number = 0
+        
+    def update_values(self):
+        pass

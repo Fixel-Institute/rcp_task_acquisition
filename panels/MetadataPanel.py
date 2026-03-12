@@ -69,7 +69,7 @@ class MetadataPanel():
         self.get_metadata()
         self.data = self.get_metadata()
         self.dialog.EndModal(wx.ID_OK)
-        # self.dialog.Destroy()
+        self.dialog.Destroy()
     
     
     def cancel_event(self, event):
@@ -81,7 +81,7 @@ class MetadataPanel():
         if dlg.ShowModal() == wx.ID_NO: 
             return
         self.dialog.EndModal(wx.CANCEL)
-        # self.dialog.Destroy()
+        self.dialog.Destroy()
     
     
     def show(self):

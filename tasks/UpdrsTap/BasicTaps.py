@@ -45,7 +45,7 @@ class BasicTaps(bases.StimulusBase):
         self.play_tone() 
         
        
-    def update_hand(self, hand):
+    def update_data(self, hand):
         self.hand = hand
         
         

@@ -13,9 +13,13 @@ naturalistic_speech:
   settings:
   - Audio
   - Cameras
+  - Button
   - Photodiode
   - Microphone 1
   - Microphone 2
+  - Force Sensor X
+  - Force Sensor Y
+  - Force Sensor Z
   - Barcode
   - leftCamA
   - rightCamA
@@ -89,6 +93,16 @@ tone_taps_closed:
   - leftCamA
   - rightCamA
 sara:
+  settings:
+  - Audio
+  - Cameras
+  - Photodiode
+  - Microphone 1
+  - Microphone 2
+  - Barcode
+  - leftCamA
+  - rightCamA
+verb_generation:
   settings:
   - Audio
   - Cameras
