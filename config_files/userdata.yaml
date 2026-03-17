@@ -1,7 +1,7 @@
 isunconnected: false
 cameras:
   leftCamA:
-    serial: '25504066'
+    serial: '24041797'
     ismaster: true
     crop:
     - 40
@@ -16,7 +16,7 @@ cameras:
     gamma: 0.8
     in_use: true
   rightCamA:
-    serial: '25504067'
+    serial: '24044011'
     ismaster: false
     crop:
     - 40
@@ -31,7 +31,7 @@ cameras:
     gamma: 0.8
     in_use: true
   leftCamB:
-    serial: '25476392'
+    serial: '24043993'
     ismaster: false
     crop:
     - 40
@@ -46,7 +46,7 @@ cameras:
     gamma: 0.8
     in_use: true
   rightCamB:
-    serial: '25504068'
+    serial: '23531686'
     ismaster: false
     crop:
     - 40
@@ -60,66 +60,6 @@ cameras:
     gain: 15
     gamma: 0.8
     in_use: true
-    leftCamC:
-      serial: '25476392'
-      ismaster: true
-      crop:
-      - 40
-      - 640
-      - 30
-      - 480
-      exposure: 1000
-      framerate: 240
-      bin: 2
-      nickname: leftCamC
-      gain: 15
-      gamma: 0.8
-      in_use: true
-    rightCamC:
-      serial: '23531686'
-      ismaster: true
-      crop:
-      - 40
-      - 640
-      - 30
-      - 480
-      exposure: 1000
-      framerate: 240
-      bin: 2
-      nickname: rightCamC
-      gain: 15
-      gamma: 0.8
-      in_use: true
-    leftCamD:
-      serial: '24043993'
-      ismaster: true
-      crop:
-      - 40
-      - 640
-      - 30
-      - 480
-      exposure: 1000
-      framerate: 240
-      bin: 2
-      nickname: leftCamD
-      gain: 15
-      gamma: 0.8
-      in_use: true
-    rightCamB:
-      serial: '24044011'
-      ismaster: true
-      crop:
-      - 40
-      - 640
-      - 30
-      - 480
-      exposure: 1000
-      framerate: 240
-      bin: 2
-      nickname: rightCamD
-      gain: 15
-      gamma: 0.8
-      in_use: true
 unitRef: unitME
 screen_settings:
   fullScreen: 1
@@ -129,26 +69,26 @@ hardware:
   Audio:
     labjack_input: AIN3
     voltage_range:
-    - -9.6
-    - 9.6
+    - -0.075
+    - 0.075
     graph: ''
   Cameras:
-    labjack_input: AIN0
-    voltage_range:
-    - -1.2
-    - 1.2
-    graph: ''
-  Button:
-    labjack_input: AIN4
-    voltage_range:
-    - -11.0
-    - 11.0
-    graph: ''
-  Photodiode:
-    labjack_input: FIO3
+    labjack_input: FIO0
     voltage_range:
     - 0
     - 1
+    graph: ''
+  Button:
+    labjack_input: FIO2
+    voltage_range:
+    - 0
+    - 1
+    graph: ''
+  Photodiode:
+    labjack_input: AIN0
+    voltage_range:
+    - -0.015
+    - 0.015
     graph: ''
   Grasp Button:
     labjack_input: FIO1
@@ -159,14 +99,14 @@ hardware:
   Microphone 1:
     labjack_input: AIN1
     voltage_range:
-    - -0.036
-    - 0.036
+    - -0.6
+    - 0.6
     graph: ''
   Microphone 2:
     labjack_input: AIN2
     voltage_range:
-    - -0.036
-    - 0.036
+    - -0.6
+    - 0.6
     graph: ''
   Force Sensor X:
     labjack_input: AIN5
@@ -187,7 +127,13 @@ hardware:
     - 0.6
     graph: ''
   Barcode:
-    labjack_input: FIO4
+    labjack_input: FIO7
+    voltage_range:
+    - 0
+    - 1
+    graph: ''
+  TENS:
+    labjack_input: FIO6
     voltage_range:
     - 0
     - 1

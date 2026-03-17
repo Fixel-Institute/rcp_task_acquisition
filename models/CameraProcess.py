@@ -29,9 +29,9 @@ class multiCam_DLC_Cam(Process):
         self.frmGrab = frmGrab
         self.actual_exposure = None
         self.actual_frame_rate = None
-        self.video_queue = Queue()
-        self.video_list = []
-        self.video_thread = None
+        # self.video_queue = Queue()
+        # self.video_list = []
+        # self.video_thread = None
         
     def run(self):
         record = False
@@ -120,8 +120,13 @@ class multiCam_DLC_Cam(Process):
                         handling_mode_entry = handling_mode.GetEntryByName('OldestFirst')
                         handling_mode.SetIntValue(handling_mode_entry.GetValue())
                         logger.debug(path_base)
-                        self.video_thread = VideoThread(self.video_queue, path_base, aqW, aqH, write_frame_rate)
-                        self.video_thread.start()
+                        avi = PySpin.SpinVideo()
+                        option = PySpin.AVIOption()
+                        
+                        option.frameRate = write_frame_rate
+                        # self.video_thread = VideoThread(self.video_queue, path_base, aqW, aqH, write_frame_rate)
+                        # self.video_thread.start()
+                        avi.Open(path_base, option)
                         file_path = f'{path_base}_timestamps.txt'
                         f = open(file_path, 'w')
                         start_time = 0
@@ -145,17 +150,17 @@ class multiCam_DLC_Cam(Process):
                                 # cam.DeInit()
                                 continue
                             image_result = processor.Convert(image_result, PySpin.PixelFormat_RGB8)
-                            frame_results = image_result.GetNDArray()
+                            # frame_results = image_result.GetNDArray()
                             if record:
                                 # image_bayer_array = image_result.GetNDArray()
                                 # # 
                                 # image_rgb = cv2.cvtColor(image_bayer_array, cv2.COLOR_BAYER_RG2BGR)
-                                # avi.Append(image_result)
+                                avi.Append(image_result)
                                 test_num+=1
-                                self.video_list.append(frame_results)
-                                if len(self.video_list) >= 30:
-                                    self.video_queue.put(self.video_list)
-                                    self.video_list = []
+                                # self.video_list.append(frame_results)
+                                # if len(self.video_list) >= 30:
+                                #     self.video_queue.put(self.video_list)
+                                #     self.video_list = []
                                 # avi.Append(image_rgb)
                                 if start_time == 0:
                                     start_time = image_result.GetTimeStamp()
@@ -169,8 +174,8 @@ class multiCam_DLC_Cam(Process):
                             if self.aq.value == 1:
                                 # Live feed array
                                 if self.frmGrab.value == 0:
-                                    if np.shape(frame_results)[2] == 3:
-                                        frame[:,:,:] = frame_results
+                                    if np.shape(image_result.GetNDArray())[2] == 3:
+                                        frame[:,:,:] = image_result.GetNDArray() #frame_results
                                         self.array4feed[0:aqH*aqW*3] = frame.flatten()
                                     self.frmGrab.value = 1
                             if ismaster:
@@ -179,23 +184,25 @@ class multiCam_DLC_Cam(Process):
                         self.camq.get()
                         percentage_dropped = 0
                         if record:
+                            avi.Close()
                             f.close()
                             dropped_frame, total_frames, files_len = identify_dropped_frames(file_path, 
                                                                     int(user_cfg[camStr]['framerate']))
                             logger.debug(f"{self.camID}: total: {total_frames}, dropped: {dropped_frame}, len: {files_len}")
                             logger.debug(f"{dropped_frame} of camera frames dropped for {self.camID}")
                             logger.debug(f"{percentage_dropped}% of camera frames dropped for {self.camID}")
-                            self.video_queue.put(self.video_list)
-                            self.video_list = []
+                            # self.video_queue.put(self.video_list)
+                            # self.video_list = []
                             # # self.video_queurue.put([])
-                            self.video_thread.cancel()
-                            self.video_thread.join()
-                            video_frames = self.video_queue.get()
-                            if video_frames != files_len+1:
-                                self.camq_p2read.put("video")
-                                warn_str = f"{self.camID}: Mismatch in video frames and timestamp files. Video frames: {video_frames} and Timestamps: {files_len}"
-
-                                self.camq_p2read.put(warn_str)
+                            # self.video_thread.cancel()
+                            # self.video_thread.join()
+                            # video_frames = self.video_queue.get()
+                            # # print("final: ", type(video_frames))
+                            # if video_frames != files_len+1:
+                            #     self.camq_p2read.put("video")
+                            #     warn_str = f"{self.camID}: Mismatch in video frames and timestamp files. Video frames: {video_frames} and Timestamps: {files_len}"
+                            #     # print(warn_str)
+                            #     self.camq_p2read.put(warn_str)
                             self.camq_p2read.put(percentage_dropped)
                             record = False
                             

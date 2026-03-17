@@ -28,7 +28,7 @@ class VideoThread(Thread):
     
     
     def run(self):
-        
+        self.num_frames = 0
         self.prepare_writers()
         
         while self.active:
@@ -45,19 +45,21 @@ class VideoThread(Thread):
                 if self.video_writer == None:
                     self.prepare_writers()
                 self.video_writer.write(frame)
-                # print(f"{self.name}: {self.num_frames}")
+                # print(f"{self.name}: {type(self.num_frames)}")
                 self.num_frames+=1
         try:
             print(self.video_queue.qsize())
-            queue_list = self.video_queue.get(timeout=0.05)
-            # print(queue_list)
-            if type(queue_list) == int:
-                self.close_writers()
-                return
-            for frame in queue_list:
-                self.video_writer.write(frame)
-                # print(f"{self.name}: {self.num_frames}")
-                self.num_frames+=1
+            while True:
+                queue_list = self.video_queue.get(timeout=0.05)
+            
+                # print(queue_list)
+                if type(queue_list) == int:
+                    self.close_writers()
+                    return
+                for frame in queue_list:
+                    self.video_writer.write(frame)
+                    # print(f"{self.name}: {type(self.num_frames)}")
+                    self.num_frames+=1
         except Empty:
             pass
         
@@ -83,6 +85,7 @@ class VideoThread(Thread):
         #     print("WARNING: ", warn_str)
             # warning = Warning("frames", warn_str)
             # warning.display()
+        # print("num frames: ", type(self.num_frames))
         self.video_file = self.video_writer = None
         self.video_queue.put(self.num_frames)
     

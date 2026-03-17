@@ -367,6 +367,7 @@ class N_back(bases.StimulusBase):
     def present(self, test=True, getTime=False):
         # clear global event keys
         self.trial+=1
+
         self.instructions = cfg.ONE_BACK_DISPLAY if self.type == 1 else cfg.TWO_BACK_DISPLAY
         event.globalKeys.clear()
         end_text = visual.TextStim(self.display, text="Task Finished. Thank you.", name="Finish", height=50)
@@ -400,17 +401,19 @@ class N_back(bases.StimulusBase):
         self.trial_list = trial_list
         for index, _ in enumerate(text):
             
-            # while not self.button.value:
-            #     if self.finished.value == 2:
-            #         break
-            text[index].draw()
-            self.display.flip()
-            time.sleep(5)
-            #     time.sleep(0.05)
-            # while self.button.value:
-            #     time.sleep(0.05)
+            while not self.button.value:
+                if self.finished.value == 2:
+                    break
+                text[index].draw()
+                self.display.flip()
+                # time.sleep(5)
+                time.sleep(0.05)
+            while self.button.value:
+                time.sleep(0.05)
             if self.finished.value == 2:
                 self.display.flip()
+                self.is_real=None
+                self.button_press = False
                 return
         self.play_tone()
         core.wait(0.05)
@@ -423,6 +426,8 @@ class N_back(bases.StimulusBase):
             for t_index, trial in enumerate(trial_set):
                 if self.finished.value == 2:
                     self.display.flip()
+                    self.is_real=None
+                    self.button_press = False
                     return
                 trial_vis = self.letters[trial]
                 self.button_press = False
@@ -443,13 +448,17 @@ class N_back(bases.StimulusBase):
                         timeData, fixFlipTime =self.showAndLog(self.display, timeData, 0, ims[0], 2, "Initial_Fixation_Shown")
                     self.button_press = False
             if index < len(trial_list)-1:
-            
+                if self.finished.value == 2:
+                    self.display.flip()
+                    self.is_real=None
+                    self.button_press = False
+                    return
 
-                    timeData, fixFlipTime =self.showAndLog(self.display, timeData, 0, intertrial_text[0], 10, "intertrial_text")
-                    
-                    self.play_tone()
-                    core.wait(0.05)
-                    timeData, fixFlipTime =self.showAndLog(self.display, timeData, 0, fixation, PARAMS["ISITime"], "Initial_Fixation_Shown")
+                timeData, fixFlipTime =self.showAndLog(self.display, timeData, 0, intertrial_text[0], 10, "intertrial_text")
+                
+                self.play_tone()
+                core.wait(0.05)
+                timeData, fixFlipTime =self.showAndLog(self.display, timeData, 0, fixation, PARAMS["ISITime"], "Initial_Fixation_Shown")
 
             
         timeData, fixFlipTime =self.showAndLog(self.display, timeData, 0, end_text, 2, "Trial_Shown") 

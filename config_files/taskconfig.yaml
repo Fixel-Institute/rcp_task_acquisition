@@ -7,6 +7,7 @@ n_back:
   - Microphone 1
   - Microphone 2
   - Barcode
+  - TENS
   - leftCamA
   - rightCamA
 naturalistic_speech:
@@ -21,10 +22,9 @@ naturalistic_speech:
   - Force Sensor Y
   - Force Sensor Z
   - Barcode
+  - TENS
   - leftCamA
   - rightCamA
-  - leftCamB
-  - rightCamB
 motor_task_finger_taps:
   settings:
   - Audio
@@ -33,6 +33,7 @@ motor_task_finger_taps:
   - Microphone 1
   - Microphone 2
   - Barcode
+  - TENS
   - leftCamA
   - rightCamA
 diadochokinesis:
@@ -43,6 +44,7 @@ diadochokinesis:
   - Microphone 1
   - Microphone 2
   - Barcode
+  - TENS
   - leftCamA
   - rightCamA
 verbal_fluency:
@@ -53,6 +55,7 @@ verbal_fluency:
   - Microphone 1
   - Microphone 2
   - Barcode
+  - TENS
   - leftCamA
   - rightCamA
 vowel_space:
@@ -63,6 +66,7 @@ vowel_space:
   - Microphone 1
   - Microphone 2
   - Barcode
+  - TENS
   - leftCamA
   - rightCamA
 reach_grasp:
@@ -77,6 +81,7 @@ reach_grasp:
   - Force Sensor Y
   - Force Sensor Z
   - Barcode
+  - TENS
   - leftCamA
   - rightCamA
   - leftCamB
@@ -90,6 +95,7 @@ tone_taps_closed:
   - Microphone 1
   - Microphone 2
   - Barcode
+  - TENS
   - leftCamA
   - rightCamA
 sara:
@@ -100,6 +106,7 @@ sara:
   - Microphone 1
   - Microphone 2
   - Barcode
+  - TENS
   - leftCamA
   - rightCamA
 verb_generation:
@@ -110,5 +117,6 @@ verb_generation:
   - Microphone 1
   - Microphone 2
   - Barcode
+  - TENS
   - leftCamA
   - rightCamA

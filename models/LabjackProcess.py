@@ -9,17 +9,17 @@ from utils.logger import get_logger
 logger = get_logger("./models/LabjackProcess") 
 import time
 import os
-log_path = r"/home/rcp-2/Desktop/ljm_test_usb.log"   # change if needed
-# Optional: clear old file
-try:
-    os.remove(log_path)
-except FileNotFoundError:
-    pass
-# Enable debug logging
-ljm.writeLibraryConfigStringS("LJM_DEBUG_LOG_FILE", log_path)
-ljm.writeLibraryConfigS("LJM_DEBUG_LOG_MODE", 2)   # CONTINUOUS
-ljm.writeLibraryConfigS("LJM_DEBUG_LOG_LEVEL", 1)  # LJM_STREAM_PACKET
-ljm.writeLibraryConfigS("LJM_DEBUG_LOG_FILE_MAX_SIZE", 123456789)
+# log_path = r"/home/rcp-2/Desktop/ljm_test_usb.log"   # change if needed
+# # Optional: clear old file
+# try:
+#     os.remove(log_path)
+# except FileNotFoundError:
+#     pass
+# # Enable debug logging
+# ljm.writeLibraryConfigStringS("LJM_DEBUG_LOG_FILE", log_path)
+# ljm.writeLibraryConfigS("LJM_DEBUG_LOG_MODE", 2)   # CONTINUOUS
+# ljm.writeLibraryConfigS("LJM_DEBUG_LOG_LEVEL", 1)  # LJM_STREAM_PACKET
+# ljm.writeLibraryConfigS("LJM_DEBUG_LOG_FILE_MAX_SIZE", 123456789)
 
  
 
@@ -48,6 +48,7 @@ class LabJackDataStream(Process):
         self.handshake = handshake
         try:
             self.handle = ljm.openS("T8", "ANY", "ANY")   
+            print("handle: ", self.handle)
         except:
             warning = Warning("labjack")
             warning.display()
@@ -78,7 +79,7 @@ class LabJackDataStream(Process):
         aScanList = ljm.namesToAddresses(len(self.scan_list), self.scan_list)[0]
         if self.digital_inputs:
             aScanList.append(2500)
-        print("PID: ", os.getpid())
+        # print("PID: ", os.getpid())
         if self.extended_inputs:
             aScanList.append(2501)
             self.extended = True
@@ -122,6 +123,7 @@ class LabJackDataStream(Process):
         logger.debug(aScanList)
         numAddresses = len(aScanList)
         self.actualscanRate.value = ljm.eStreamStart(self.handle, SCANS_PER_READ, numAddresses, aScanList, self.attemptedscanRate)
+        self.aScanList = aScanList
         print( ljm.eReadName(
             self.handle,
             "STREAM_BUFFER_SIZE_BYTES"))
@@ -137,21 +139,21 @@ class LabJackDataStream(Process):
         self.start_stream()
         self.stream_started.value = True
         while not self.finished.value:
-            # if self.create_csv.value:
-            #     self.labjack_csv = self.folder_queue.get()
-            #     write_to_csv = True
-            #     self.create_csv.value = False
+            if self.create_csv.value:
+                self.labjack_csv = self.folder_queue.get()
+                write_to_csv = True
+                self.create_csv.value = False
             data = ljm.eStreamRead(self.handle)
             self.results[:] = np.asarray(data[0])
             if int(-9999) in self.results:
                 print("ERROR!! OVERFLOW!!")
                 # return
-                print(f"prev data[1]: {data_1}")
-                print(f"prev data[2]: {data_2}")
+                # print(f"prev data[1]: {data_1}")
+                # print(f"prev data[2]: {data_2}")
                 print(f"data[1]: {data[1]}")
                 print(f"data[2]: {data[2]}")
-            data_1 = data[1]
-            data_2 = data[2]
+            # data_1 = data[1]
+            # data_2 = data[2]
             # if int(data[1]) != 48:
             # print(f"buffer value: ", data[1])
             results = self.results.reshape((self.scan_num, SCANS_PER_READ), order="F")
@@ -184,6 +186,7 @@ class LabJackDataStream(Process):
                 first_write = False
             self.graph(results, digital_reshape)                   
         logger.debug("labjack stream stopped.\n")
+        
         self.stop()
 
 
@@ -218,9 +221,9 @@ class LabJackDataStream(Process):
             self.numpy_arr[graph_list_index] = np.roll(self.numpy_arr[graph_list_index], size)
             self.numpy_arr[graph_list_index][:size] = np.flip(np.asarray(new_results[constants_index]))
             graph_list_index += 1
-        if self.handshake.value == 0:
-            np.frombuffer(self.graph_arr.get_obj(), dtype=ctypes.c_double).reshape(len(self.numpy_arr.flatten()))[:] = self.numpy_arr.flatten()
-            self.handshake.value = 1
+        # if self.handshake.value == 0:
+        np.frombuffer(self.graph_arr.get_obj(), dtype=ctypes.c_double).reshape(len(self.numpy_arr.flatten()))[:] = self.numpy_arr.flatten()
+            # self.handshake.value = 1
 
 
     def write_csv(self, results, write_headers=False): 

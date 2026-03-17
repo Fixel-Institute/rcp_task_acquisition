@@ -22,7 +22,7 @@ class FingerTapPanel(TrialPanel):
         self.instruction_paths = BASIC_TAPS_PATH
         self.start_video_button.Enable(True)
         self.SetSizer(vertical_sizer)
-        print(self.instruction_paths)
+        print("insruct path", self.instruction_paths)
         
     def _setup_fingertap(self):
         self.trial_text = wx.StaticText(self, label="Trial # 1")

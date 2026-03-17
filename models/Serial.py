@@ -27,3 +27,4 @@ class Serial():
                 break
         if not self.serSuccess:
             logger.info('Serial connection failed')
+            

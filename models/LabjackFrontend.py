@@ -10,6 +10,7 @@ from utils.constants import PLOT_CONSTANTS
 from models.LabjackProcess import LabJackDataStream
 # from models.FlipDetection import FlipDetection
 import wx
+import time
 from models.Warnings import Warning
 from utils.logger import get_logger
 logger = get_logger("./models/LabjackFrontend") 
@@ -145,6 +146,8 @@ class LabjackFrontend():
 
 
     def stop_labjack(self):
+        
+        
         self.labjack_is_finished.value = True
         self.labjack_is_csv.value = False
         self.stream_started.value = False
@@ -170,17 +173,19 @@ class LabjackFrontend():
     def labjack_event(self, event):
             if not self.labjack_is_finished.value and self.stream_started.value:
                 arr_step = 0
-                if self.handshake.value == 1:
-                    y_plot_points = np.frombuffer(self.labjack_arr.get_obj(), 'd', len(self.labjack_arr))
-                else:
-                    return
+                # if self.handshake.value == 1:
+                y_plot_points = np.frombuffer(self.labjack_arr.get_obj(), 'd', len(self.labjack_arr))
+                # else:
+                #     return
                 if not np.isnan(y_plot_points[-1]) and self.serial_bool:
                     self.serial_state += 1
                     if self.ser_success and self.serial_state > 0:
                         self.ser.write(self.msg.encode())
+                        
+                        time.sleep(2)
                         self.ser_success = False
                         self.serial_bool = False
-                        
+                        self.ser.write("A".encode())
                 
                     
                 if not self.hardware_test.value:
@@ -208,9 +213,9 @@ class LabjackFrontend():
                     self.graph_panel.update_constants(y_plot_points[arr_step:arr_step+self.array_length], index, self.constant_index[index])
                     self.graph_panel.set_visible_const(index)
                     arr_step+= self.array_length
-                if self.handshake.value == 1:    
-                    np.frombuffer(self.labjack_arr.get_obj(), dtype=ctypes.c_double).reshape(len(y_plot_points.flatten()))[:] = y_plot_points.flatten()
-                    self.handshake.value = 0
+                # if self.handshake.value == 1:    
+                np.frombuffer(self.labjack_arr.get_obj(), dtype=ctypes.c_double).reshape(len(y_plot_points.flatten()))[:] = y_plot_points.flatten()
+                    # self.handshake.value = 0
                 self.graph_panel.draw()
                 
         

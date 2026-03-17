@@ -52,7 +52,7 @@ class ControlsPanel(wx.Panel):
     def _set_up_tasks(self, task, button_width):
         vertical_position = 0
         white_space = 10
-        self.task_sizer = wx.GridBagSizer(5, 5)
+        self.task_sizer = wx.GridBagSizer(6, 5)
         self.font = wx.Font(wx.FontInfo(12).Bold())
         task_title = task.replace("_", " ").title()
         self.task_text = wx.StaticText(self, label=f"{task_title}")
@@ -72,6 +72,12 @@ class ControlsPanel(wx.Panel):
         self.task_sizer.Add(self.hardware_button, pos=(vertical_position,2), span=(0,2), flag=wx.LEFT, border=white_space)
         
         vertical_position+=1
+        
+        self.tens_button = wx.Button(self, id=wx.ID_ANY, label="TENS Test",size=(button_width*2, -1))
+        self.task_sizer.Add(self.tens_button, pos=(vertical_position,0), span=(0,2), flag=wx.LEFT, border=white_space)
+        
+        vertical_position+=1
+        
         
         self.session_button = wx.ToggleButton(self, id=wx.ID_ANY, label="Start Task",size=(button_width*4+15, -1))
         self.task_sizer.Add(self.session_button, pos=(vertical_position,0), span=(0,4), flag=wx.LEFT, border=white_space)
@@ -93,7 +99,7 @@ class ControlsPanel(wx.Panel):
     
     def get_task_handles(self):
         # return (self.slider, self.hardware_button, self.session_button, self.quit)
-        return (self.camera_toggle, self.hardware_button, self.session_button, self.quit)
+        return (self.camera_toggle, self.hardware_button, self.session_button, self.quit, self.tens_button)
     
 
     def update_task(self, task):

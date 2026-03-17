@@ -8,7 +8,7 @@ from pathlib import Path
 
 BASEDIR = Path(__file__).resolve().parent.parent.parent
 CODE_DIR = os.path.join(BASEDIR, "rcp_task_acquisition")
-RAW_DATA_DIR = "/media/nvme/RawDataLocal" #os.path.join(BASEDIR, "Documents/RawDataLocal")
+RAW_DATA_DIR = "/media/rld/c87215a7-5f3c-4acf-bb4d-2b823140e003/RawDataLocal" #os.path.join(BASEDIR, "Documents/RawDataLocal")
 COMPRESSED_VIDEO_DIR = os.path.join(BASEDIR, "Documents/CompressedData")
 DUMP_FOLDER_PATH =os.path.join(BASEDIR, 'Documents/RawDataLocal/Dump')
 STIM_CONFIG_FILE_PATH = CONFIG_FILE_PATH = os.path.join(CODE_DIR, 'config_files')
@@ -17,7 +17,7 @@ SCREEN_CONFIG_FILE_NAME = "screen_config.yaml"
 VIDEO_DIR = os.path.join(BASEDIR, "Videos/task_videos")
 
 # constants for graphing
-DEFAULTS = ["Microphone 1", "Audio", "Microphone 2"]
+DEFAULTS = ["Microphone 1", "Audio", "TENS"]
 PLOT_CONSTANTS = ["Cameras", "Barcode", "Photodiode"]
 LINE_STYLES = ["-", "-", "-", "-"] #["--", "-", ":", "-."]
 COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#8c564b',  '#9467bd', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
@@ -31,7 +31,7 @@ HEADERS = ["In Use", "Hardware", "Labjack Pin", "Voltage Range"]#"Graph Min", "G
 HARDWARE_LIST = ["Audio", "Cameras", "Button", "Photodiode", 
                  "Grasp Button", "Microphone 1", "Microphone 2", 
                  "String Potentiometer", "Force Sensor X", "Force Sensor Y", 
-                 "Force Sensor Z", "Barcode"]
+                 "Force Sensor Z", "Barcode", "TENS"]
 LABJACK_PIN_LIST = ["AIN0", "AIN1", "AIN2", "AIN3", "AIN4", "AIN5", "AIN6", "AIN7", 
                     "FIO0", "FIO1", "FIO2", "FIO3", "FIO4", "FIO5", "FIO6", "FIO7",
                     "EIO0", "EIO1", "EIO2", "EIO3", "EIO4", "EIO5", "EIO6", "EIO7"]

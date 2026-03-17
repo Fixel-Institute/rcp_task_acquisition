@@ -14,7 +14,7 @@ class GraphPanel(wx.Panel):
     Class for settiing up and displaying the gui graph
     
     '''
-    def __init__(self, parent: wx.SplitterWindow, gui_size: tuple[int, int]) -> None:
+    def __init__(self, parent, gui_size) -> None:
         wx.Panel.__init__(self, parent, -1,style=wx.SUNKEN_BORDER)
         
         # most of these are placeholders since we will not know which hardware
@@ -67,7 +67,7 @@ class GraphPanel(wx.Panel):
         self.Layout()
         
         
-    def update_graph(self, hardware: list[list[str]]) -> None:
+    def update_graph(self, hardware) -> None:
         '''
         where the actual set up is occurring
         
@@ -167,7 +167,7 @@ class GraphPanel(wx.Panel):
             self.constants.append(plot)
         
             
-    def update_constants(self, y_points: list[list[int]], index: int, lj_value: int) -> None:
+    def update_constants(self, y_points, index: int, lj_value: int) -> None:
         # calculating a new scale for the constants so that they will show up 
         # on the top half of the graph, and then plotting them
         min_new = 15-(index * self.constants_step)
@@ -186,7 +186,7 @@ class GraphPanel(wx.Panel):
         return self.labjack_stream_button
     
     
-    def get_graph_choices(self) -> list[wx.Choice]:
+    def get_graph_choices(self):
         return self.labjack_choices
 
         
@@ -198,7 +198,7 @@ class GraphPanel(wx.Panel):
         self.constants[index].set_visible(is_visible)
         
         
-    def update_yaxis(self, y_points: list[list[float]], index: int, lj_value: int) -> None:
+    def update_yaxis(self, y_points, index: int, lj_value: int) -> None:
         if index != -1 and lj_value != -1:
             min_old = float(self.voltage[lj_value][0])
             max_old = float(self.voltage[lj_value][1])
@@ -239,8 +239,8 @@ class GraphPanel(wx.Panel):
 
     def hardware_test(self, 
                       arr_size: int, 
-                      cam_num: list[int], 
-                      cam_names: list[str]) -> None:
+                      cam_num, 
+                      cam_names) -> None:
         for plot in self.lines:
             plot.set_visible(False)
         
@@ -273,7 +273,7 @@ class GraphPanel(wx.Panel):
 
 
     def plot_hardware(self, 
-                      cam_vals: list[list[float]], 
+                      cam_vals, 
                       max_old: int, 
                       threshold: float = 0.5) -> None:
         self.test_focus.set_visible(True)
@@ -298,7 +298,7 @@ class GraphPanel(wx.Panel):
         self.draw()
 
 
-    def set_constants(self, constants: list[str]) -> None:
+    def set_constants(self, constants) -> None:
         self.constant_labels = constants
 
     def reset(self):

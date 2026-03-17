@@ -26,7 +26,7 @@ class SwitchPanel():
         self.launch_panel.panel.Bind(wx.EVT_TIMER, self.switch_panel, self.disable_timer)
         self.task_frame.Bind(wx.EVT_TIMER, self.switch_panel, self.disable_timer)
         self.launch_panel.panel.SetFocus()
-        self.launch_panel.compress_button.Enable(False)
+        # self.launch_panel.compress_button.Enable(False)
         
     def switch_panel(self, event):
         if not self.launch_showing:

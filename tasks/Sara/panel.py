@@ -17,7 +17,7 @@ class SaraPanel(TrialPanel):
         self.recent_trials = {}
         vertical_sizer = wx.BoxSizer(wx.VERTICAL)
         vertical_sizer.Add(self._setup_panel(), 0, wx.ALIGN_LEFT | wx.ALL, self.border)  
-        vertical_sizer.Add(self.setup_instruction_playback(), 0, wx.ALIGN_LEFT | wx.ALL, self.border)
+        # vertical_sizer.Add(self.setup_instruction_playback(), 0, wx.ALIGN_LEFT | wx.ALL, self.border)
         self.SetSizer(vertical_sizer)
 
         
@@ -101,7 +101,7 @@ class SaraPanel(TrialPanel):
 
     def check_can_edit(self, event):
         self.assesment_num = self.assesment_choice.GetSelection()
-
+        self.current_assesment = self.assesment_list[self.assesment_num]
         if self.assesment_list[self.assesment_num] in self.recent_trials.keys():
             self.edit_button.Enable(True)
         else:
@@ -121,6 +121,9 @@ class SaraPanel(TrialPanel):
 
 
     def edit_score(self, event):
+        print(self.actual_assesments)
+        print(self.recent_trials)
+        print(self.current_assesment)
         args = self.actual_assesments[self.recent_trials[self.current_assesment]]
 
         self.scoring_panel = AssesmentPanel(self.current_assesment, args)

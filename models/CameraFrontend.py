@@ -7,7 +7,7 @@ import time
 from multiprocessing import Queue, Value, Array
 import os
 import shutil
-import multiCam_DLC.multiCam_DLC_PySpin_v1 as spin
+import models.CameraProcess as spin
 import cv2
 import ctypes
 import datetime

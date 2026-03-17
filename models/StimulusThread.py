@@ -70,10 +70,8 @@ class StimulusThread(threading.Thread):
                 elif msg=="run_stimulus":
                     # time.sleep(5)
                     self.shared.value = 0
-                    print(self.finish.value)
                     # Main loop for presenting stimuli
                     tStart = time.time()
-                    print("start")
                     logger.info(f"Presenting {self.task}")
                     if self.shared.value == -1:
                         break
@@ -91,7 +89,6 @@ class StimulusThread(threading.Thread):
                     seconds = (tElapsed%60)
                     min_string = f"{math.floor(tElapsed/ 60)} minutes, " if minutes > 0 else ""
                     logger.info(f'Stimulus protocol completed in {min_string}{seconds:.2f} seconds')
-                    print("stop")
 
                     self.finish.value = 1
                 elif msg=="end_stimulus":
@@ -120,7 +117,6 @@ class StimulusThread(threading.Thread):
                 
                 
     def init_stimuli(self):
-        print(self.task)
         if self.task == 'n_back':
             self.stimulus = N_back(self.window, self.frame, self.button, self.finish)
 
@@ -152,7 +148,7 @@ class StimulusThread(threading.Thread):
             self.stimulus = VerbGeneration(self.window, self.frame, self.finish)
         
         else:
-            self.stimulus = StimulusBase(self.window, self.frame, self.finish)
+            self.stimulus = StimulusBase(self.window, self.frame, None, self.finish)
             
         logger.info(f"iterable: {self.stimulus}")
             

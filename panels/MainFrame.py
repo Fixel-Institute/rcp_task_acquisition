@@ -59,9 +59,9 @@ class MainFrame(wx.Frame):
         screenW = screenSizes[index][0]
         screenH = screenSizes[index][1]
         
-        self.gui_size = (screenW-70, screenH-55)
+        self.gui_size = (screenW-90, screenH-55)
         wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = 'Task Master Aquisition',
-                            size = wx.Size(self.gui_size), pos = wx.DefaultPosition, style = wx.RESIZE_BORDER|wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
+                            size = wx.Size(self.gui_size), pos=(0,0), style = wx.RESIZE_BORDER|wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
         self.Maximize(True)
         self.statusbar = self.CreateStatusBar()
         self.statusbar.SetStatusText("")
@@ -88,7 +88,7 @@ class MainFrame(wx.Frame):
         self.exposure_button,self.set_crop,self.crop, self.minRec,self.secRec) = self.widget_panel.get_cam_handles()
 
         (self.camera_toggle, self.hardware_button, 
-         self.task_button,  self.quit) = self.widget_panel.get_task_handles()
+         self.task_button,  self.quit, self.tens_button) = self.widget_panel.get_task_handles()
         (self.contrast_test, self.focus_test, self.hardware_test_panel) = self.widget_panel.get_hardware_handles()
         self.focus_test.Bind(wx.EVT_TOGGLEBUTTON, self.set_focus)
         self.contrast_test.Bind(wx.EVT_TOGGLEBUTTON, self.set_contrast)
@@ -101,7 +101,7 @@ class MainFrame(wx.Frame):
         self.rec.Bind(wx.EVT_TOGGLEBUTTON, self.recordCam)
         self.exposure_button.Bind(wx.EVT_BUTTON, self.cams.get_exposure)
         self.task_button.Bind(wx.EVT_TOGGLEBUTTON, self.disable_gui)
-
+        self.tens_button.Bind(wx.EVT_BUTTON, self.tens_pulse)
         self.cam_test = Value(ctypes.c_bool, False)
         self.hardware_test = False
         self.liveTimer = wx.Timer(self, wx.ID_ANY)
@@ -224,6 +224,8 @@ class MainFrame(wx.Frame):
             self.trial_panel.start_new_trial()
             self.trial_panel.show()
         else:
+            self.serial.ser.write("A".encode())
+            time.sleep(3)
             if self.trial_button.GetValue():
                 self.trial_button.SetValue(False)
                 self.trial_event(event)
@@ -307,7 +309,7 @@ class MainFrame(wx.Frame):
             self.liveTimer.Stop()
         
         
-    def setup_videos(self): 
+    def setup_videos(self):
         video_paths = self.trial_panel.get_instructions()
         self.msgq.put("create_instructions")
         self.msgq.put(video_paths)
@@ -324,7 +326,6 @@ class MainFrame(wx.Frame):
             self.video_status.value = 0
         elif (self.finish.value == 1 and 
         (self.task != "naturalistic_speech" and self.task != "vowel_space")):
-            print('here')
             self.cams.stop_recording(event)
             self.trial_panel.reset(self.count)
             self.trial_panel.end_trial()
@@ -627,6 +628,8 @@ class MainFrame(wx.Frame):
             # self.cams.deinitThreads()
         return True          
     
+    def tens_pulse(self, event):    
+        self.serial.ser.write("A".encode())
     
     def quitButton(self, event):
         """
