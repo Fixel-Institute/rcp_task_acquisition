@@ -86,7 +86,7 @@ class HardwarePanel(wx.Panel):
         self.task = None
         self.border = 10
         self.task_list = list(self.task_config.keys())
-        self.cam_list = [Value(ctypes.c_int, -1), Value(ctypes.c_int, -1), Value(ctypes.c_int, -1),  Value(ctypes.c_int, -1)]
+        self.cam_list = [Value(ctypes.c_int, -1), Value(ctypes.c_int, -1), Value(ctypes.c_int, -1),  Value(ctypes.c_int, -1),  Value(ctypes.c_int, -1),  Value(ctypes.c_int, -1),  Value(ctypes.c_int, -1),  Value(ctypes.c_int, -1)]
         
         user_input_count = 1
         while len(self.row_list) < len(LABJACK_PIN_LIST)+1:

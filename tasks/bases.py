@@ -4,10 +4,12 @@ import os
 import winsound
 from psychopy import visual
 from psychopy.visual import MovieStim
-# from psychopy.visual.vlcmoviestim import VlcMovieStim
+from psychopy.visual.vlcmoviestim import VlcMovieStim
 import numpy as np
 import pandas as pd
 from utils.constants import VIDEO_DIR, VOLUME, DURATION, FREQUENCY
+from utils.logger import get_logger
+logger = get_logger("./tasks/bases.py") 
 headerBreakLine = '-' * 40 + '\n'
 winsound.Beep(37, 5)
 
@@ -142,23 +144,7 @@ class StimulusBase():
         
         
     def play_tone(self):
-        # os.system(f'play -nq -t alsa synth {DURATION} sine {FREQUENCY} vol {VOLUME}')
         winsound.Beep(int(FREQUENCY), DURATION)
-        # VOLUME = 0.125       # range [0.0, 1.0]
-        # SAMPLING_RATE = 44100 # sampling rate, Hz
-        # DURATION = 1000# in seconds, can be a float
-        # FREQUENCY = 750   # sine frequency, Hz, can be a float
-
-        
-    # def close_audio(self):
-    #     pass
-        
-    
-
-    # def setup_videos(self, video_filename_dict):
-    #     if self.video_status == None:
-    #         return 
-    #     self.instructions_dict = video_filename_dict
 
 
     def reset_task(self):
@@ -166,21 +152,16 @@ class StimulusBase():
         pass
     
     def play_instructional_video(self, trial_name):
-        print(self.instructions_dict)
-        # for trial_name in video_filename_dict:
-        # print(self.display.size)
-        # print("DIR", VIDEO_DIR)
         if trial_name == "":
             file = self.instructions_dict
         else:
             file = self.instructions_dict[trial_name]
         path =  os.path.join(VIDEO_DIR, str(file))
-        # print(f"{path}, path")
         if not os.path.exists(path):
             raise RuntimeError(f"Video File could not be found: {path}")
         
-
-        video = MovieStim(
+        logger.debug(path)
+        video = VlcMovieStim(
                 self.display, 
                 path,
                 size=self.display.size,
@@ -189,6 +170,7 @@ class StimulusBase():
                 flipHoriz=False, 
                 loop=False
             )
+        logger.debug(video)
         video.play()
         while video.status != visual.FINISHED:
             if self.video_status.value == 2:
@@ -208,7 +190,8 @@ class StimulusBase():
         video.stop()
         
         self.video_status.value = 5
-        self.display.clearStimuli()
+        self.display.idle(time_list = [])
+        # self.display.clearStimuli()
 
 
     def trial_bookends(self):

@@ -2,7 +2,8 @@
 import logging
 from pathlib import Path
 import os
-from utils.constants import CODE_DIR
+from utils.constants import RAW_DATA_DIR
+import datetime
 
 def get_logger(name: str = "cart") -> logging.Logger:
     """
@@ -14,12 +15,15 @@ def get_logger(name: str = "cart") -> logging.Logger:
     Returns:
         logging.Logger: Configured logger instance
     """
-    log_dir = Path(CODE_DIR+ "/logs") #Path("/home/rcp/task-acquisition/logs")
+    # log_dir = Path(RAW_DATA_DIR+ "/logs") #Path("/home/rcp/task-acquisition/logs")
+    date_string = datetime.datetime.utcnow().strftime("%Y%m%d")
+    log_str = os.path.join(RAW_DATA_DIR, date_string)
+    log_dir = Path(log_str)
     # Ensure the log directory exists
     log_dir.mkdir(parents=True, exist_ok=True)
 
     # Log file name
-    log_filename =  CODE_DIR +"/logs/cart.log"
+    log_filename =  os.path.join(log_dir, 'cart.log') #CODE_DIR +"/logs/cart.log"
     if not os.path.exists(log_filename):
         open(log_filename,'w').close()
 

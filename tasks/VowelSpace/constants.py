@@ -18,4 +18,9 @@ VS_PATHS = {
 
 #paths for the instructional videos
 VIDEO_PATHS = {
+    "introduction": os.path.join("VowelSpaceArea", "VSA_instructions_captioned.mp4"),
+    "hoad":  os.path.join("VowelSpaceArea", "say_hoad_again_vid.mp4"),
+    "heed":  os.path.join("VowelSpaceArea", "say_heed_again_vid.mp4"),
+    "who'd": os.path.join("VowelSpaceArea", "say_whod_again_vid.mp4"),
+    "hod":   os.path.join("VowelSpaceArea", "say_hod_again_vid.mp4")
     }

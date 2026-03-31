@@ -11,11 +11,10 @@ from tasks import bases
 from pathlib import Path
 # import pathlib as pl
 import time
-import utils.nback_configs as cfg
+import tasks.NBack.configs as cfg
 from utils.enums import Answer
 from utils.constants import CODE_DIR
 from typing import List, Tuple
-# from utils.file_utils import write_metadata
 from utils.logger import get_logger
 logger = get_logger("./tasks/NBack") 
 
@@ -49,7 +48,7 @@ PARAMS = {
     "stimTime" :0.5, # time stimulus is on in seconds,
     }
 # basedir = "/home/rcp/task-acquisition/tasks"
-imdir = os.path.join(CODE_DIR, "tasks/NBack/stimuli")
+imdir = os.path.join(CODE_DIR, "tasks", "NBack", "stimuli")
 # nReps = 3 # Number of reps to do of all stimuli
 # randomSeed = 0 # Random seed
 # nBackDegree = 1 # What is the N in N-Back?
@@ -308,12 +307,15 @@ class N_back(bases.StimulusBase):
         # Initialize the image stimuli
         ims = []
         picture_list = []
-        for fi in os.listdir(imdir) :
-            ims.append(visual.ImageStim(self.display, image=os.path.join(imdir, fi), name=fi, size=[300, 300]))
-            picture_list.append(fi)
+        correct_img = visual.ImageStim(self.display, image=os.path.join(imdir, cfg.CORRECT_IMG), name=cfg.CORRECT_IMG, size=[300, 300])
+        incorrect_img = visual.ImageStim(self.display, image=os.path.join(imdir, cfg.INCORRECT_IMG), name=cfg.INCORRECT_IMG, size=[300, 300])
+        logger.debug(f"ims: {correct_img}, {incorrect_img}")
+        # for fi in os.listdir(imdir) :
+        #     ims.append(visual.ImageStim(self.display, image=os.path.join(imdir, fi), name=fi, size=[300, 300]))
+        #     picture_list.append(fi)
                 
         self.metadata = picture_list
-        return (fixation, texts, ims)
+        return (fixation, texts, correct_img, incorrect_img)
     
     # Sets up trial data structure and stimuli presentation order
     def setupTrialData(self, nReps, ims, randomSeed, ISITime, stimTime, nBackDegree) :
@@ -371,9 +373,10 @@ class N_back(bases.StimulusBase):
         self.instructions = cfg.ONE_BACK_DISPLAY if self.type == 1 else cfg.TWO_BACK_DISPLAY
         event.globalKeys.clear()
         end_text = visual.TextStim(self.display, text="Task Finished. Thank you.", name="Finish", height=50)
-        
+        logger.debug(self.type)
+        logger.debug(self.is_real)
         # Initialize the display window
-        fixation, texts, ims = self.setupWinStims(imdir)
+        fixation, texts, correct_ims, incorrect_ims = self.setupWinStims(imdir)
         # Set up a dataframe to hold time data
         timeDataColumns = ['Event_Name', 'Trial_Num', 'Time_Since_Start']
         timeData = pd.DataFrame(columns=timeDataColumns)
@@ -439,13 +442,13 @@ class N_back(bases.StimulusBase):
                     if self.button_press:
                         if answer_list[index][t_index] == Answer.DIFFERENT:
                             
-                            timeData, fixFlipTime =self.showAndLog(self.display, timeData, 0, ims[0], 2, "Initial_Fixation_Shown")
+                            timeData, fixFlipTime =self.showAndLog(self.display, timeData, 0, incorrect_ims, 2, "Initial_Fixation_Shown")
                         elif answer_list[index][t_index] == Answer.SAME or answer_list[index][t_index] == Answer.NOGO:
-                            timeData, fixFlipTime =self.showAndLog(self.display, timeData, 0, ims[1], 2, "Initial_Fixation_Shown")
+                            timeData, fixFlipTime =self.showAndLog(self.display, timeData, 0, correct_ims, 2, "Initial_Fixation_Shown")
                     elif answer_list[index][t_index] == Answer.DIFFERENT or answer_list[index][t_index] == Answer.NOGO:
-                            timeData, fixFlipTime =self.showAndLog(self.display, timeData, 0, ims[1], 2, "Initial_Fixation_Shown")
+                            timeData, fixFlipTime =self.showAndLog(self.display, timeData, 0, correct_ims, 2, "Initial_Fixation_Shown")
                     elif answer_list[index][t_index] == Answer.SAME:
-                        timeData, fixFlipTime =self.showAndLog(self.display, timeData, 0, ims[0], 2, "Initial_Fixation_Shown")
+                        timeData, fixFlipTime =self.showAndLog(self.display, timeData, 0, incorrect_ims, 2, "Initial_Fixation_Shown")
                     self.button_press = False
             if index < len(trial_list)-1:
                 if self.finished.value == 2:
@@ -471,8 +474,6 @@ class N_back(bases.StimulusBase):
 
         
     def update_data(self, selections):
-        # sel_list = selections.split(",")
-        print(f"SELL LIST: {selections}")
         self.is_real = True if selections[0] == "real" else False
         self.type = 1 if selections[1] == "1-back" else 2
         

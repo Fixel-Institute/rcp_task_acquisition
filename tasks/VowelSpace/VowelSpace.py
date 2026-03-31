@@ -9,20 +9,21 @@ logger = get_logger("./tasks/VowelSpace")
 
 
 class VowelSpace(bases.StimulusBase):
-    def __init__(self, window, frame, finish):
-        super().__init__(window, frame)
+    def __init__(self, window, frame, finish, video_status):
+        super().__init__(window, frame, video_status, finish)
         self.generated_trials = None
         self.completed_trials_dict = {}
         self.create_trial_data()
         self.repeat_num = 0
-        self.finish = finish
         self.is_finished = False
+        self.actual_trials = 0
+        self.instructions_dict = c.VIDEO_PATHS
       
         
     def present(self):
-        
         self.current_trial =str(self.generated_trials[self.trial])
-        self.completed_trials_dict[f"trial_{self.trial+self.repeat_num}"] = str(self.current_trial)
+        self.actual_trials+=1
+        self.completed_trials_dict[f"trial_{self.actual_trials}"] = str(self.current_trial)
         logger.debug(f"trial: {self.trial}, repeat: {self.repeat_num}, current: {self.current_trial}")
         
         self.trial_bookends()
@@ -32,24 +33,29 @@ class VowelSpace(bases.StimulusBase):
             self.display.draw_patch()
             self.display.flip()
 
-        # thread_event.wait()
-        # thread_event.clear()
         self.trial_bookends()
 
 
-
     def get_trial(self):
-        if self.trial >= (len(self.generated_trials)-1):
+        logger.debug(self.trial)
+        logger.debug(self.generated_trials)
+        logger.debug(len(self.generated_trials))
+        if self.trial > (len(self.generated_trials)):
             self.is_finished=True
+        if self.is_finished:
+            return f"-1,-1,{self.is_finished}"
         return f"{self.trial},{self.generated_trials[self.trial]},{self.is_finished}"
     
     
     def update_data(self, is_repeated):
+        is_repeated = is_repeated[0] == "True"
         if is_repeated:
-            self.repeat_num+=1
+            # self.repeat_num+=1
+            logger.debug("in is_repeated")
         else:
+            logger.debug("in is_updated")
             self.trial+=1
-            if self.trial >= len(self.generated_trials)-1:
+            if self.trial >= len(self.generated_trials):
                 self.is_finished = True
         
         
@@ -58,6 +64,7 @@ class VowelSpace(bases.StimulusBase):
         new_trials = np.tile(c.PHRASE_LIST, num_repeats)
         np.random.shuffle(new_trials)
         self.generated_trials = new_trials.tolist()
+        logger.debug(f'trial: {self.generated_trials}')
 
 
     def saveMetadata(self, name, sessionFolder):

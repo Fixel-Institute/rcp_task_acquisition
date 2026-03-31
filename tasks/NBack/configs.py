@@ -127,6 +127,8 @@ ANSWER: Answer | None = None               # answer for the current trial
 STATUS: Status = Status.NO_RESPONSE     # the current response is correct / incorrect / timeout 
 
 
+CORRECT_IMG = "feedback_correct.png"
+INCORRECT_IMG = "feedback_incorrect.png"
 
 
 ONE_BACK_DISPLAY = {

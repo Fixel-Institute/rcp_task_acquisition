@@ -71,6 +71,7 @@ class SaraPanel(TrialPanel):
             self.assesment_num+=1
         else:
             self.assesment_num = 0
+        self.current_assesment = self.assesment_list[self.assesment_num]
         self.assesment_choice.SetSelection(self.assesment_num)
         self.actual_assesments[self.trial_number] = assesment_dict
         self.assesment_task.Enable(True)
@@ -121,9 +122,6 @@ class SaraPanel(TrialPanel):
 
 
     def edit_score(self, event):
-        print(self.actual_assesments)
-        print(self.recent_trials)
-        print(self.current_assesment)
         args = self.actual_assesments[self.recent_trials[self.current_assesment]]
 
         self.scoring_panel = AssesmentPanel(self.current_assesment, args)

@@ -1,18 +1,9 @@
 # -*- coding: utf-8 -*-
-
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Oct 10 12:59:41 2025
-
-@author: rld
-"""
-import os
 from psychopy import visual
 import time
 from tasks import bases
 from  utils.constants import GLOBAL_CLOCK, VOLUME
-from tasks.ToneTaps.constants import TAP_DURATION, TAP_FREQUENCY 
+from tasks.ToneTaps.constants import TAP_DURATION, TAP_FREQUENCY, IVRY_TAPS_VIDEO_PATH 
 from utils.logger import get_logger
 import winsound
 logger = get_logger("./tasks/ToneTapsClosed") 
@@ -35,14 +26,14 @@ PARAMS = {
 
 
 class ToneTapsClosed(bases.StimulusBase):
-    def __init__(self, window, frame, press_count, is_finished):
-        super().__init__(window, frame)
+    def __init__(self, window, frame, press_count, finish, video_status):
+        super().__init__(window, frame, video_status, finish)
         self.hand_list = []
         self.hand = None
-        self.finish = is_finished
         self.trial_count = 0
         self.first_tap = True
         self.press_count = press_count
+        self.instructions_dict = IVRY_TAPS_VIDEO_PATH
         
     def present(self, test=True):
         # Initialize the message text
@@ -81,11 +72,6 @@ class ToneTapsClosed(bases.StimulusBase):
                 if self.finish.value == 2:
                     break
                 if GLOBAL_CLOCK.getTime() - gToneTime > playTime :
-                    # duration = 0.05  # seconds
-                    # freq = 1000 # Hz
-                    # vol = 0.1
-                    # os.system('play -nq -t alsa synth {} sine {} vol {}'.format(duration, freq, vol))
-                    # self.stream.write(self.output_bytes)
                     self.play_tap()
 
                     nPlayed+=1
@@ -101,7 +87,6 @@ class ToneTapsClosed(bases.StimulusBase):
             if self.finish.value == 2:
                 break
             time.sleep(0.005)
-            # print("press: ", self.press_count.value)
             if self.press_count.value >= 31 + PARAMS["tone_number_per_trial"]:
                 break
 

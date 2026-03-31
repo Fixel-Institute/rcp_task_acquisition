@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 import wx
-import logging
-logger = logging.getLogger(__name__) # Or logging.getLogger() for the root logger
-logger.setLevel(logging.DEBUG)
+from utils.logger import get_logger
+logger = get_logger("./panels/TrialPanel") 
 
 
 class TrialPanel(wx.Panel):

@@ -10,6 +10,7 @@ import time
 from utils.camera_utils import identify_dropped_frames
 from models.VideoThread import VideoThread
 from utils.logger import get_logger
+import cv2
 logger = get_logger("./multiCam_DLC/multiCam_DLC_PySpin_v1") 
 
         
@@ -30,7 +31,10 @@ class multiCam_DLC_Cam(Process):
         self.actual_frame_rate = None
         # self.video_queue = Queue()
         # self.video_list = []
-        # self.video_thread = None
+        self.video_thread = None
+        self.fps = None
+        self.width = None
+        self.height = None
         
         
     def run(self):
@@ -114,19 +118,28 @@ class multiCam_DLC_Cam(Process):
                         write_frame_rate = record_frame_rate
                         s_node_map = cam.GetTLStreamNodeMap()
                         handling_mode = PySpin.CEnumerationPtr(s_node_map.GetNode('StreamBufferHandlingMode'))
+                        # manual_mode = handling_mode.GetEntryByName("Manual")
+                        # buffer_count = PySpin.CIntegerPtr(s_node_map.GetNode("StreamBufferCountManual"))
+                        # buffer_count.SetValue(100)
                         if not PySpin.IsAvailable(handling_mode) or not PySpin.IsWritable(handling_mode):
                             logger.warn('Unable to set Buffer Handling mode (node retrieval). Aborting...\n')
                             return
                         handling_mode_entry = handling_mode.GetEntryByName('OldestFirst')
                         handling_mode.SetIntValue(handling_mode_entry.GetValue())
                         logger.debug(path_base)
-                        avi = PySpin.SpinVideo()
-                        option = PySpin.AVIOption()
+                        # avi = PySpin.SpinVideo()
+                        # option = PySpin.AVIOption()
                         
-                        option.frameRate = write_frame_rate
-                        # self.video_thread = VideoThread(self.video_queue, path_base, aqW, aqH, write_frame_rate)
+                        # option.frameRate = write_frame_rate
+                        # self.video_thread = 
+                        # VideoThread(self.video_queue, path_base, aqW, aqH, write_frame_rate)
+                        self.height = aqH
+                        self.width = aqW
+                        self.fps = round(write_frame_rate,2)
+                        self.video_file = path_base+".mp4"
                         # self.video_thread.start()
-                        avi.Open(path_base, option)
+                        self.prepare_writers()
+                        # avi.Open(path_base, option)
                         file_path = f'{path_base}_timestamps.txt'
                         f = open(file_path, 'w')
                         start_time = 0
@@ -135,6 +148,7 @@ class multiCam_DLC_Cam(Process):
                         self.camq_p2read.put('done')
                     elif msg == 'Start':
                         cam.BeginAcquisition()
+                        
                         if ismaster or isunconnected:
                             self.frm.value = 0
                             self.camq.get()
@@ -150,13 +164,14 @@ class multiCam_DLC_Cam(Process):
                                 # cam.DeInit()
                                 continue
                             image_result = processor.Convert(image_result, PySpin.PixelFormat_RGB8)
-                            # frame_results = image_result.GetNDArray()
+                            frame_results = image_result.GetNDArray()
                             if record:
                                 # image_bayer_array = image_result.GetNDArray()
                                 # # 
                                 # image_rgb = cv2.cvtColor(image_bayer_array, cv2.COLOR_BAYER_RG2BGR)
-                                avi.Append(image_result)
+                                # avi.Append(image_result)
                                 test_num+=1
+                                self.video_writer.write(frame_results)
                                 # self.video_list.append(frame_results)
                                 # if len(self.video_list) >= 30:
                                 #     self.video_queue.put(self.video_list)
@@ -184,24 +199,26 @@ class multiCam_DLC_Cam(Process):
                         self.camq.get()
                         percentage_dropped = 0
                         if record:
-                            avi.Close()
+                            # avi.Close()
                             f.close()
+                            self.video_writer.release()
                             dropped_frame, total_frames, files_len = identify_dropped_frames(file_path, 
                                                                     int(user_cfg[camStr]['framerate']))
+                            percentage_dropped = int(np.ceil((dropped_frame/total_frames)*100))
                             logger.debug(f"{self.camID}: total: {total_frames}, dropped: {dropped_frame}, len: {files_len}")
                             logger.debug(f"{dropped_frame} of camera frames dropped for {self.camID}")
                             logger.debug(f"{percentage_dropped}% of camera frames dropped for {self.camID}")
                             # self.video_queue.put(self.video_list)
                             # self.video_list = []
-                            # # self.video_queurue.put([])
+                            # self.video_queue.put([])
                             # self.video_thread.cancel()
                             # self.video_thread.join()
                             # video_frames = self.video_queue.get()
-                            # # print("final: ", type(video_frames))
+                            # print("final: ", type(video_frames))
                             # if video_frames != files_len+1:
                             #     self.camq_p2read.put("video")
                             #     warn_str = f"{self.camID}: Mismatch in video frames and timestamp files. Video frames: {video_frames} and Timestamps: {files_len}"
-                            #     # print(warn_str)
+                                # print(warn_str)
                             #     self.camq_p2read.put(warn_str)
                             self.camq_p2read.put(percentage_dropped)
                             record = False
@@ -464,3 +481,7 @@ class multiCam_DLC_Cam(Process):
         cam.TriggerActivation.SetValue(PySpin.TriggerActivation_AnyEdge)
         cam.TriggerMode.SetValue(PySpin.TriggerMode_On)
     
+    def prepare_writers(self):
+        video_file = self.video_file
+        self.video_writer = cv2.VideoWriter(video_file, cv2.VideoWriter_fourcc('m', 'p', '4', 'v'), self.fps, (self.width, self.height))
+      

@@ -8,12 +8,12 @@ SEMANTIC_LIST = ["Animals", "Food and Drinks", "Fruits", "Tools"]
 PHONEMIC_PHRASE = "Phonemic Fluency. Prompt the participant to say as many words beginning with the letter *"
 SEMANTIC_PHRASE = "Semantic Fluency. Prompt the participant to say as many * as they can think of"
 VERBAL_FLUENCY_PATHS = {
-    "CFL": {
+    "C.F.L": {
         "C": "VerbalFluency/VerbalFluency_C_instructions.mp4",
         "F": "VerbalFluency/VerbalFluency_F_CFL_instructions.mp4",
         "L": "VerbalFluency/VerbalFluency_L_instructions.mp4"
         },
-    "FAS": {
+    "F.A.S": {
         "F": "VerbalFluency/VerbalFluency_F_instructions.mp4",
         "A": "VerbalFluency/VerbalFluency_A_instructions.mp4",
         "S": "VerbalFluency/VerbalFluency_S_instructions.mp4"

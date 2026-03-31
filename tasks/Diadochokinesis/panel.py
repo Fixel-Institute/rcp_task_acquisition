@@ -7,9 +7,8 @@ from datetime import datetime
 import logging
 from tasks.Diadochokinesis.constants import (DDK_TRIAL_TIME, DDK_TRIALS, 
                              DDK_PATHS, DDK_TRIALS_PER_SYLLABLE)
-# Get a logger instance (or the root logger)
-logger = logging.getLogger(__name__) # Or logging.getLogger() for the root logger
-logger.setLevel(logging.DEBUG)
+from utils.logger import get_logger
+logger = get_logger("./panel/Diadochokinesis")
 
 
 class DdkPanel(TrialPanel):
@@ -56,7 +55,7 @@ class DdkPanel(TrialPanel):
 
     def add_video_panel(self, static_box_sizer):
         self.syllable_video_title = wx.StaticText(self, label=f"Syllable ({self.syllable}) Instructions:")
-        self.syllable_start_video_button = wx.ToggleButton(self, label="Start Video", size=(self.button_width*2, -1))
+        self.syllable_start_video_button = wx.ToggleButton(self, label="Play Video", size=(self.button_width*2, -1))
         self.syllable_pause_video_button = wx.ToggleButton(self, label="Pause Video", size=(self.button_width*2, -1))
         self.syllable_pause_video_button.Enable(False)
         
@@ -73,7 +72,6 @@ class DdkPanel(TrialPanel):
         if self.trial_number_ < len(self.param_list):
             self.syllable = self.param_list[self.trial_number_]
             self.syllable_text.SetLabel(f"Syllable: {self.syllable}")
-            print(type(self.syllable))
             self.continue_button.SetLabel("Begin Trial")
             self.trials[f"trial_{self.trial_number_}"] = str(self.syllable)
             self.trial_number_+=1
@@ -100,13 +98,12 @@ class DdkPanel(TrialPanel):
         return self.syllable
     
     
-    def get_results(self, count):
+    def get_instruction(self, count):
         if self.syllable_start_video_button.GetValue():
             key_end = "_1" if self.trial_number_%3 == 1 else ""
             value = f"{self.syllable}{key_end}"
         else:
             value = "introduction"
-        print(value)
         return value
     
     

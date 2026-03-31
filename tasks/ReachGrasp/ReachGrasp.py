@@ -1,19 +1,8 @@
-from psychopy import core, sound #, visual
 from tasks import bases
-# from utils.logging import logger
-from  utils.stimulus_utils import thread_event
-import logging
-# Get a logger instance (or the root logger)
-logger = logging.getLogger(__name__) # Or logging.getLogger() for the root logger
-logger.setLevel(logging.DEBUG)
+from utils.logger import get_logger
+logger = get_logger("./tasks/NaturalisticSpeech") 
 
 
-# Parameters
-PARAMS = {
-    "number_of_trials": 0,
-    "hand_used": {},
-    "grasp_object": {}
-    }
 
 
 class ReachGrasp(bases.StimulusBase):
@@ -23,11 +12,16 @@ class ReachGrasp(bases.StimulusBase):
         self.hand = None
         self.grasp_object = None
         self.finish = finish
+        self.hand_dict = {}
+        self.grasp_dict = {}
         
     def present(self):        
         self.trial_count+=1
-        PARAMS["hand_used"][f"trial_{self.trial_count}"] = self.hand
-        PARAMS["grasp_object"][f"trial_{self.trial_count}"] = self.grasp_object
+        self.trial
+        self.hand_dict[f"trial_{self.trial_count}"] = self.hand
+        self.grasp_dict[f"trial_{self.trial_count}"] = self.grasp_object
+        # PARAMS["hand_used"][f"trial_{self.trial_count}"] = self.hand
+        # PARAMS["grasp_object"][f"trial_{self.trial_count}"] = self.grasp_object
         self.play_tone()
         self.display.switch_patch()
         self.display.draw_patch()
@@ -50,7 +44,10 @@ class ReachGrasp(bases.StimulusBase):
                  
         
     def saveMetadata(self, name, sessionFolder):
-        PARAMS["number_of_trials"] = self.trial_count
-        return PARAMS
+        data = {"trial_count": self.trial_count, 
+                "hand_used": self.hand_dict,
+                "grasp_object": self.grasp_dict
+            }        
+        return data
             
             

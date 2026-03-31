@@ -74,9 +74,9 @@ class Camera():
     
     def initialize(self, event):
         self.serial.init_serial()
-        print('before init')
+        # print('before init')
         self.initThreads()
-        print('after init')
+        # print('after init')
         try: 
             self.updateSettings(event)
         except:
@@ -136,8 +136,7 @@ class Camera():
 
     
     def deinitialize(self):
-        if self.serial.serSuccess:
-            self.serial.ser.close()
+        self.serial.close()
         for ndx, im in enumerate(self.im):
             self.frame[ndx] = np.zeros(self.shape, dtype='ubyte')
             im.set_data(self.frame[ndx])
@@ -272,7 +271,7 @@ class Camera():
     def startAq(self):
         if self.serial.serSuccess:
             msg = 'Sx'
-            self.serial.ser.write(msg.encode())
+            self.serial.write(msg)
         if self.camaq.value < 2:
             self.camaq.value = 1
         for cam in self.unconnected:

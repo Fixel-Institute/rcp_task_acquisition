@@ -1,14 +1,9 @@
 # -*- coding: utf-8 -*-
-
 import wx
-# from utils.logging import logger
-from datetime import datetime
-import logging
 from panels.TrialPanel import TrialPanel
 from tasks.UpdrsTap.constants import BASIC_TAPS_PATH
-# Get a logger instance (or the root logger)
-logger = logging.getLogger(__name__) # Or logging.getLogger() for the root logger
-logger.setLevel(logging.DEBUG)
+from utils.logger import get_logger
+logger = get_logger("./panel/UpdrsTap")
 
 
 class FingerTapPanel(TrialPanel):
@@ -22,7 +17,6 @@ class FingerTapPanel(TrialPanel):
         self.instruction_paths = BASIC_TAPS_PATH
         self.start_video_button.Enable(True)
         self.SetSizer(vertical_sizer)
-        print("insruct path", self.instruction_paths)
         
     def _setup_fingertap(self):
         self.trial_text = wx.StaticText(self, label="Trial # 1")
@@ -56,9 +50,6 @@ class FingerTapPanel(TrialPanel):
         self.start_video_button.Enable(False)
         # self.trial_text.SetLabel(f"Trial # {number}")
     
-    
-    # def update_trial(self, number):
-    #     self.trial_text.SetLabel(f"Trial # {number}")
         
     def get_result(self):
         self.tap_hand = "left" if self.left_radio.GetValue() else "right"
@@ -75,7 +66,7 @@ class FingerTapPanel(TrialPanel):
         self.right_radio.Enable(True)
         self.hand_text.Enable(True)
         self.seconds_text.SetLabel(f"Time: {self.seconds} secs")
-        self.continue_button.Enable(False)
+        # self.continue_button.Enable(False)
         self.continue_button.SetValue(False)
         self.continue_button.SetLabel("Begin Trial")
         self.trial_text.SetLabel(f"Trial # {trial+1}")
@@ -89,5 +80,5 @@ class FingerTapPanel(TrialPanel):
         self.seconds-=1
         if self.seconds >= 0:
             self.seconds_text.SetLabel(f"Time: {self.seconds} secs")
-        else:
-            self.continue_button.Enable(True)
+        # else:
+        #     self.continue_button.Enable(True)

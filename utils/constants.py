@@ -9,7 +9,7 @@ from pathlib import Path
 
 BASEDIR = Path(__file__).resolve().parent.parent.parent.parent
 CODE_DIR = os.path.join(BASEDIR, "Documents", "rcp_task_acquisition")
-RAW_DATA_DIR = os.path.join(BASEDIR, "Documents", "RawDataLocal")
+RAW_DATA_DIR = os.path.join( "D:", "RawDataLocal")
 COMPRESSED_VIDEO_DIR = os.path.join(BASEDIR, "Documents", "CompressedData")
 DUMP_FOLDER_PATH =os.path.join(BASEDIR, "Documents", "RawDataLocal", "Dump")
 
@@ -22,11 +22,11 @@ VIDEO_DIR = os.path.join(BASEDIR, "Videos", "task_videos")
 DEFAULTS = ["Microphone 1", "Audio", "TENS"]
 PLOT_CONSTANTS = ["Cameras", "Barcode", "Photodiode"]
 LINE_STYLES = ["-", "-", "-", "-"] #["--", "-", ":", "-."]
-COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#8c564b',  '#9467bd', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#8c564b',  '#9467bd', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf', '#9467bd', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf', '#7f7f7f', '#bcbd22', '#17becf']
 PLOT_LENGTH = 80000
 
 # labjack constants
-SCANS_PER_READ = 400
+SCANS_PER_READ = 20000
 #Hardcoded the hardware and labjack bc its much easier than pulling from somewhere for now
 CAMERA_HEADERS = ["In Use","Name", "Is Primary", "Serial Number"]
 HEADERS = ["In Use", "Hardware", "Labjack Pin", "Voltage Range"]#"Graph Min", "Graph Max"]
@@ -58,8 +58,9 @@ FREQUENCY = 750   # sine frequency, Hz, can be a float
 
 
 
-
-
+# serial constants
+BAUDRATE = 9600
+WRITE_TIMEOUT = 0.1
 
 
 # nBack constants

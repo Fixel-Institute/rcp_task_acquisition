@@ -25,6 +25,8 @@ naturalistic_speech:
   - TENS
   - leftCamA
   - rightCamA
+  - leftCamB
+  - rightCamB
 motor_task_finger_taps:
   settings:
   - Audio

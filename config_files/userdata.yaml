@@ -1,7 +1,7 @@
 isunconnected: false
 cameras:
   leftCamA:
-    serial: '24041797'
+    serial: '25504066'
     ismaster: true
     crop:
     - 40
@@ -16,7 +16,7 @@ cameras:
     gamma: 0.8
     in_use: true
   rightCamA:
-    serial: '24044011'
+    serial: '25504067'
     ismaster: false
     crop:
     - 40
@@ -31,7 +31,7 @@ cameras:
     gamma: 0.8
     in_use: true
   leftCamB:
-    serial: '24043993'
+    serial: '25476392'
     ismaster: false
     crop:
     - 40
@@ -44,9 +44,9 @@ cameras:
     nickname: leftCamB
     gain: 15
     gamma: 0.8
-    in_use: true
+    in_use: false
   rightCamB:
-    serial: '23531686'
+    serial: '25504067'
     ismaster: false
     crop:
     - 40
@@ -59,7 +59,8 @@ cameras:
     nickname: rightCamB
     gain: 15
     gamma: 0.8
-    in_use: true
+    in_use: false
+
 unitRef: unitME
 screen_settings:
   fullScreen: 1

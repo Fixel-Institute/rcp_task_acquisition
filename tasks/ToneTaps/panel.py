@@ -1,28 +1,22 @@
 # -*- coding: utf-8 -*-
-
-# -*- coding: utf-8 -*-
-
 import wx
-# from utils.logging import logger
-from datetime import datetime
-import logging
 from panels.TrialPanel import TrialPanel
-# Get a logger instance (or the root logger)
-logger = logging.getLogger(__name__) # Or logging.getLogger() for the root logger
-logger.setLevel(logging.DEBUG)
+from tasks.ToneTaps.constants import IVRY_TAPS_VIDEO_PATH
+from utils.logger import get_logger
+logger = get_logger("./panel/ToneTaps")
 
 
 class ToneTapsClosedPanel(TrialPanel):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.tap_hand = "Left"
+        self.instruction_paths = IVRY_TAPS_VIDEO_PATH
         vertical_sizer = wx.BoxSizer(wx.VERTICAL)
         vertical_sizer.Add(self._setup_fingertap(), 0, wx.ALIGN_LEFT | wx.ALL, self.border)
+        vertical_sizer.Add(self.setup_instruction_playback(), 0, wx.ALIGN_LEFT | wx.ALL, self.border)
+        self.start_video_button.Enable(True)
         self.SetSizer(vertical_sizer)
         
-        # self.rest_timer = wx.Timer(self)
-        # self.Bind(wx.EVT_TIMER, self.on_timer, self.rest_timer)
-
         
     def _setup_fingertap(self):
         self.trial_text = wx.StaticText(self, label="Trial # 1")
@@ -37,8 +31,6 @@ class ToneTapsClosedPanel(TrialPanel):
         self.seconds_text = wx.StaticText(self, label= "Time: 0 secs")
         
         self.continue_button = wx.ToggleButton(self, label="Begin Trial", size=(self.button_width*2, -1))
-        # self.continue_button.Bind(wx.EVT_TOGGLEBUTTON, self.continue_event)
-    
         grid_sizer = wx.GridBagSizer(5, 4)
         
         grid_sizer.Add(self.trial_text, pos=(0, 0), span=(0,4), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
@@ -69,8 +61,6 @@ class ToneTapsClosedPanel(TrialPanel):
         self.tap_hand = "left" if self.left_radio.GetValue() else "right"
     
     
-
-    
     def reset(self, number):
         self.seconds = 0
         self.trial_is_active = False
@@ -83,8 +73,6 @@ class ToneTapsClosedPanel(TrialPanel):
         self.continue_button.SetValue(False)
         self.continue_button.SetLabel("Begin Trial")
         self.trial_text.SetLabel(f"Trial # {number}")
-    
-    
 
         
     def on_timer(self, event):

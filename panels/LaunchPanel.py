@@ -136,7 +136,7 @@ class LaunchPanel():
         self.metadata["administrator_id"] = self.administrator_id.GetValue() 
         self.metadata["participant_id"] = self.participant_id.GetValue()
         self.metadata["participant_detail"] = self.participant_detail.GetValue()
-        print(self.metadata)
+        
         self.is_hidden = True
         self.dialog.Hide()
 
@@ -189,7 +189,7 @@ class LaunchPanel():
     def hide(self):
         self.hardware_button.SetValue(False)
         self.hardware_button.SetLabel("Update Hardware")
-        print(self.metadata)
+        
         self.dialog.Hide()
     
     def get_task(self):

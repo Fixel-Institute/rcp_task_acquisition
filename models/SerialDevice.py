@@ -1,27 +1,25 @@
 # -*- coding: utf-8 -*-
 import serial
+from utils.constants import BAUDRATE, WRITE_TIMEOUT
 from utils.logger import get_logger
 logger = get_logger("./models/Serial") 
 
-class Serial():
-    def __init__(self):
-        
+class SerialDevice():
+    def __init__(self):        
         self.serSuccess = False
         self.ser = None
-        self.write_timeout = 0.1
-        self.baudrate = 9600
-
+        
+        
     def init_serial(self):
-        self.serSuccess = False
-            
-        for i in range(10):
+        for i in range(2, 10):
             try:
                 # self.ser = serial.Serial('/dev/ttyACM'+str(i), 
                 #                          baudrate=self.baudrate, 
                 #                          write_timeout = self.write_timeout)
+                
                 self.ser = serial.Serial('COM'+str(i),
-                                         baudrate=self.baudrate, 
-                                         write_timeout = self.write_timeout)
+                                         baudrate=BAUDRATE, 
+                                         write_timeout = WRITE_TIMEOUT)
                 self.serSuccess = True
                 logger.info('Serial connected')
                 break
@@ -31,4 +29,12 @@ class Serial():
                 break
         if not self.serSuccess:
             logger.info('Serial connection failed')
-            
+        
+        
+    def write(self, serial_str):
+        self.ser.write(serial_str.encode())
+        
+    def close(self):
+        if self.serSuccess:
+            self.ser.close()
+            self.serSuccess = False

@@ -137,7 +137,7 @@ class LabjackFrontend():
             self.labjack_timer.Start(200)
             return True
         else:
-            Warning("labjack").display()
+            # Warning("labjack").display()
             labjack_button = self.graph_panel.get_graph_button()
             labjack_button.SetValue(False)
             return False
@@ -219,15 +219,15 @@ class LabjackFrontend():
                 self.graph_panel.draw()
                 
         
-    def add_csv(self, labjack_file, ser_success, ser, msg):
+    def add_csv(self, labjack_file, serial, msg):
         self.labjack_csv = labjack_file
         self.labjack_queue.put(labjack_file)
         self.labjack_is_csv.value = True
         
         self.serial_state = 0
         self.serial_bool = True
-        self.ser_success = ser_success
-        self.ser = ser
+        self.ser_success = serial.serSuccess
+        self.ser = serial.ser
         self.msg = msg
         
         

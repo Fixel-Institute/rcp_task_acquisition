@@ -29,7 +29,6 @@ class SwitchPanel():
         # self.launch_panel.compress_button.Enable(False)
         
     def switch_panel(self, event):
-        print("in switch panel")
         if not self.launch_showing:
             self.launch_panel.panel.Enable()
             self.launch_panel.protocol_button.SetLabel("Select Protocol")
@@ -47,15 +46,12 @@ class SwitchPanel():
         self.launch_showing = not self.launch_showing
 
     def disable_panel(self, event):
-        print("in disable")
         if not self.launch_showing:
             self.task_frame.quit.SetLabel("Loading...")
             self.task_frame.Disable()
         else:
-            print("in else")
             self.launch_panel.protocol_button.SetLabel("Loading...")
             # self.launch_panel.panel.Disable()
-            print("after launch panel")
         self.disable_timer.StartOnce(80)
         
         
