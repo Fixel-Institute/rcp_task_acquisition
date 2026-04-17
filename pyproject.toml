@@ -1,10 +1,21 @@
 [build-system]
-requires = ["setuptools>=61.0", "setuptools-scm>=6"]
+requires = ["setuptools>=61.0",
+		 "setuptools-scm>= 9.2.2, < 10"]
 build-backend = "setuptools.build_meta"
+
 
 [project]
 name = "rcp-task-acquisition"
-dynamic = ["version"]
+dynamic = ["version", "dependencies"]
 readme = "README.md"
+requires-python = ">=3.10, <3.11"
+
+
+[tool.setuptools]
+py-modules = ["task_files"]
+
+
+[project.scripts]
+run_tasks = "__main__:run_app"
 
 [tool.setuptools_scm]
