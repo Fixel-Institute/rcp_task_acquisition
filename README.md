@@ -52,7 +52,7 @@ This is the outline for installing this program with the expected hardware confi
     - `cd Desktop`
     - `conda create -n rcp_task_acquisition python=3.10`
     - `conda activate rcp_task_acquisition` - Note: This line will always need to be ran when running system in future
-    - `git clone https://github.com/mhelsel/rcp_task_acquisition.git`
+    - `git clone https://github.com/mmt-rcp/rcp_task_acquisition.git`
     - `cd rcp_task_acquisition`
     - `pip install .`
 3. Once installed, run with `python -m rcp_task_acquisition`
