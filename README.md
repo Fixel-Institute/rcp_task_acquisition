@@ -22,7 +22,7 @@ This is the outline for installing this program with the expected hardware confi
 
 ### Installing Programs
 1. Plug in USB flash drive
-2. When pop up with **Centon USB** shows up, select *Open device to view files. (If this pop up does not show up, you can also find in **File Explorer**)
+2. When pop up with **Centon USB** shows up, select *Open device to view files. (If this pop up does not show up, you can also find in **File Explorer**). All apps other than Visual Studio will be installed from the versions on this USB.
 3. Extract videos
     - Right-click **task_videos.zip**
     - Select **Extract All**
