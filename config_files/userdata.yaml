@@ -1,7 +1,7 @@
 isunconnected: false
 cameras:
   leftCamA:
-    serial: '24041797'
+    serial:
     ismaster: true
     crop:
     - 40
@@ -16,7 +16,7 @@ cameras:
     gamma: 0.8
     in_use: true
   rightCamA:
-    serial: '24044011'
+    serial: 
     ismaster: false
     crop:
     - 40
@@ -31,7 +31,7 @@ cameras:
     gamma: 0.8
     in_use: true
   leftCamB:
-    serial: '25504066'
+    serial:
     ismaster: false
     crop:
     - 40
@@ -46,7 +46,7 @@ cameras:
     gamma: 0.8
     in_use: true
   rightCamB:
-    serial: '23531686'
+    serial: 
     ismaster: false
     crop:
     - 40
@@ -61,7 +61,7 @@ cameras:
     gamma: 0.8
     in_use: true
   leftCamC:
-    serial: '25502269'
+    serial:
     ismaster: false
     crop:
     - 40
@@ -76,7 +76,7 @@ cameras:
     gamma: 0.8
     in_use: true
   rightCamC:
-    serial: '25502268'
+    serial: 
     ismaster: false
     crop:
     - 40
@@ -91,7 +91,7 @@ cameras:
     gamma: 0.8
     in_use: true
   leftCamD:
-    serial: '25502266'
+    serial: 
     ismaster: false
     crop:
     - 40
@@ -106,7 +106,7 @@ cameras:
     gamma: 0.8
     in_use: true
   rightCamD:
-    serial: '25502267'
+    serial:
     ismaster: false
     crop:
     - 40

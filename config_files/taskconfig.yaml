@@ -11,8 +11,6 @@ n_back:
   - TENS-out
   - leftCamA
   - rightCamA
-  - leftCamB
-  - rightCamB
 naturalistic_speech:
   settings:
   - Audio
@@ -21,16 +19,11 @@ naturalistic_speech:
   - Photodiode
   - Microphone 1
   - Microphone 2
-  - Force Sensor X
-  - Force Sensor Y
-  - Force Sensor Z
   - Barcode
   - TENS
   - TENS-out
   - leftCamA
   - rightCamA
-  - leftCamB
-  - rightCamB
 motor_task_finger_taps:
   settings:
   - Audio
