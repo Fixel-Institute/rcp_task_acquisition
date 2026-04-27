@@ -7,7 +7,8 @@ from multiprocessing import Process, Value
 from rcp_task_acquisition.models.Warnings import Warning
 from rcp_task_acquisition.utils.file_utils import read_config, write_config
 from rcp_task_acquisition.utils.constants import (CAMERA_HEADERS, HEADERS, HARDWARE_LIST,
-                            LABJACK_PIN_LIST, ANALOG_RANGES)
+                            LABJACK_PIN_LIST, ANALOG_RANGES,
+                            DELSYS_HEADERS, DELSYS_SENSOR_POSITION_LIST, DELSYS_SENSOR_HEMISPHERE_LIST)
 from rcp_task_acquisition.utils.logger import get_logger
 logger = get_logger("./panels/HardwarePanel") 
 
@@ -32,7 +33,16 @@ class CameraRow:
     serial: wx.Choice
     in_use_all: bool = False
     in_use_protocol: bool = False
-    
+
+@dataclass
+class TrignoRow:
+    name: wx.StaticText
+    in_use: wx.CheckBox
+    hemisphere: wx.Choice
+    position: wx.Choice
+    pair: wx.Button
+    in_use_all: bool = False
+    in_use_protocol: bool = False
 
 class CamProcess(Process):
     '''
@@ -69,13 +79,14 @@ class HardwarePanel(wx.Panel):
     The initial panel where the user can select the hardware and task to run
     
     '''
-    def __init__(self, task_config, parent=None):
+    def __init__(self, task_config, delsys=None,  parent=None):
         self.args = None
         self.row_list = HARDWARE_LIST
         self.protocol = None
         self.camera_indices = []
         self.hardware_list= []
         self.camera_list = []
+        self.trigno_list = []
         self.cam_serial_numbers = []
         self.labjack_selction = LABJACK_PIN_LIST
         self.serial_selections = []
@@ -83,6 +94,11 @@ class HardwarePanel(wx.Panel):
         self.user_config = read_config("userdata.yaml")
         self.task_config = task_config
         self.task = None
+
+        self.delsys = delsys
+        self.delsys.update_sensors_config_ui = self.update_delsys_config_ui
+        self.delsys_refresh_button = None
+
         self.border = 10
         self.task_list = list(self.task_config.keys())
         self.cam_list = [Value(ctypes.c_int, -1), Value(ctypes.c_int, -1), Value(ctypes.c_int, -1),  Value(ctypes.c_int, -1),  Value(ctypes.c_int, -1),  Value(ctypes.c_int, -1),  Value(ctypes.c_int, -1),  Value(ctypes.c_int, -1)]
@@ -96,12 +112,12 @@ class HardwarePanel(wx.Panel):
         # self.SetBackgroundColour(wx.Colour(54, 54, 54))
         # self.SetForegroundColour(wx.Colour(250,250,250))
         vertical_sizer = wx.BoxSizer(wx.VERTICAL)
+        vertical_sizer.Add(self._setup_delsys(), 0, wx.EXPAND | wx.ALL, 10 )
         vertical_sizer.Add(self._setup_protocol(), 0, wx.EXPAND | wx.ALL, 10)
         vertical_sizer.Add(self._setup_camera_panel(), 0, wx.EXPAND | wx.ALL, 10)
         vertical_sizer.Add(self._setup_labjack(), 0, wx.EXPAND | wx.ALL, 10 )
         self.SetSizerAndFit(vertical_sizer)
 
-        
     def _setup_protocol(self):
         self.save_button = wx.Button(self, label="Save Hardware Settings")
         self.save_button.Bind(wx.EVT_BUTTON, self.save_event)
@@ -118,7 +134,6 @@ class HardwarePanel(wx.Panel):
         grid_sizer.Add(self.protocol_radio, pos=(0,2), span=(0,2), flag=wx.ALIGN_CENTER | wx.ALL, border=self.border)
         grid_sizer.Add(self.save_button, pos=(0,4), span=(0,2), flag=wx.ALIGN_CENTER | wx.ALL, border=self.border)
         return grid_sizer
-            
 
     def _setup_labjack(self):
         hardware_config = self.user_config["hardware"]
@@ -224,8 +239,105 @@ class HardwarePanel(wx.Panel):
         hardware_sizer.Add(labjack_sizer, 1, wx.EXPAND | wx.ALL, 15)
         return hardware_sizer
 
+    def update_delsys_config_ui(self, status):
+        if "IsConnected" in status.keys() and status["IsConnected"]:
+            for i in range(len(self.trigno_list)):
+                self.trigno_list[i].pair.Enable(True)
+            self.delsys_refresh_button.Enable(True)
 
-    def _setup_camera_panel(self):   
+        if "Sensors" in status.keys():
+            for i in range(len(self.trigno_list)):
+                self.trigno_list[i].in_use.SetValue(False)
+                self.trigno_list[i].name.Enable(False)
+                self.trigno_list[i].hemisphere.Enable(False)
+                self.trigno_list[i].position.Enable(False)
+
+            for i in range(len(status["Sensors"])):
+                sensor_id = status["Sensors"][i]["Id"]-1
+                self.trigno_list[sensor_id].in_use.SetValue(True)
+                self.trigno_list[sensor_id].name.Enable(True)
+                self.trigno_list[sensor_id].hemisphere.Enable(True)
+                self.trigno_list[sensor_id].position.Enable(True)
+
+    def _setup_delsys(self):
+        hardware_config = self.user_config["hardware"]
+        user_input_list = []
+        user_input_count = 0
+        vertical_pos = 0
+        horizontal_pos = 0
+
+        delsys_sizer = wx.GridBagSizer(len(DELSYS_HEADERS), 18)
+        connect_button = wx.Button(self, label="Connect Delsys")
+        connect_button.Bind(wx.EVT_BUTTON, lambda event: self.delsys.connect())
+
+        self.delsys_refresh_button = wx.Button(self, label="Refresh Sensor Status")
+        self.delsys_refresh_button.Bind(wx.EVT_BUTTON, lambda event: self.delsys.refresh())
+        self.delsys_refresh_button.Enable(False)
+
+        start_button = wx.Button(self, label="Start Delsys Stream")
+        start_button.Bind(wx.EVT_BUTTON, lambda event: self.delsys.start())
+        stop_button = wx.Button(self, label="Stop Delsys Stream")
+        stop_button.Bind(wx.EVT_BUTTON, lambda event: self.delsys.stop())
+
+        delsys_sizer.Add(connect_button, pos=(vertical_pos, 0), span=(0, 1), flag=wx.ALIGN_CENTER | wx.ALL,
+                         border=self.border)
+        delsys_sizer.Add(self.delsys_refresh_button, pos=(vertical_pos, 2), span=(0, 1), flag=wx.ALIGN_CENTER | wx.ALL,
+                         border=self.border)
+        delsys_sizer.Add(start_button, pos=(vertical_pos, 3), span=(0, 1), flag=wx.ALIGN_CENTER | wx.ALL,
+                         border=self.border)
+        delsys_sizer.Add(stop_button, pos=(vertical_pos, 4), span=(0, 1), flag=wx.ALIGN_CENTER | wx.ALL,
+                         border=self.border)
+        vertical_pos += 1
+
+        for header in DELSYS_HEADERS:
+            new_header = wx.StaticText(self, label=header)
+            delsys_sizer.Add(new_header, pos=(vertical_pos, horizontal_pos), span=(0, 1), flag=wx.ALL,
+                              border=self.border)
+            horizontal_pos += 1
+        vertical_pos += 1
+
+        for i in range(16):
+            in_use = wx.CheckBox(self, id=wx.ID_ANY)
+            in_use.Bind(wx.EVT_CHECKBOX, self.update_delsys_sensor)
+
+            name = wx.StaticText(self, label=f"Delsys Sensor #{i + 1}")
+            name.Enable(False)
+
+            hemisphere = wx.Choice(self, id=wx.ID_ANY, choices=DELSYS_SENSOR_HEMISPHERE_LIST)
+            #hemisphere.Bind(wx.EVT_CHOICE, self._on_choice_labjack)
+            hemisphere.Enable(False)
+
+            position = wx.Choice(self, id=wx.ID_ANY, choices=DELSYS_SENSOR_POSITION_LIST)
+            #hemisphere.Bind(wx.EVT_CHOICE, self._on_choice_labjack)
+            position.Enable(False)
+
+            pairBtn = wx.Button(self, label="Pair")
+            pairBtn.Enable(False)
+
+            delsys_sizer.Add(in_use, pos=(vertical_pos, 0), span=(0, 1), flag=wx.ALIGN_CENTER | wx.ALL,
+                              border=self.border)
+            delsys_sizer.Add(name, pos=(vertical_pos, 1), span=(0, 1), flag=wx.ALIGN_CENTER_VERTICAL | wx.ALL,
+                              border=self.border)
+            delsys_sizer.Add(hemisphere, pos=(vertical_pos, 2), span=(0, 1), flag=wx.ALIGN_CENTER | wx.ALL,
+                              border=self.border)
+            delsys_sizer.Add(position, pos=(vertical_pos, 3), span=(0, 1), flag=wx.ALIGN_CENTER | wx.ALL,
+                              border=self.border)
+            delsys_sizer.Add(pairBtn, pos=(vertical_pos, 4), span=(0, 1), flag=wx.ALIGN_CENTER | wx.ALL,
+                             border=self.border)
+
+            vertical_pos += 1
+
+            new_sensor = TrignoRow(name, in_use, hemisphere, position, pair=pairBtn)
+
+            self.trigno_list.append(new_sensor)
+        #self._update_lists(self.hardware_list)
+
+        delsys_box = wx.StaticBox(self, label="Delsys Setup")
+        hardware_sizer = wx.StaticBoxSizer(delsys_box, wx.HORIZONTAL)
+        hardware_sizer.Add(delsys_sizer, 1, wx.EXPAND | wx.ALL, 15)
+        return hardware_sizer
+
+    def _setup_camera_panel(self):
         first_cam = True
         camera = CamProcess(self.cam_list)
         camera.start()
@@ -242,12 +354,10 @@ class HardwarePanel(wx.Panel):
             horizontal_pos+=1
         vertical_pos+=1
        
-        for key in cam_config: 
-            
+        for key in cam_config:
             in_use = wx.CheckBox(self, id=wx.ID_ANY)
-           
             in_use.Bind(wx.EVT_CHECKBOX, self.update_options)
-            
+
             name = wx.StaticText(self, label=cam_config[key]["nickname"])
             name.Enable(False)
             
@@ -287,7 +397,6 @@ class HardwarePanel(wx.Panel):
         
         # self._update_lists(self.camera_list, is_labjack=False)
         return camera_sizer
-           
 
     def hardware_radio_pressed(self, event):
         #update to show active hardware
@@ -333,7 +442,12 @@ class HardwarePanel(wx.Panel):
         self.update_task()
         self._update_lists(self.hardware_list)
         self._update_lists(self.camera_list, is_labjack=False)
-                
+
+    def update_delsys_sensor(self, event):
+        for sensor in self.trigno_list:
+            if sensor.in_use.GetValue():
+                sensor.hemisphere.Enable(True)
+                sensor.position.Enable(True)
     
     def update_options(self, event):
         for hardware in self.hardware_list:
@@ -496,7 +610,9 @@ class HardwarePanel(wx.Panel):
         
     def _on_choice_cameras(self, event):
         self._update_lists(self.camera_list, is_labjack=False)
-    
+
+    def _update_delsys(self, item_list):
+        pass
     
     def _update_lists(self, item_list, is_labjack=True):
         selected_list = []

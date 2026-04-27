@@ -27,6 +27,7 @@ from rcp_task_acquisition.panels.ControlsPanel import ControlsPanel
 from rcp_task_acquisition.panels.ImagePanel import ImagePanel
 from rcp_task_acquisition.models.SerialDevice import SerialDevice
 from rcp_task_acquisition.models.CameraFrontend import Camera
+from rcp_task_acquisition.models.DelsysProcess import DelsysController
 from rcp_task_acquisition.utils.task_acquisistion_version import __version__
 from rcp_task_acquisition.utils.logger import get_logger
 logger = get_logger("./panels/MainFrame") 
@@ -34,7 +35,7 @@ logger = get_logger("./panels/MainFrame")
 
 class MainFrame(wx.Frame):
     """Contains the main GUI and button boxes"""
-    def __init__(self, parent=None):
+    def __init__(self, delsys=None, parent=None):
         self.task_cfg = None
         self.task = None
         self.cam_cfg = {}
@@ -127,7 +128,10 @@ class MainFrame(wx.Frame):
         
         self.Bind(wx.EVT_TIMER, self.lj.labjack_event, self.labjack_timer)
         self.labjack_stream_button.Bind(wx.EVT_TOGGLEBUTTON, self.disable_gui)
-        
+
+        # Delsys setup
+        self.delsys = delsys
+
         #set up cam things
         self.figure,self.axes,self.canvas = self.image_panel.getfigure()
         self.x1 = 0
@@ -230,6 +234,11 @@ class MainFrame(wx.Frame):
                 self.trial_panel.update_trial(trial, syllable)
             self.trial_panel.start_new_trial()
             self.trial_panel.show()
+
+            # Start Delsys
+            if self.delsys:
+                self.delsys.start(filename=os.path.join(self.sess_dir, f"{self.date_string}_{self.user_cfg['unitRef']}_{self.sess_string}_delsys.mdat"))
+
         else:
             self.task_active = False
             self.serial_device.write("A")
@@ -258,6 +267,8 @@ class MainFrame(wx.Frame):
             self.labjack_timer.Start(200)
             # self.trial_panel.start_new_trial()
 
+            if self.delsys:
+                self.delsys.stop()
     
     def trial_event(self, event):
         if self.trial_button.GetValue():
