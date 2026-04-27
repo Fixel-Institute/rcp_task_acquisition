@@ -1,10 +1,38 @@
 # RCP Task Acquisition
 
 * [Overview](#overview)
+* [Updates and Changes to Original Python Scripts](#Updates-and-Changes-to-Original-Python-Scripts)
 * [Installation instructions](#installation)
 
 ## Overview
 Code for the RCP task cart. More information to come...
+
+## Updates and Changes to Original Python Scripts:
+
+### Delsys Acquisition Script
+- Delsys is now added. The Delsys sensor configurations require prior-connection, so the Delsys system must be connected in the Hardware Panel prior to running.
+- Should we automate the whole process?... The issue is that sensors must be connected before we scan for sensors, otherwise the sensors are not registered by the base. The whole process is somewhat manual.
+
+### Camera Packet Loss
+- Camera Packet Loss is present in my computer even with only 1 Camera. 
+- This is due to the fact that they try to add video writer in the same thread as the camera acquisition. 
+- To fix this, we should use a thread-safe Producer-Consumer model where the camera acquisition is in one thread and the video writing is in another thread.
+
+### Control Panel Buttons
+- The control panels are all button-based, the best case scenario should be keyboard based so it is easier to start/stop/trigger
+
+### Zombie Threads
+- When the script crashed, the threading process is still processing despite the fact that Main thread has exited. 
+- By default, Python threads are non-daemon threads. When your script "crashes" or reaches the end of its execution, the Python interpreter will not actually shut down as long as there is at least one non-daemon thread still running.
+- To ensure that the program can exit cleanly, we can set the threads to be daemon threads. This way, when the main thread exits, all daemon threads will be automatically killed.
+
+### General Feedbacks
+- Currently, the LJ does not save configuration on the recording. This means that if the user changes the configuration, it will not be saved in the recording to notify user that a session is recorded with different sampling rate.
+- The recording timestamp is date and session based, making timestamp difficult to track. We should at least save the timestamp somewhere. 
+- The data are saved in text file which is significantly larger than binary files. We should save in binary format. 
+- We need clarification on the Camera timestamps. 
+- LJ is currently continuously recording even without task running.
+- The Arduino Serial is honestly not necessary. I would like to remove this and just use the LJ for all digital I/O. This will simplify the system and reduce the number of potential points of failure.
 
 ## Installation
 This is the outline for installing this program with the expected hardware configurations. There may be unexpected errors in the system if your hardware is different.

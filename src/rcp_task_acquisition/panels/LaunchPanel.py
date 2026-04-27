@@ -26,7 +26,7 @@ class LaunchPanel():
         participant_detail (wx.TextCtrl):
             text box for any overarching participant notes. final string will be added to the metadata
     '''
-    def __init__(self, parent=None):
+    def __init__(self, delsys=None, parent=None):
         self.args = None
         self.task = None
         self.is_hidden = False
@@ -38,12 +38,14 @@ class LaunchPanel():
                          "administrator_id": None,
                          "participant_id": None,
                          "participant_detail": None}
+
+        # Load Delsys Controller
+        self.delsys = delsys
+
         # Basic panel set up. 3 different steps (Protocol, metadata and buttons) to help with 
         # organization and padding between sections
-        
-        
         self.regular_size = wx.Size(650, 400)
-        self.hardware_size = wx.Size(650,800)
+        self.hardware_size = wx.Size(800, 800)
         button_width = wx.Size(200, -1)
         
         self.dialog = wx.Dialog(parent, id= wx.ID_ANY, title= 'Select Protocol',
@@ -51,7 +53,7 @@ class LaunchPanel():
         
         self.panel = scrolled.ScrolledPanel(self.dialog, -1,style=wx.SUNKEN_BORDER)
         self.panel.SetupScrolling(scroll_x=False, scroll_y=False, scrollToTop=False, scrollIntoView=False)
-        self.hardware_panel = HardwarePanel(task_config, self.panel)
+        self.hardware_panel = HardwarePanel(task_config, self.delsys, self.panel)
         self.hardware_panel.Hide()
         vertical_sizer = wx.BoxSizer(wx.VERTICAL)
         vertical_sizer.Add(self._setup_protocol(button_width), 0, wx.ALIGN_CENTER_HORIZONTAL | wx.TOP | wx.BOTTOM, 10)
