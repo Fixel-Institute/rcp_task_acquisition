@@ -103,6 +103,7 @@ cameras:
 
 unitRef: unitME
 RawDataDir: C:\Users\Public\Documents\RawDataLocal
+VideoDir: C:\Users\Public\Videos\task_videos
 
 screen_settings:
   fullScreen: 1

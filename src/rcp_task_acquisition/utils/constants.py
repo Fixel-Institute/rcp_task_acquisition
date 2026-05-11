@@ -17,11 +17,10 @@ with open(config_path, 'r') as config_file:
 
 
 RAW_DATA_DIR = Path(config["RawDataDir"])
-
+VIDEO_DIR = Path(config["VideoDir"])
 
 STIM_CONFIG_FILE_NAME = 'visualStimulusConfig.yaml'
 SCREEN_CONFIG_FILE_NAME = "screen_config.yaml"
-VIDEO_DIR = Path(r'C:\Users\Public\Videos\task_videos')
 
 DEFAULTS = ["Microphone 1", "Audio", "TENS"]
 PLOT_CONSTANTS = ["Cameras", "Barcode", "Photodiode"]

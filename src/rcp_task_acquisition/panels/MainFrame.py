@@ -264,9 +264,7 @@ class MainFrame(wx.Frame):
         if self.trial_button.GetValue():
             time.sleep(1)
             self.count += 1
-            print("status", self.video_status.value)
             if self.video_status.value != 0:
-                print("VIDEO IS ACTIVE")
                 self.video_status.value = 4
                 self.trial_panel.stop_video()
             else:
@@ -359,6 +357,14 @@ class MainFrame(wx.Frame):
             self.video_status.value = 0
             logger.debug("called stop_video")
             self.rest_timer.Stop()
+        elif self.video_status.value == 6:
+            
+            self.trial_panel.stop_video()
+            self.video_status.value = 0
+            self.warning.update_error("video")
+            self.warning.display()
+            
+            
         elif (self.finish.value == 1 and 
         (self.task != "naturalistic_speech" and self.task != "vowel_space")):
             logger.debug("in intertrial")
@@ -379,8 +385,8 @@ class MainFrame(wx.Frame):
                 result = self.trial_panel.get_instruction(self.count)
             self.msgq.put("play_instructions")
             self.msgq.put(result)
-            self.trial_panel.start_video()
             self.video_status.value = 1
+            self.trial_panel.start_video()
             self.rest_timer.Start(1000)
         else:
             self.video_status.value = 4
