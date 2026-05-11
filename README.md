@@ -11,7 +11,12 @@ This is the outline for installing this program with the expected hardware confi
 
 ### Installing Windows
 1. Install Windows 11 per University standards. It will be helpful to have some level of admin acess to install programs.
-2. Adjust settings (Optional but recommended)
+2. Adjust settings
+    - Set Main Display:
+        1. Go to **Settings -> System -> Display**
+        2. Select the smaller screen
+        3. Select the drop down for **Multiple displays**
+        4. Check the box that says **Make this my main display**
     - Silence Notifications:
         1. Go to **Settings -> System -> Notifications**
         2. Turn Notifications **Off**
@@ -26,7 +31,7 @@ This is the outline for installing this program with the expected hardware confi
 3. Extract videos
     - Right-click **task_videos.zip**
     - Select **Extract All**
-    - Choose **Videos** folder to extract to
+    - Choose **C:\Users\Public\Videos** (the Public Videos folder) to extract to.
 4. Install other apps:
     - Notes:
         - When asked if you want app to make changes to the computer, always select **Yes**

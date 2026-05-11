@@ -51,16 +51,25 @@ class MainFrame(wx.Frame):
         self.cam_crop = Crop()
         #setting up screen for stimulus thread
         self.user_cfg = file_utils.read_config('userdata.yaml')
-        screen_settings = self.user_cfg["screen_settings"]
+        # screen_settings = self.user_cfg["screen_settings"]
         
         # Settting the GUI size and panels design
         displays = (wx.Display(i) for i in range(wx.Display.GetCount())) # Gets the number of displays
         screenSizes = [display.GetGeometry().GetSize() for display in displays] # Gets the size of each display
         logger.debug(f"screenSizes: {screenSizes}")
-        index = 0 # For display 1.
+        # index = 1 # For display 1.
+        if len(screenSizes) != 2:
+            self.warning.update_error("display")
+            self.warning.display()
+            sys.exit()
+        index = 0
+        psychopy_monitor = 1
+        if screenSizes[0][0] > screenSizes[1][0]:
+            logger.debug("Fist monitor is patient monitor")
+            index = 1
+            psychopy_monitor = 0
         screenW = screenSizes[index][0]
         screenH = screenSizes[index][1]
-        
         self.gui_size = (int(screenW*0.9), int(screenW*0.45))
         # self.gui_size = (screenW-90, screenH-55)
         wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = 'Task Master Aquisition',
@@ -150,10 +159,8 @@ class MainFrame(wx.Frame):
         self.warning = Warning()
         #check the display is correct
         #check the correct monitors are displayed
-        if wx.Display.GetCount() < 2:
-            self.warning.update_error("display")
-            self.warning.display()
-            sys.exit()
+        # if wx.Display.GetCount() < 2:
+            
 
         self.camera_toggle.Bind(wx.EVT_BUTTON, self.cams.update_cameras_viewed)
         #set up stimulus thread
@@ -175,7 +182,7 @@ class MainFrame(wx.Frame):
                                      self.finish, 
                                      self.shared, 
                                      self.frmaq,  
-                                     screen_settings, 
+                                     psychopy_monitor, #screen_settings, 
                                      self.task, 
                                      self.button_pressed,
                                      self.press_count,
@@ -263,8 +270,12 @@ class MainFrame(wx.Frame):
     def trial_event(self, event):
         if self.trial_button.GetValue():
             time.sleep(1)
-            self.count +=1
-            self.rest_timer.Start(1000)
+            self.count += 1
+            if self.video_status.value != 0:
+                self.video_status.value = 4
+                self.trial_panel.stop_video()
+            else:
+                self.rest_timer.Start(1000)
             self.finish.value = 0
             try:
                 self.msgq.put("update_data")
@@ -323,6 +334,7 @@ class MainFrame(wx.Frame):
             self.trial_panel.end_trial()
             self.liveTimer.Stop()
     
+    
     def next_trial(self, event):  
         logger.debug("UPDATING DATA")
         self.msgq.put("update_data")
@@ -346,9 +358,20 @@ class MainFrame(wx.Frame):
         
 
     def update_intertrial(self, event):
+        logger.debug(f"video_status: {self.video_status.value}")
         if self.video_status.value == 5:
             self.trial_panel.stop_video()
             self.video_status.value = 0
+            logger.debug("called stop_video")
+            self.rest_timer.Stop()
+        elif self.video_status.value == 6:
+            
+            self.trial_panel.stop_video()
+            self.video_status.value = 0
+            self.warning.update_error("video")
+            self.warning.display()
+            
+            
         elif (self.finish.value == 1 and 
         (self.task != "naturalistic_speech" and self.task != "vowel_space")):
             logger.debug("in intertrial")
@@ -369,11 +392,13 @@ class MainFrame(wx.Frame):
                 result = self.trial_panel.get_instruction(self.count)
             self.msgq.put("play_instructions")
             self.msgq.put(result)
-            self.trial_panel.start_video()
             self.video_status.value = 1
+            self.trial_panel.start_video()
+            self.rest_timer.Start(1000)
         else:
             self.video_status.value = 4
             self.trial_panel.stop_video()
+            self.rest_timer.Stop()
         
         
     def pause_instructions(self, event):
@@ -570,7 +595,7 @@ class MainFrame(wx.Frame):
             self.meta['unitRef']=self.user_cfg['unitRef']
             self.meta['Collection']='info'
             self.meta['hardware'] = self.user_cfg['hardware']
-            self.meta['screen_settings'] = self.user_cfg['screen_settings']
+            # self.meta['screen_settings'] = self.user_cfg['screen_settings']
             meta_name = '%s_%s_%s_metadata.yaml' % (date_string, self.user_cfg['unitRef'], self.sess_string)
             self.metapath = os.path.join(self.sess_dir,meta_name)
     

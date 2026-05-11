@@ -24,7 +24,7 @@ class Window(Window):
         color=-1,
         fullScreen=False, #-900
         patchCoords=(-1280, 720, 50),
-        textureShape=(16, 16)
+        textureShape=(16, 16),
         ):
         """
         """
@@ -49,7 +49,8 @@ class Window(Window):
             # checkTiming=False,
             fullscr=fullScreen,
             waitBlanking=True,
-            winType="pyglet"
+            winType="pyglet",
+            infoMsg=""
         )
         self._state = False
         self._patchCoords = patchCoords

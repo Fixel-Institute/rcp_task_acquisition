@@ -34,77 +34,79 @@ cameras:
     gig_e: false
     flip: false
     in_use: true
-
-    leftCamFace:
-      serial:
-      ismaster: true
-      crop:
-      - 40
-      - 640
-      - 30
-      - 480
-      exposure: 1000
-      bin: 2
-      gain: 15
-      gamma: 0.8
-      gig_e: false
-      flip: false
-      in_use: true
-    rightCamFace:
-      serial:
-      ismaster: false
-      crop:
-      - 40
-      - 640
-      - 30
-      - 480
-      exposure: 1000
-      bin: 2
-      gain: 15
-      gamma: 0.8
-      gig_e: true
-      flip: false
-      in_use: true
-
-    leftCamTripod:
-      serial:
-      ismaster: true
-      crop:
-      - 40
-      - 640
-      - 30
-      - 480
-      exposure: 1000
-      bin: 2
-      gain: 15
-      gamma: 0.8
-      gig_e: false
-      flip: false
-      in_use: true
-    rightCamTripod:
-      serial:
-      ismaster: false
-      crop:
-      - 40
-      - 640
-      - 30
-      - 480
-      exposure: 1000
-      bin: 2
-      gain: 15
-      gamma: 0.8
-      gig_e: true
-      flip: false
-      in_use: true
+    framerate: 240
+  leftCamFace:
+    serial: '23531686'
+    ismaster: false
+    crop:
+    - 40
+    - 640
+    - 30
+    - 480
+    exposure: 1000
+    bin: 2
+    gain: 15
+    gamma: 0.8
+    gig_e: false
+    flip: false
+    in_use: true
+    framerate: 240
+  rightCamFace:
+    serial: '25504066'
+    ismaster: false
+    crop:
+    - 40
+    - 640
+    - 30
+    - 480
+    exposure: 1000
+    bin: 2
+    gain: 15
+    gamma: 0.8
+    gig_e: false
+    flip: false
+    in_use: true
 
     framerate: 240
+  leftCamTripod:
+    serial:
+    ismaster: false
+    crop:
+    - 40
+    - 640
+    - 30
+    - 480
+    exposure: 1000
+    bin: 2
+    gain: 15
+    gamma: 0.8
+    gig_e: false
+    flip: false
+    in_use: false
+  rightCamTripod:
+    serial:
+    ismaster: false
+    crop:
+    - 40
+    - 640
+    - 30
+    - 480
+    exposure: 1000
+    bin: 2
+    gain: 15
+    gamma: 0.8
+    gig_e: true
+    flip: false
+    in_use: false
+    framerate: 240
+
+
 unitRef: unitME
 RawDataDir: C:\Users\Public\Documents\RawDataLocal
+VideoDir: C:\Users\Public\Videos\task_videos
 
-screen_settings:
-  fullScreen: 1
-  screenNumber: 1
-  vflipMovies: 1
+
+  
 hardware:
   Audio:
     labjack_input: AIN1

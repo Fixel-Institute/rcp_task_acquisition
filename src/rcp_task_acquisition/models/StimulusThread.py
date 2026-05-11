@@ -51,8 +51,8 @@ class StimulusThread(Process):
         
     def run(self):
         self.window = Window(
-                    screen=self.screenConfig['screenNumber'],
-                    fullScreen=self.screenConfig['fullScreen']
+                    screen=self.screenConfig,
+                    fullScreen=True
                     )
 
         while self.alive:

@@ -156,7 +156,9 @@ class StimulusBase():
             file = self.instructions_dict[trial_name]
         path =  os.path.join(VIDEO_DIR, str(file))
         if not os.path.exists(path):
-            raise RuntimeError(f"Video File could not be found: {path}")
+            # raise RuntimeError(f"Video File could not be found: {path}")
+            self.video_status.value = 6 
+            return
         
         logger.debug(path)
         video = VlcMovieStim(
