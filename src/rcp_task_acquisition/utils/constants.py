@@ -21,9 +21,8 @@ RAW_DATA_DIR = Path(config["RawDataDir"])
 
 STIM_CONFIG_FILE_NAME = 'visualStimulusConfig.yaml'
 SCREEN_CONFIG_FILE_NAME = "screen_config.yaml"
-VIDEO_DIR = Path.home() / "Videos" / "task_videos" #os.path.join(BASEDIR, "Videos", "task_videos")
+VIDEO_DIR = Path(r'C:\Users\Public\Videos\task_videos')
 
-# constants for graphing
 DEFAULTS = ["Microphone 1", "Audio", "TENS"]
 PLOT_CONSTANTS = ["Cameras", "Barcode", "Photodiode"]
 LINE_STYLES = ["-", "-", "-", "-"] #["--", "-", ":", "-."]

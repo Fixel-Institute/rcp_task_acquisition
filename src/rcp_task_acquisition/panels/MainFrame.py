@@ -57,7 +57,7 @@ class MainFrame(wx.Frame):
         displays = (wx.Display(i) for i in range(wx.Display.GetCount())) # Gets the number of displays
         screenSizes = [display.GetGeometry().GetSize() for display in displays] # Gets the size of each display
         logger.debug(f"screenSizes: {screenSizes}")
-        index = 0 # For display 1.
+        index = 1 # For display 1.
         screenW = screenSizes[index][0]
         screenH = screenSizes[index][1]
         
@@ -263,8 +263,14 @@ class MainFrame(wx.Frame):
     def trial_event(self, event):
         if self.trial_button.GetValue():
             time.sleep(1)
-            self.count +=1
-            self.rest_timer.Start(1000)
+            self.count += 1
+            print("status", self.video_status.value)
+            if self.video_status.value != 0:
+                print("VIDEO IS ACTIVE")
+                self.video_status.value = 4
+                self.trial_panel.stop_video()
+            else:
+                self.rest_timer.Start(1000)
             self.finish.value = 0
             try:
                 self.msgq.put("update_data")
@@ -323,6 +329,7 @@ class MainFrame(wx.Frame):
             self.trial_panel.end_trial()
             self.liveTimer.Stop()
     
+    
     def next_trial(self, event):  
         logger.debug("UPDATING DATA")
         self.msgq.put("update_data")
@@ -346,9 +353,12 @@ class MainFrame(wx.Frame):
         
 
     def update_intertrial(self, event):
+        logger.debug(f"video_status: {self.video_status.value}")
         if self.video_status.value == 5:
             self.trial_panel.stop_video()
             self.video_status.value = 0
+            logger.debug("called stop_video")
+            self.rest_timer.Stop()
         elif (self.finish.value == 1 and 
         (self.task != "naturalistic_speech" and self.task != "vowel_space")):
             logger.debug("in intertrial")
@@ -371,9 +381,11 @@ class MainFrame(wx.Frame):
             self.msgq.put(result)
             self.trial_panel.start_video()
             self.video_status.value = 1
+            self.rest_timer.Start(1000)
         else:
             self.video_status.value = 4
             self.trial_panel.stop_video()
+            self.rest_timer.Stop()
         
         
     def pause_instructions(self, event):

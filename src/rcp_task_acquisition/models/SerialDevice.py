@@ -35,7 +35,8 @@ class SerialDevice():
         
         
     def write(self, serial_str):
-        self.ser.write(serial_str.encode())
+        if self.serSuccess:
+            self.ser.write(serial_str.encode())
         
     def close(self):
         if self.serSuccess:
