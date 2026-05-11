@@ -595,7 +595,7 @@ class MainFrame(wx.Frame):
             self.meta['unitRef']=self.user_cfg['unitRef']
             self.meta['Collection']='info'
             self.meta['hardware'] = self.user_cfg['hardware']
-            self.meta['screen_settings'] = self.user_cfg['screen_settings']
+            # self.meta['screen_settings'] = self.user_cfg['screen_settings']
             meta_name = '%s_%s_%s_metadata.yaml' % (date_string, self.user_cfg['unitRef'], self.sess_string)
             self.metapath = os.path.join(self.sess_dir,meta_name)
     
