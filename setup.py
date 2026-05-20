@@ -19,7 +19,9 @@ if __name__ == "__main__":
             "setuptools_scm",
             "pyshortcuts",
             "pyaudio",
-            f"spinnaker_python @ {local_path}"
+            f"spinnaker_python @ {local_path}",
+            # other dependencies...
+            "pythonnet==3.0.5",
         ]
     )
 

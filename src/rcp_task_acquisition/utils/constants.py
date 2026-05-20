@@ -40,8 +40,10 @@ HARDWARE_LIST = ["Audio", "Cameras", "Button", "Photodiode",
 LABJACK_PIN_LIST = ["AIN0", "AIN1", "AIN2", "AIN3", "AIN4", "AIN5", "AIN6", "AIN7", 
                     "FIO0", "FIO1", "FIO2", "FIO3", "FIO4", "FIO5", "FIO6", "FIO7",
                     "EIO0", "EIO1", "EIO2", "EIO3", "EIO4", "EIO5", "EIO6", "EIO7"]
+DELSYS_HEADERS = ["In Use", "Sensor #", "Hemisphere", "Position", "Start Pairing"]
+DELSYS_SENSOR_POSITION_LIST = ["Shoulder", "Biceps", "Triceps", "Forearm", "Hand"]
+DELSYS_SENSOR_HEMISPHERE_LIST = ["Left", "Right"]
 
-    
 ANALOG_RANGES = [11, 9.6, 4.8, 2.4, 1.2, 0.6, 0.3, 0.15, 0.075, 0.036, 0.015]
 
 
