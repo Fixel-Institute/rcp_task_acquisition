@@ -54,6 +54,8 @@ class Warning():
             return f"Warning! {info}"
         elif error == "video":
             return "Video not found in current path"
+        elif error == "fps":
+            return f"Warning! {info}"
         else:
             return None
         

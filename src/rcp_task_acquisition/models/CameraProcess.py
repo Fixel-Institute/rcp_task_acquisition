@@ -354,6 +354,7 @@ class multiCam_DLC_Cam(Process):
                         frame = np.zeros([aqH,aqW,3],'ubyte')
                         cam.AcquisitionFrameRateEnable.SetValue(True)
                         cam.Gain.SetValue(user_cfg[camStr]['gain'])
+                        
                         # Ensure desired frame rate does not exceed the maximum
                         max_frmrate = cam.AcquisitionFrameRate.GetMax()
                         frmrate_time_to_set = min(max_frmrate, record_frame_rate)
@@ -423,6 +424,7 @@ class multiCam_DLC_Cam(Process):
                         logger.debug(f"fps: {record_frame_rate}")
                         
                         self.camq_p2read.put(record_frame_rate)
+                        self.camq_p2read.put(self.framerate)
                         logger.info(f"Auto-exposure frame rate {camStr}: {record_frame_rate}")
                         
                         
