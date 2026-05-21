@@ -7,8 +7,8 @@ from rcp_task_acquisition.utils.logger import get_logger
 logger = get_logger("./utils/displays") 
 
 
-_lowStateTexture = np.full([16, 16], -1).astype(np.int8)
-_highStateTexture = np.full([16, 16], 1).astype(np.int8)
+_lowStateTexture = np.full([256, 256], -1).astype(np.int8)
+_highStateTexture = np.full([256, 256], 1).astype(np.int8)
 
 
 class Window(Window):
@@ -23,8 +23,8 @@ class Window(Window):
         screen=1,
         color=-1,
         fullScreen=False, #-900
-        patchCoords=(-1280, 720, 50),
-        textureShape=(16, 16),
+        patchCoords=(-1280, 720, 256),
+        textureShape=(256, 256),
         ):
         """
         """
