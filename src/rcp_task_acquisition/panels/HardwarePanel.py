@@ -113,8 +113,8 @@ class HardwarePanel(wx.Panel):
             
         super().__init__(parent)
         vertical_sizer = wx.BoxSizer(wx.VERTICAL)
-        vertical_sizer.Add(self._setup_delsys(), 0, wx.EXPAND | wx.ALL, 10 )
         vertical_sizer.Add(self._setup_protocol(), 0, wx.EXPAND | wx.ALL, 10)
+        vertical_sizer.Add(self._setup_delsys(), 0, wx.EXPAND | wx.ALL, 10 )
         vertical_sizer.Add(self._setup_camera_panel(), 0, wx.EXPAND | wx.ALL, 10)
         vertical_sizer.Add(self._setup_labjack(), 0, wx.EXPAND | wx.ALL, 10 )
         self.SetSizerAndFit(vertical_sizer)
@@ -247,39 +247,21 @@ class HardwarePanel(wx.Panel):
 
             for i in range(len(status["Sensors"])):
                 sensor_id = status["Sensors"][i]["Id"]-1
+                self.trigno_list[sensor_id].in_use.Enable(False)
                 self.trigno_list[sensor_id].in_use.SetValue(True)
                 self.trigno_list[sensor_id].name.Enable(True)
                 self.trigno_list[sensor_id].hemisphere.Enable(True)
                 self.trigno_list[sensor_id].position.Enable(True)
 
     def _setup_delsys(self):
-        hardware_config = self.user_config["hardware"]
+        sensor_list = self.delsys.SensorList
+
         user_input_list = []
         user_input_count = 0
         vertical_pos = 0
         horizontal_pos = 0
 
         delsys_sizer = wx.GridBagSizer(len(DELSYS_HEADERS), 18)
-        connect_button = wx.Button(self, label="Connect Delsys")
-        connect_button.Bind(wx.EVT_BUTTON, lambda event: self.delsys.connect())
-
-        self.delsys_refresh_button = wx.Button(self, label="Refresh Sensor Status")
-        self.delsys_refresh_button.Bind(wx.EVT_BUTTON, lambda event: self.delsys.refresh())
-        self.delsys_refresh_button.Enable(False)
-
-        start_button = wx.Button(self, label="Start Delsys Stream")
-        start_button.Bind(wx.EVT_BUTTON, lambda event: self.delsys.start())
-        stop_button = wx.Button(self, label="Stop Delsys Stream")
-        stop_button.Bind(wx.EVT_BUTTON, lambda event: self.delsys.stop())
-
-        delsys_sizer.Add(connect_button, pos=(vertical_pos, 0), span=(0, 1), flag=wx.ALIGN_CENTER | wx.ALL,
-                         border=self.border)
-        delsys_sizer.Add(self.delsys_refresh_button, pos=(vertical_pos, 2), span=(0, 1), flag=wx.ALIGN_CENTER | wx.ALL,
-                         border=self.border)
-        delsys_sizer.Add(start_button, pos=(vertical_pos, 3), span=(0, 1), flag=wx.ALIGN_CENTER | wx.ALL,
-                         border=self.border)
-        delsys_sizer.Add(stop_button, pos=(vertical_pos, 4), span=(0, 1), flag=wx.ALIGN_CENTER | wx.ALL,
-                         border=self.border)
         vertical_pos += 1
 
         for header in DELSYS_HEADERS:
@@ -292,16 +274,16 @@ class HardwarePanel(wx.Panel):
         for i in range(16):
             in_use = wx.CheckBox(self, id=wx.ID_ANY)
             in_use.Bind(wx.EVT_CHECKBOX, self.update_delsys_sensor)
+            in_use.Enable(False)
 
             name = wx.StaticText(self, label=f"Delsys Sensor #{i + 1}")
             name.Enable(False)
 
             hemisphere = wx.Choice(self, id=wx.ID_ANY, choices=DELSYS_SENSOR_HEMISPHERE_LIST)
-            #hemisphere.Bind(wx.EVT_CHOICE, self._on_choice_labjack)
+            hemisphere.Bind(wx.EVT_CHOICE, self._on_choice_delsys)
             hemisphere.Enable(False)
 
             position = wx.Choice(self, id=wx.ID_ANY, choices=DELSYS_SENSOR_POSITION_LIST)
-            #hemisphere.Bind(wx.EVT_CHOICE, self._on_choice_labjack)
             position.Enable(False)
 
             pairBtn = wx.Button(self, label="Pair")
@@ -324,6 +306,25 @@ class HardwarePanel(wx.Panel):
 
             self.trigno_list.append(new_sensor)
         #self._update_lists(self.hardware_list)
+
+        for i in range(len(sensor_list)):
+            sensor_id = sensor_list[i]["Id"]-1
+            self.trigno_list[sensor_id].in_use.SetValue(True)
+            self.trigno_list[sensor_id].name.Enable(True)
+            self.trigno_list[sensor_id].hemisphere.Enable(True)
+            self.trigno_list[sensor_id].position.Enable(True)
+            
+            sensor_name = self.trigno_list[sensor_id].name.GetLabel() 
+            if sensor_name in self.user_config["delsys"]:
+                try:
+                    self.trigno_list[sensor_id].hemisphere.SetSelection(DELSYS_SENSOR_HEMISPHERE_LIST.index(self.user_config["delsys"][sensor_name]["hemisphere"])) 
+                except:
+                    logger.error(f"{sensor_name} is configured for Hemisphere {self.user_config['delsys'][sensor_name]['hemisphere']}, not part of the options.")
+                
+                try:
+                    self.trigno_list[sensor_id].position.SetSelection(DELSYS_SENSOR_POSITION_LIST.index(self.user_config["delsys"][sensor_name]["position"])) 
+                except:
+                    logger.error(f"{sensor_name} is configured for Hemisphere {self.user_config['delsys'][sensor_name]['hemisphere']}, not part of the options.")
 
         delsys_box = wx.StaticBox(self, label="Delsys Setup")
         hardware_sizer = wx.StaticBoxSizer(delsys_box, wx.HORIZONTAL)
@@ -435,6 +436,7 @@ class HardwarePanel(wx.Panel):
             else:
                 camera.in_use_all = True
                 camera.name.Enable(True)
+
             camera.in_use.SetValue(False)
             camera.serial.Enable(False)
             camera.is_primary.Enable(False)
@@ -506,6 +508,11 @@ class HardwarePanel(wx.Panel):
             Warning("no_hardware").display()
             return
         self.user_config['hardware'] = hardware_dict
+
+        delsys_dict = self._create_delsys_dict()
+        if not delsys_dict:
+            return
+        self.user_config["delsys"] = delsys_dict
         
         if self.select_protocol:
             self.args = []
@@ -522,6 +529,16 @@ class HardwarePanel(wx.Panel):
             write_config("taskconfig.yaml", self.task_config)
         write_config("userdata.yaml", self.user_config)
 
+    def _create_delsys_dict(self): 
+        delsys_dict = {}
+        for sensor in self.trigno_list:
+            if sensor.in_use.GetValue():
+                delsys_dict[sensor.name.GetLabel()] = {
+                    "hemisphere": sensor.hemisphere.GetStrings()[sensor.hemisphere.GetSelection()],
+                    "position": sensor.position.GetStrings()[sensor.position.GetSelection()]
+                }
+                
+        return delsys_dict
 
     def _create_hardware_dict(self): 
         hardware_dict = {}
@@ -604,6 +621,10 @@ class HardwarePanel(wx.Panel):
     def _on_choice_labjack(self, event):
         self._update_lists(self.hardware_list)
         
+    def _on_choice_delsys(self, event):
+        for i in range(len(self.trigno_list)):
+            if self.trigno_list[i].hemisphere.GetSelection() == 2:
+                self.trigno_list[i].position.SetSelection(5)
         
     def _on_choice_cameras(self, event):
         self._update_lists(self.camera_list, is_labjack=False)

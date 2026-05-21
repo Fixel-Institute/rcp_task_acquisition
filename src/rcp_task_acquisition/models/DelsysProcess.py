@@ -53,7 +53,8 @@ class DelsysController():
         self.WaitForStopThread = None
 
         self.DataWriter = None
-
+        
+        self.SensorList = []
         self.ActiveSensors = {}
 
         # Callback
@@ -86,22 +87,23 @@ class DelsysController():
                 logger.error("Error refreshing Delsys device")
             self.IsScanning = False
 
+            sensor_status = {"Sensors": []}
+            sensors = self.Trigno.TrigBase.GetSensors()
+            for i in range(len(sensors)):
+                sensor = sensors[i]
+                if sensor.InternalName == "Analog Input Adapter":
+                    sensor.SelectSampleMode(sensor.Configuration.SampleModes[23])
+                else:
+                    sensor.SelectSampleMode(sensor.Configuration.SampleModes[60])
+
+                sensor_status["Sensors"].append({
+                    "Id": sensor.PairNumber,
+                    "Name": sensor.InternalName,
+                    "TrignoChannels": [chan.Name for chan in sensor.TrignoChannels],
+                })
+            self.SensorList = sensor_status["Sensors"]
+
             if self.update_sensors_config_ui is not None:
-                sensor_status = {"Sensors": []}
-                sensors = self.Trigno.TrigBase.GetSensors()
-                for i in range(len(sensors)):
-                    sensor = sensors[i]
-                    if sensor.InternalName == "Analog Input Adapter":
-                        sensor.SelectSampleMode(sensor.Configuration.SampleModes[23])
-                    else:
-                        sensor.SelectSampleMode(sensor.Configuration.SampleModes[60])
-
-                    sensor_status["Sensors"].append({
-                        "Id": sensor.PairNumber,
-                        "Name": sensor.InternalName,
-                        "TrignoChannels": [chan.Name for chan in sensor.TrignoChannels],
-                    })
-
                 self.update_sensors_config_ui(sensor_status)
 
             self.Trigno.TrigBase.SelectAllSensors() #Enable all sensors for streaming

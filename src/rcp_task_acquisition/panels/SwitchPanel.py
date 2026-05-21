@@ -15,7 +15,15 @@ class ActivePanel(Enum):
 class SwitchPanel():
     def __init__(self) -> None:
         self.active_panel = True
+        
         self.delsys = DelsysController()
+        try:
+            self.delsys.connect()
+            if self.delsys.is_connected():
+                self.delsys.refresh()
+        except:
+            logger.error("Delsys NOT CONNECTED")
+
         self.launch_panel = LaunchPanel(self.delsys)
         self.task_frame = MainFrame(self.delsys)
         self.warning = Warning()
