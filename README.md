@@ -9,6 +9,19 @@ Code for the RCP task cart. More information to come...
 
 ## Updates and Changes to Original Python Scripts:
 
+### BUG Fix 2026/05/21
+
+1. ruamel.yaml.representer.RepresenterError: cannot represent an object: <built-in method GetValue of CheckBox object>
+
+- Origins: https://github.com/mmt-rcp/rcp_task_acquisition/blob/ab839ff55b7b1242843ead73a91d4c6e7e34031c/src/rcp_task_acquisition/panels/HardwarePanel.py#L459
+- Fix: get the actual value, not the method
+
+2. Camera Flip Checkbox is not properly shown even if it is true in YAML
+
+- Origins: There is no code to actually use <cam_config[key]["flip"]> to set values
+- Fix: flip_vid.SetValue(cam_config[key]["flip"])
+
+
 ### Delsys Acquisition Script
 - Delsys is now added. The Delsys sensor configurations require prior-connection, so the Delsys system must be connected in the Hardware Panel prior to running.
 - Should we automate the whole process?... The issue is that sensors must be connected before we scan for sensors, otherwise the sensors are not registered by the base. The whole process is somewhat manual.

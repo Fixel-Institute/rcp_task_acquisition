@@ -348,7 +348,7 @@ class HardwarePanel(wx.Panel):
             in_use = wx.CheckBox(self, id=wx.ID_ANY)
             in_use.Bind(wx.EVT_CHECKBOX, self.update_options)
             
-            name = wx.StaticText(self, label=cam_config[key]["nickname"])
+            name = wx.StaticText(self, label=key)
             name.Enable(False)
             
             serial = wx.Choice(self, choices=self.cam_serial_numbers)
@@ -389,6 +389,7 @@ class HardwarePanel(wx.Panel):
                 is_primary.SetValue(cam_config[key]["ismaster"])
                 cam_index = self.cam_serial_numbers.index(cam_config[key]["serial"])
                 serial.SetSelection(cam_index)
+                flip_vid.SetValue(cam_config[key]["flip"])
             
             self.camera_list.append(new_camera)
         self._update_lists(self.camera_list, is_labjack=False)
@@ -544,7 +545,7 @@ class HardwarePanel(wx.Panel):
                         "labjack_input": labjack_value,
                         "voltage_range": voltage_range,
                         "graph": ""
-                    }   
+                    }
         return hardware_dict
     
     def _create_camera_dict (self): 
@@ -568,14 +569,15 @@ class HardwarePanel(wx.Panel):
                 
                 else:
                     camera_dict[self._get_name(camera)] = {"ismaster": camera.is_primary.GetValue(),
-                                                                    "serial": camera.serial.GetStrings()[serial],
-                                                                    "in_use": camera.in_use_all,
-                                                                    "gig_e": camera.gig_e.GetValue(),
-                                                                    "flip": camera.flip_vid.GetValue}
+                                                            "serial": camera.serial.GetStrings()[serial],
+                                                            "in_use": camera.in_use_all,
+                                                            "gig_e": camera.gig_e.GetValue(),
+                                                            "flip": camera.flip_vid.GetValue()}
                                                                     
             else:
                 camera_dict[self._get_name(camera)]["in_use"] = False
                 camera_dict[self._get_name(camera)]["ismaster"] = False
+                
         return camera_dict
     
     
