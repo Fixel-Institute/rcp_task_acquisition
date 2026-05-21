@@ -414,7 +414,6 @@ class Camera():
             self.im[1].set_data(self.frame[self.cam_pointer+1])
             self.image_panel.update_names([self.camStrList[self.cam_pointer], self.camStrList[self.cam_pointer+1]])
 
-
     def reset_variables(self):
         self.labjack_scan_rate = None
         self.camStrList = list()

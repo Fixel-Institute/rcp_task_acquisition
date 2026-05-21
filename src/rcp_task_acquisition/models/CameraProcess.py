@@ -401,7 +401,6 @@ class multiCam_DLC_Cam(Process):
                         cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Continuous)
                     
                     elif msg == 'getExposure':
-                        
                         logger.info(f"Current exposure: {current_exposure_time}" )
                         current_exposure_time = cam.ExposureTime.GetValue()*.9
                         cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Off)
@@ -410,11 +409,11 @@ class multiCam_DLC_Cam(Process):
                         logger.info(f"Auto-exposure result {camStr}: {current_exposure_time}")
                         logger.debug(f"exposure: {cam.ExposureTime.GetValue()}")
                         self.camq_p2read.put(cam.ExposureTime.GetValue())
+
                     elif msg == "setBalance":
                         cam.BalanceWhiteAuto.SetValue(PySpin.BalanceWhiteAuto_Continuous)
                     
                     elif msg == 'getBalance':
-                        
                         cam.BalanceWhiteAuto.SetValue(PySpin.BalanceWhiteAuto_Off)
                         cam.Gain.SetValue(user_cfg[camStr]['gain'])
                         cam.Gamma.SetValue(user_cfg[camStr]['gamma'])
@@ -424,8 +423,6 @@ class multiCam_DLC_Cam(Process):
                         
                         self.camq_p2read.put(record_frame_rate)
                         logger.info(f"Auto-exposure frame rate {camStr}: {record_frame_rate}")
-                        
-                        
 
                 except PySpin.SpinnakerException:
                     exc_type, exc_obj, tb = sys.exc_info()

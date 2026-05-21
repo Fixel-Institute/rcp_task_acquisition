@@ -59,6 +59,9 @@ class DelsysController():
         # Callback
         self.update_sensors_config_ui = None
 
+    def is_connected(self):
+        return self.IsConnected
+
     def connect(self):
         if not self.IsConnected:
             try:

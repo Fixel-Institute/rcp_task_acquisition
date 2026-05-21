@@ -244,7 +244,7 @@ class MainFrame(wx.Frame):
             self.trial_panel.show()
 
             # Start Delsys
-            if self.delsys:
+            if self.delsys.is_connected():
                 self.delsys.start(filename=os.path.join(self.sess_dir, f"{self.date_string}_{self.user_cfg['unitRef']}_{self.sess_string}_delsys.mdat"))
 
         else:
@@ -275,7 +275,7 @@ class MainFrame(wx.Frame):
             self.labjack_timer.Start(200)
             # self.trial_panel.start_new_trial()
 
-            if self.delsys:
+            if self.delsys.is_connected():
                 self.delsys.stop()
     
     def trial_event(self, event):
