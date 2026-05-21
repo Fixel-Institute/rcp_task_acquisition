@@ -7,6 +7,7 @@ import shutil
 import cv2
 import ctypes
 from multiprocessing import Queue, Value, Array
+import math
 
 import rcp_task_acquisition.models.CameraProcess as spin
 import rcp_task_acquisition.utils.file_utils as file_utils
@@ -99,11 +100,13 @@ class Camera():
             except:
                 return False
         self.get_exposure(event)
+        self.updateSettings(event)
         self.camaq.value = 1
         self.startAq()
         time.sleep(0.5)
         self.camaq.value = 0
         self.stopAq()
+        
         self.x1 = list()
         self.x2 = list()
         self.y1 = list()
@@ -389,13 +392,21 @@ class Camera():
         time.sleep(1)
         self.camaq.value = 0
         self.stopAq()
+        warning_str = ""
         for n, camID in enumerate(self.camIdList):
             self.camq[camID].put('getBalance')
 
             actual_rate = self.camq_p2read[camID].get()
+            framerate = self.camq_p2read[camID].get()
             self.rate.append(actual_rate)
+            if math.ceil(actual_rate) != framerate:
 
-            
+                warning_str += f"\n {camID} has a framerate of {round(actual_rate,3)}, expected {framerate}"
+        if warning_str != "":
+            self.warning.update_error("fps", info=warning_str)
+            self.warning.display()
+        
+
     def update_crop(self, value):
         self.crop = value
         
