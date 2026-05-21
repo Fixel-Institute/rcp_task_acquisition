@@ -8,8 +8,6 @@ from rcp_task_acquisition.utils.constants import SCANS_PER_READ
 from rcp_task_acquisition.utils.logger import get_logger
 logger = get_logger("./models/LabjackProcess") 
 
-
-
 class LabJackDataStream(Process):
     def __init__(self, arr_length, is_finished, labjack_arr, 
                  create_csv, folder_queue, labjack_list, graph_indices, 
@@ -103,6 +101,9 @@ class LabJackDataStream(Process):
             ljm.writeLibraryConfigS("LJM_STREAM_TCP_RECEIVE_BUFFER_SIZE", 4194304)
             ljm.eWriteNames(self.handle, len(self.input_names), self.input_names, self.voltage_ranges)
             self.actualscanRate.value = ljm.eStreamStart(self.handle, SCANS_PER_READ, numAddresses, aScanList, self.attemptedscanRate)
+        
+        logger.info(f"Labjack stream started at {self.actualscanRate.value} scans/s")
+
         self.stream_started.value = True
         while not self.finished.value:
             if self.create_csv.value:

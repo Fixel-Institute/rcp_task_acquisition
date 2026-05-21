@@ -13,8 +13,6 @@ from rcp_task_acquisition.models.LabjackProcess import LabJackDataStream
 from rcp_task_acquisition.utils.logger import get_logger
 logger = get_logger("./models/LabjackFrontend") 
 
- 
-
 class LabjackFrontend():
     def __init__(self, array_length, ctrl_panel, timer, args, button_pressed, press_count, hardware_test):
         
@@ -57,7 +55,6 @@ class LabjackFrontend():
         self.serial_state = 0
         self.serial_bool = False
         self.ser_success = False
-
 
     def labjack_stream(self, event):
         labjack_button = self.graph_panel.get_graph_button()
@@ -110,8 +107,7 @@ class LabjackFrontend():
         self.inputs_list = [self.analog_list, self.digital_list, self.extended_list]     
         logger.debug(self.button_list)
         self._update_graph_list('')
-        
-        
+
     def start_labjack(self):
         if not self.labjack_is_finished.value:
             logger.info("labjack is currently runninng")
@@ -146,13 +142,8 @@ class LabjackFrontend():
             labjack_button = self.graph_panel.get_graph_button()
             labjack_button.SetValue(False)
             return False
-        
-
-
 
     def stop_labjack(self):
-        
-        
         self.labjack_is_finished.value = True
         self.labjack_is_csv.value = False
         self.stream_started.value = False
