@@ -274,6 +274,7 @@ class HardwarePanel(wx.Panel):
                 is_primary.Enable(True)
                 gig_e.Enable(True)
                 flip_vid.Enable(True)
+                flip_vid.SetValue(cam_config[key]["flip"])
                 gig_e.SetValue(cam_config[key]["gig_e"])
                 is_primary.SetValue(cam_config[key]["ismaster"])
                 cam_index = self.cam_serial_numbers.index(cam_config[key]["serial"])
@@ -456,7 +457,7 @@ class HardwarePanel(wx.Panel):
                                                                     "serial": camera.serial.GetStrings()[serial],
                                                                     "in_use": camera.in_use_all,
                                                                     "gig_e": camera.gig_e.GetValue(),
-                                                                    "flip": camera.flip_vid.GetValue}
+                                                                    "flip": camera.flip_vid.GetValue()}
                                                                     
             else:
                 camera_dict[self._get_name(camera)]["in_use"] = False
