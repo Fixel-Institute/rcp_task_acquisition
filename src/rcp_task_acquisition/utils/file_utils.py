@@ -121,8 +121,10 @@ def metadata_template():
     Designer:
     administrator_id:
     Task:
-    StartTime:
-    EndTime:
+    StartTime_Local:
+    StartTime_UTC:
+    EndTime_Local:
+    EndTime_UTC:
     Collection:
     duration (s):
     unitRef:
