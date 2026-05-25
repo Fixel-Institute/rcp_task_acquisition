@@ -57,6 +57,8 @@ class DelsysController():
         self.SensorList = []
         self.ActiveSensors = {}
 
+        self.StreamingSensor = None
+
         # Callback
         self.update_sensors_config_ui = None
 
@@ -170,6 +172,10 @@ class DelsysController():
         self.DataWriter.close()
         logger.info("Delsys device stopped streaming.")
 
+    def set_streaming_sensor(self, sensor_id):
+        self.StreamingSensor = sensor_id
+        logger.info(f"Set streaming sensor to {sensor_id}")
+
     def streaming(self):
         self.DataQueue = deque()
 
@@ -182,7 +188,11 @@ class DelsysController():
                     data_out = self.Trigno.TrigBase.PollDataByString()
                     if len(list(data_out.Keys)) > 0:
                         for key in list(data_out.Keys):
-                            self.DataWriter.write_data("Delsys_DataPacket|" + key, np.asarray(data_out[key], dtype='double').tobytes())
+                            data = np.asarray(data_out[key], dtype='double')
+                            self.DataWriter.write_data("Delsys_DataPacket|" + key, data.tobytes())
+
+                            if self.StreamingSensor is not None and self.ActiveSensors[key]["SensorId"] == self.StreamingSensor:
+                                self.DataQueue.append((self.ActiveSensors[key], data))
 
                 except Exception as e:
                     print("Exception occured in GetData() - " + str(e))
