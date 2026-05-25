@@ -23,8 +23,8 @@ class Window(Window):
         screen=1,
         color=-1,
         fullScreen=False, #-900
-        patchCoords=(-1280, 720, 256),
-        textureShape=(256, 256),
+        patchCoords=(-1280, 720, 250),
+        textureShape=(16, 16),
         ):
         """
         """

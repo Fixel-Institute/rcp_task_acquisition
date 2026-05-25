@@ -212,7 +212,8 @@ class MainFrame(wx.Frame):
         if self.task_button.GetValue():
             self.task_active = True
             self.trial_dict = {}
-            self.start_time= str(f'{datetime.datetime.now().strftime("%Y%m%d%H%M%S")}Z') 
+            self.start_time = str(f'{datetime.datetime.now().strftime("%Y%m%d%H%M%S")}Z') 
+            self.start_time_utc = str(f'{datetime.datetime.utcnow().strftime("%Y%m%d%H%M%S")}Z') 
             self.count = 0
             self.finish.value = 0
             self.msgq.put("init_stimulus")
@@ -269,7 +270,8 @@ class MainFrame(wx.Frame):
                 self.labjack_stream_button.SetValue(False)
                 self.labjack_stream_button.SetLabel("Stream Labjack")
             self.labjack_stream_button.Enable(True)
-            self.end_time= str(f'{datetime.datetime.now().strftime("%Y%m%d%H%M%S")}Z') 
+            self.end_time = str(f'{datetime.datetime.now().strftime("%Y%m%d%H%M%S")}Z') 
+            self.end_time_utc = str(f'{datetime.datetime.utcnow().strftime("%Y%m%d%H%M%S")}Z') 
             self.add_metadata()
             self.msgq.put("reset_task")
             self.labjack_timer.Start(200)
@@ -282,7 +284,7 @@ class MainFrame(wx.Frame):
         if self.trial_button.GetValue():
             time.sleep(1)
             self.count += 1
-            if self.video_status.value != 0:
+            if self.video_status.value != 0 and self.video_status.value != 4:
                 self.video_status.value = 4
                 self.trial_panel.stop_video()
             else:
@@ -610,7 +612,8 @@ class MainFrame(wx.Frame):
             meta_name = '%s_%s_%s_metadata.yaml' % (date_string, self.user_cfg['unitRef'], self.sess_string)
             self.metapath = os.path.join(self.sess_dir,meta_name)
     
-            self.meta['StartTime']= self.start_time
+            self.meta['StartTime_Local']= self.start_time
+            self.meta['StartTime_UTC']= self.start_time_utc
             self.meta['administrator_id'] = self.launch_args["administrator_id"]
             self.meta["participant_id"] = self.launch_args["participant_id"]
             self.meta["participant_details"] = self.launch_args["participant_detail"]
@@ -627,7 +630,8 @@ class MainFrame(wx.Frame):
             for data in metadata.data:
                 self.meta[data] = metadata.data[data]
                 logger.debug(data)
-            self.meta['EndTime']= self.end_time
+            self.meta['EndTime_Local']= self.end_time
+            self.meta['EndTime_UTC']= self.end_time_utc
             file_utils.write_metadata(self.meta, self.metapath)
         else:
             #remove entire directory
@@ -636,7 +640,7 @@ class MainFrame(wx.Frame):
             
     
     def create_file(self):
-        date_string = datetime.datetime.utcnow().strftime("%Y%m%d")
+        date_string = datetime.datetime.now().strftime("%Y%m%d")
         self.base_dir = os.path.join(RAW_DATA_DIR, date_string, self.user_cfg['unitRef'])
         if not os.path.exists(self.base_dir):
             os.makedirs(self.base_dir)

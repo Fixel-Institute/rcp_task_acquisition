@@ -399,12 +399,12 @@ class Camera():
             actual_rate = self.camq_p2read[camID].get()
             framerate = self.camq_p2read[camID].get()
             self.rate.append(actual_rate)
-            if math.ceil(actual_rate) != framerate:
+            # if math.ceil(actual_rate) != framerate:
 
-                warning_str += f"\n {camID} has a framerate of {round(actual_rate,3)}, expected {framerate}"
-        if warning_str != "":
-            self.warning.update_error("fps", info=warning_str)
-            self.warning.display()
+                # warning_str += f"\n {camID} has a framerate of {round(actual_rate,3)}, expected {framerate}"
+        # if warning_str != "":
+            # self.warning.update_error("fps", info=warning_str)
+            # self.warning.display()
         
 
     def update_crop(self, value):
