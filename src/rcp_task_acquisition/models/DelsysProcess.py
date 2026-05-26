@@ -37,7 +37,8 @@ class DelsysController():
     def __init__(self):
         super().__init__()
         self.EMGQueue = deque()
-        self.DataQueue = deque()
+        self.IMUQueue = deque()
+        self.deque_locker = threading.Lock()
         self.Trigno = TrignoBase.TrignoBase(self)
         self.DataHandler = DataManager.DataKernel(self.Trigno)
         self.Trigno.DataHandler = self.DataHandler
@@ -58,6 +59,7 @@ class DelsysController():
         self.ActiveSensors = {}
 
         self.StreamingSensor = None
+        self.IMUPreview = "ACC"
 
         # Callback
         self.update_sensors_config_ui = None
@@ -171,14 +173,44 @@ class DelsysController():
         self.IsRecording = False
         self.DataWriter.close()
         logger.info("Delsys device stopped streaming.")
+    
+    def get_sensors(self):
+        sensor_ids = []
+        for sensor in self.SensorList:
+            if not sensor["Id"] in sensor_ids:
+                sensor_ids.append(sensor["Id"])
+        return sensor_ids
 
-    def set_streaming_sensor(self, sensor_id):
+    def set_streaming_sensor(self, sensor_id, imu_type):
+        emg_fs = 1250
+        imu_fs = 148.148
+        for key in self.ActiveSensors.keys():
+            if self.ActiveSensors[key]["Name"] == f"EMG {sensor_id}":
+                emg_fs = self.ActiveSensors[key]["SamplingRate"]
+            elif self.ActiveSensors[key]["Name"] == f"Gyro {sensor_id}":
+                imu_fs = self.ActiveSensors[key]["SamplingRate"]
         self.StreamingSensor = sensor_id
-        logger.info(f"Set streaming sensor to {sensor_id}")
+
+        if imu_type == "Accelerometer":
+            self.IMUPreview = "ACC"
+        else:
+            self.IMUPreview = "GYRO"
+
+        self.EMGQueue.clear()
+        return emg_fs, imu_fs
+
+    def get_streaming_data(self):
+        if len(self.EMGQueue) > 0 and len(self.IMUQueue) > 0:
+            with self.deque_locker:
+                emg_data = np.concatenate(self.EMGQueue, axis=0)
+                self.EMGQueue.clear()
+                imu_data = np.concatenate(self.IMUQueue, axis=0)
+                self.IMUQueue.clear()
+                return emg_data, imu_data
+            
+        return np.zeros(0), np.zeros((0,3))
 
     def streaming(self):
-        self.DataQueue = deque()
-
         while self.PauseFlag:
             continue
 
@@ -187,15 +219,39 @@ class DelsysController():
                 try:
                     data_out = self.Trigno.TrigBase.PollDataByString()
                     if len(list(data_out.Keys)) > 0:
+                        imu_stack = np.zeros((0,3))
                         for key in list(data_out.Keys):
                             data = np.asarray(data_out[key], dtype='double')
                             self.DataWriter.write_data("Delsys_DataPacket|" + key, data.tobytes())
+                            
+                            if self.StreamingSensor is not None:
+                                if key in self.ActiveSensors.keys():
+                                    if self.ActiveSensors[key]["SensorId"] == self.StreamingSensor:
+                                        if self.ActiveSensors[key]["Name"].startswith("EMG"):
+                                            with self.deque_locker:
+                                                self.EMGQueue.append(data)
+                                        elif self.ActiveSensors[key]["Name"].startswith(f"{self.IMUPreview}"):
+                                            if imu_stack.shape[0] == 0:
+                                                imu_stack = np.zeros((len(data), 3))
+                                            if self.ActiveSensors[key]["Name"].endswith("X"):
+                                                imu_stack[:,0] = data
+                                            elif self.ActiveSensors[key]["Name"].endswith("Y"):
+                                                imu_stack[:,1] = data
+                                            elif self.ActiveSensors[key]["Name"].endswith("Z"):
+                                                imu_stack[:,2] = data
+                                        
+                        if imu_stack.shape[0] > 0:
+                            with self.deque_locker:
+                                self.IMUQueue.append(imu_stack)
 
-                            if self.StreamingSensor is not None and self.ActiveSensors[key]["SensorId"] == self.StreamingSensor:
-                                self.DataQueue.append((self.ActiveSensors[key], data))
-
+                            #print(self.ActiveSensors[key])
+                            #if self.StreamingSensor is not None and self.ActiveSensors[key]["Name"] == "EMG" and self.ActiveSensors[key]["SensorId"] == self.StreamingSensor:
+                            #    with self.deque_locker:
+                            #        self.EMGQueue.append((self.ActiveSensors[key], data))
+                                        
                 except Exception as e:
                     print("Exception occured in GetData() - " + str(e))
+            time.sleep(0.005)
 
     def waiting_for_start_trigger(self):
         while self.Trigno.TrigBase.IsWaitingForStartTrigger():
@@ -215,6 +271,7 @@ class DelsysController():
     def threadManager(self, start_trigger, stop_trigger):
         """Handles the threads for the DataCollector gui"""
         self.EMGQueue = deque()
+
         self.StreamingThread = threading.Thread(target=self.streaming)
         self.StreamingThread.start()
 

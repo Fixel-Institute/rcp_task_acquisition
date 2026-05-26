@@ -21,6 +21,7 @@ from rcp_task_acquisition.models.StimulusThread import StimulusThread
 from rcp_task_acquisition.models.LabjackFrontend import LabjackFrontend
 from rcp_task_acquisition.models.Crop import Crop
 from rcp_task_acquisition.panels.GraphPanel import GraphPanel
+from rcp_task_acquisition.panels.DelsysPreview import DelsysPreview
 from rcp_task_acquisition.models.Warnings import Warning
 from rcp_task_acquisition.panels.MetadataPanel import MetadataPanel
 from rcp_task_acquisition.utils.constants import RAW_DATA_DIR, PLOT_LENGTH
@@ -98,6 +99,9 @@ class MainFrame(wx.Frame):
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(topSplitter, 1, wx.EXPAND)
         self.SetSizer(sizer)
+
+        # Add Delsys Graph Frame
+        self.delsys_preview = DelsysPreview(delsys, self)
     
         # Add Buttons to the WidgetPanel and bind them to their respective functions.
         (self.init,self.reset,self.update_settings,self.play,self.rec,
@@ -264,6 +268,9 @@ class MainFrame(wx.Frame):
             self.msgq.put('end_stimulus')
             self.labjack_scan_rate = self.lj.stop_labjack()
             
+            if self.delsys.is_connected():
+                self.delsys.stop()
+                
             self.finish.value = 0
             self.labjack_stream_button.Enable(True)
             if self.labjack_stream_button.GetValue():
@@ -272,14 +279,12 @@ class MainFrame(wx.Frame):
             self.labjack_stream_button.Enable(True)
             self.end_time = str(f'{datetime.datetime.now().strftime("%Y%m%d%H%M%S")}Z') 
             self.end_time_utc = str(f'{datetime.datetime.utcnow().strftime("%Y%m%d%H%M%S")}Z') 
+    
             self.add_metadata()
             self.msgq.put("reset_task")
             self.labjack_timer.Start(200)
             # self.trial_panel.start_new_trial()
 
-            if self.delsys.is_connected():
-                self.delsys.stop()
-    
     def trial_event(self, event):
         if self.trial_button.GetValue():
             time.sleep(1)
@@ -718,6 +723,7 @@ class MainFrame(wx.Frame):
             self.trial_panel.Destroy()
         except:
             pass
+
         self.ctrl_panel.Destroy()
         self.statusbar.SetStatusText("")
         self.Destroy()
@@ -726,6 +732,11 @@ class MainFrame(wx.Frame):
     def Hide(self, event):
         self.is_hidden = True
         self.lj.stop_labjack()
+        
+        if self.delsys_preview:
+            self.delsys_preview.Destroy()
+        if self.delsys.is_connected():
+            self.delsys.stop()
         
         self.rest_timer.Stop()
         self.video_status.value = 4
@@ -864,6 +875,8 @@ class MainFrame(wx.Frame):
                 self.trial_panel.syllable_pause_video_button.Bind(wx.EVT_TOGGLEBUTTON, self.pause_instructions)
             if self.task == "vowel_space":
                 self.trial_panel.next_button.Bind(wx.EVT_BUTTON, self.next_trial)
+
+        self.delsys_preview.Show()
         super().Show()
         return True
         

@@ -4,19 +4,26 @@ import time
 from collections import deque
 
 class DelsysPreview(wx.Frame):
-    def __init__(self, parent, title):
-        super(DelsysPreview, self).__init__(parent, title=title, size=(800, 500))
+    def __init__(self, delsys, parent):
+        super(DelsysPreview, self).__init__(parent, title="Delsys Sensor Preview", size=(800, 500))
         splitter = wx.SplitterWindow(self)
 
-        self.preview_panel = DelsysPreviewPanel(splitter, title)
+        self.delsys = delsys
+        self.preview_panel = DelsysPreviewPanel(splitter, delsys)
         self.control_panel = DelsysControlPanel(splitter, onSensorChange=self.preview_panel.on_sensor_change, onIMUChange=self.preview_panel.on_imu_change)
         splitter.SplitHorizontally(self.control_panel, self.preview_panel, sashPosition=100)
 
         self.Bind(wx.EVT_CLOSE, self.on_close)
 
     def on_close(self, event):
-        self.preview_panel._timer.Stop()
+        self.preview_panel.stop()
         event.Skip()
+    
+    def Show(self, show = True):
+        sensor_ids = self.delsys.get_sensors()
+        self.control_panel.setup_controls(sensor_ids)
+        #self.preview_panel.start()
+        return super().Show(show)
 
 class DelsysControlPanel(wx.Panel):
     def __init__(self, parent, onSensorChange=None, onIMUChange=None):
@@ -25,13 +32,14 @@ class DelsysControlPanel(wx.Panel):
         self.onSensorChange = onSensorChange
         self.onIMUChange = onIMUChange
 
+    def setup_controls(self, sensors):
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         hgroup = wx.BoxSizer(wx.HORIZONTAL)
 
         left = wx.BoxSizer(wx.VERTICAL)
         left.Add(wx.StaticText(self, label="Delsys Sensor #:"), 0, wx.ALL, 4)
-        self.sensor_id = ["Delsys Sensor #1", "Delsys Sensor #2", "Delsys Sensor #3"]
-        self.sensor_choice = wx.Choice(self, choices=self.sensor_id)
+        self.sensor_ids = [f"Delsys Sensor #{id}" for id in sensors]
+        self.sensor_choice = wx.Choice(self, choices=self.sensor_ids)
         self.sensor_choice.SetSelection(0)
         self.sensor_choice.Bind(wx.EVT_CHOICE, self.on_sensor_change)
         left.Add(self.sensor_choice, 1, wx.EXPAND | wx.ALL, 4)
@@ -57,13 +65,14 @@ class DelsysControlPanel(wx.Panel):
         if self.onIMUChange:
             self.onIMUChange(self.imu_choice.GetStringSelection())
 
-    def on_detect_change(self, event):
-        self.detection_enabled = self.detect_rb1.GetValue()
-
-
 class DelsysPreviewPanel(wx.Panel):
-    def __init__(self, parent, title):
+    def __init__(self, parent, delsys):
         super(DelsysPreviewPanel, self).__init__(parent)
+
+        self.delsys = delsys
+        self.sensor_id = None
+        self.sensor_type = "Accelerometer"
+
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.canvas = wx.Panel(self)
         self.sizer.Add(self.canvas, 1, wx.EXPAND | wx.ALL, 10)
@@ -75,22 +84,23 @@ class DelsysPreviewPanel(wx.Panel):
         self.canvas.Bind(wx.EVT_SIZE, self.on_resize)
 
         # Scale factors for EMG and imu data
-        self.emg_scale = 0.05
-        self.imu_scale = 16
+        self.emg_scale = 0.15
+        self.imu_scale = 2
+        self.imu_unit = "g"
 
         # cached pens for drawing
-        self._pen_emg = wx.Pen("#606060", 2)
-        self._pen_imu_x = wx.Pen("#F48754", 3)
-        self._pen_imu_y = wx.Pen("#6985FF", 3)
-        self._pen_imu_z = wx.Pen("#5FFBA3", 3)
+        self._pen_emg = wx.Pen("#606060", 1)
+        self._pen_imu_x = wx.Pen("#F98400", 2)
+        self._pen_imu_y = wx.Pen("#F2AD00", 2)
+        self._pen_imu_z = wx.Pen("#00A08A", 2)
 
-        self.setup_signals()
+        self.setup_signals(2000,150)
 
         # Timer to refresh at maximum rate
         self._interval_ms = 1
         self._timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.on_timer, self._timer)
-        self._timer.Start(self._interval_ms)
+        #self._timer.Start(self._interval_ms)
 
         # Measuring timer/callback rate and processing time, remove for production
         self._last_timer_ts = None
@@ -98,13 +108,17 @@ class DelsysPreviewPanel(wx.Panel):
         self._timer_count = 0
         self.measured_fps = 0.0
 
+    def start(self):
+        self._timer.Start(self._interval_ms)
+    
+    def stop(self):
+        self._timer.Stop()
+
     # Dummy definitions for now. We will grab the actual info from streaming sensor
-    def setup_signals(self, channel=None):
-        self.emg_fs = 2222.22
-        self.imu_fs = 148.148
-        self.window_time = 2
-        emg_sizer = int(2 * self.emg_fs)
-        imu_sizer = int(2 * self.imu_fs)
+    def setup_signals(self, emg_fs, imu_fs):
+        self.window_time = 5
+        emg_sizer = int(self.window_time * emg_fs)
+        imu_sizer = int(self.window_time * imu_fs)
         self.emg_y = np.zeros(emg_sizer, dtype=float)
         self.imu_y = np.zeros((imu_sizer, 3), dtype=float)
 
@@ -116,12 +130,27 @@ class DelsysPreviewPanel(wx.Panel):
         self.imu_x = np.array(self.imu_x, dtype=int)
 
     def on_sensor_change(self, sensor_name):
-        print(f"Selected sensor: {sensor_name}")
-        pass 
+        self.sensor_id = int(sensor_name.replace("Delsys Sensor #",""))
+        if self.sensor_id:
+            self._timer.Stop()
+            emg_fs, imu_fs = self.delsys.set_streaming_sensor(self.sensor_id, self.sensor_type)
+            self.setup_signals(emg_fs, imu_fs)
+            self._timer.Start(1)
 
     def on_imu_change(self, sensor_name):
-        print(f"Selected IMU mode: {sensor_name}")
-        pass
+        self.sensor_type = sensor_name
+        if self.sensor_type:
+            if sensor_name == "Accelerometer":
+                self.imu_scale = 2
+                self.imu_unit = "g"
+            elif sensor_name == "Gyroscope":
+                self.imu_scale = 500
+                self.imu_unit = "degree/s"
+
+            self._timer.Stop()
+            emg_fs, imu_fs = self.delsys.set_streaming_sensor(self.sensor_id, self.sensor_type)
+            self.setup_signals(emg_fs, imu_fs)
+            self._timer.Start(1)
 
     def get_emg_data(self):
         sample_count = int(self.emg_fs/30)
@@ -135,7 +164,7 @@ class DelsysPreviewPanel(wx.Panel):
         imu_signal[:, 1] = np.random.normal(0, 1, sample_count)
         imu_signal[:, 2] = np.random.normal(0, 1, sample_count) + 9.81
         return imu_signal
-    
+
     def on_resize(self, event):
         self.Layout()
         self.canvas.Refresh()
@@ -163,7 +192,7 @@ class DelsysPreviewPanel(wx.Panel):
         dc.SetClippingRegion(int(emg_canvas[0]), int(emg_canvas[1]), int(emg_canvas[2]), -int(emg_canvas[3]))
         
         # Hum, step of 5 maybe too much? idk... Need testing with real data
-        step = 5
+        step = 2
         ys = np.asarray(emg_canvas[1] - (emg_canvas[3] / 2) - (self.emg_y[::step] / self.emg_scale) * (emg_canvas[3] / 2)).astype(int)
         xs = self.emg_x[::step]
         points = list(zip(xs, ys))
@@ -200,7 +229,7 @@ class DelsysPreviewPanel(wx.Panel):
         dc.SetPen(wx.Pen("#000000", 3))
         dc.SetClippingRegion(0, 0, width, height)
         dc.DrawLine(int(imu_canvas[0]), int(imu_canvas[1]), int(imu_canvas[0]+imu_canvas[2]), int(imu_canvas[1]))
-        ticks = np.arange(-self.window_time, 0.0001, 0.5)
+        ticks = np.arange(-self.window_time, 0.0001, 1)
         for t in ticks:
             norm = (t + self.window_time) / self.window_time
             x = int(norm * imu_canvas[2] + imu_canvas[0])
@@ -214,7 +243,7 @@ class DelsysPreviewPanel(wx.Panel):
         
         # Add labels for EMG and IMU
         dc.DrawText(f"EMG ({self.emg_scale:.1f} V)", int(emg_canvas[0]) + 5, int(emg_canvas[1]) - int(emg_canvas[3]) + 5)
-        dc.DrawText(f"IMU ({self.imu_scale:.1f} g)", int(imu_canvas[0]) + 5, int(imu_canvas[1]) - int(imu_canvas[3]) + 5)
+        dc.DrawText(f"IMU ({self.imu_scale:.1f} {self.imu_unit})", int(imu_canvas[0]) + 5, int(imu_canvas[1]) - int(imu_canvas[3]) + 5)
 
         event.Skip()
 
@@ -231,30 +260,32 @@ class DelsysPreviewPanel(wx.Panel):
 
         # Main processing (get data and update buffer)
         # But wait, this actually only works for normal sensor, not the analog sensor... 
-        emg_data = self.get_emg_data()
-        imu_data = self.get_imu_data()
+        #emg_data = self.get_emg_data()
+        #imu_data = self.get_imu_data()
+        emg_data, imu_data = self.delsys.get_streaming_data()
+        if len(emg_data) > 0:
+            n = emg_data.shape[0]
+            if n >= self.emg_y.size:
+                self.emg_y = emg_data[-self.emg_y.size:]
+            else:
+                self.emg_y[:-n] = self.emg_y[n:]
+                self.emg_y[-n:] = emg_data
 
-        n = len(emg_data)
-        if n >= self.emg_y.size:
-            self.emg_y = emg_data[-self.emg_y.size:]
-        else:
-            self.emg_y[:-n] = self.emg_y[n:]
-            self.emg_y[-n:] = emg_data
+            n = imu_data.shape[0]
+            if n >= self.imu_y.size:
+                self.imu_y = imu_data[-self.imu_y.size:, :]
+            else:
+                self.imu_y[:-n, :] = self.imu_y[n:, :]
+                self.imu_y[-n:, :] = imu_data
 
-        n = len(imu_data)
-        if n >= self.imu_y.size:
-            self.imu_y = imu_data[-self.imu_y.size:, :]
-        else:
-            self.imu_y[:-n, :] = self.imu_y[n:, :]
-            self.imu_y[-n:, :] = imu_data
+            proc_time = time.perf_counter() - t_start
+            self._timer_count += 1
 
-        proc_time = time.perf_counter() - t_start
-        self._timer_count += 1
+            # Print stats every 200 callbacks to avoid spam (remove for production) 
+            # Testing environment is about 200Hz refresh rate on a 2017 iMac without considering Delsys delays. 
+            # RCP Cart performance seems to cap at 60Hz ish but still more than sufficient for smooth display of data.
+            if self._timer_count % 200 == 0:
+                print(f"Timer called {self._timer_count} times — mean interval { (sum(self._intervals)/len(self._intervals)) if self._intervals else 0:.4f}s -> {self.measured_fps:.1f} Hz; processing {proc_time*1000:.1f} ms")
 
-        # Print stats every 200 callbacks to avoid spam (remove for production) 
-        # Testing environment is about 200Hz refresh rate on a 2017 iMac without considering Delsys delays. 
-        if self._timer_count % 200 == 0:
-            print(f"Timer called {self._timer_count} times — mean interval { (sum(self._intervals)/len(self._intervals)) if self._intervals else 0:.4f}s -> {self.measured_fps:.1f} Hz; processing {proc_time*1000:.1f} ms")
-
-        if self and self.canvas:
-            self.canvas.Refresh(False)
+            if self and self.canvas:
+                self.canvas.Refresh(False)
