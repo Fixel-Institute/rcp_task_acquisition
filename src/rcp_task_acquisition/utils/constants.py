@@ -4,7 +4,7 @@ from psychopy import core
 from pathlib import Path
 import ruamel.yaml
 
-BASEDIR = Path(__file__).resolve().parent.parent.parent.parent.parent
+BASEDIR = Path(__file__).resolve().parent.parent.parent.parent
 CODE_DIR = Path(__file__).resolve().parent.parent
 
 STIM_CONFIG_FILE_PATH = CONFIG_FILE_PATH = os.path.join(CODE_DIR.resolve().parent.parent, 'config_files')
