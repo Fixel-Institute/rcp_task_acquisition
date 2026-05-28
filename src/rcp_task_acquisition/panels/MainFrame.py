@@ -142,7 +142,7 @@ class MainFrame(wx.Frame):
         self.figure,self.axes,self.canvas = self.image_panel.getfigure()
         self.x1 = 0
         self.y1 = 0
-        self.frmDims = [0,540,0,720]
+        self.frmDims = [0,1080,0,1440]
         self.shared = Value(ctypes.c_byte, 0)
         self.camaq = Value(ctypes.c_byte, 0)
         self.frmaq = Value(ctypes.c_int, 0)

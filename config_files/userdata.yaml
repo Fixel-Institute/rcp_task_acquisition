@@ -13,7 +13,7 @@ cameras:
     - 480
     exposure: 1000
     bin: 2
-    gain: 15
+    gain: 20
     gamma: 0.8
     gig_e: false
     flip: false
@@ -24,12 +24,12 @@ cameras:
     ismaster: true
     crop:
     - 40
-    - 640
+    - 1280
     - 30
-    - 480
+    - 960
     exposure: 1000
-    bin: 2
-    gain: 15
+    bin: 1
+    gain: 20
     gamma: 0.8
     gig_e: false
     flip: false
@@ -45,7 +45,7 @@ cameras:
     - 480
     exposure: 1000
     bin: 2
-    gain: 15
+    gain: 20
     gamma: 0.8
     gig_e: false
     flip: false
@@ -61,24 +61,23 @@ cameras:
     - 480
     exposure: 1000
     bin: 2
-    gain: 15
+    gain: 20
     gamma: 0.8
     gig_e: false
     flip: false
     in_use: true
-
     framerate: 240
   leftCamTripod:
     serial:
     ismaster: false
     crop:
-    - 40
-    - 640
-    - 30
-    - 480
+    - 80
+    - 1280
+    - 60
+    - 960
     exposure: 1000
-    bin: 2
-    gain: 15
+    bin: 1
+    gain: 20
     gamma: 0.8
     gig_e: false
     flip: false
@@ -87,13 +86,13 @@ cameras:
     serial:
     ismaster: false
     crop:
-    - 40
-    - 640
-    - 30
-    - 480
+    - 80
+    - 1280
+    - 60
+    - 960
     exposure: 1000
-    bin: 2
-    gain: 15
+    bin: 1
+    gain: 20
     gamma: 0.8
     gig_e: true
     flip: false
@@ -106,7 +105,7 @@ RawDataDir: C:\Users\Public\Documents\RawDataLocal
 VideoDir: C:\Users\Public\Videos\task_videos
 
 
-  
+
 hardware:
   Audio:
     labjack_input: AIN1

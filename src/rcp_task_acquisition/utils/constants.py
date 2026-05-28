@@ -44,6 +44,10 @@ LABJACK_PIN_LIST = ["AIN0", "AIN1", "AIN2", "AIN3", "AIN4", "AIN5", "AIN6", "AIN
     
 ANALOG_RANGES = [11, 9.6, 4.8, 2.4, 1.2, 0.6, 0.3, 0.15, 0.075, 0.036, 0.015]
 
+#Camera val constants
+DOWNSAMPLE_VAL = 1
+CAM_MAX_HEIGHT = 1080
+CAM_MAX_WIDTH = 1440
 
 
 #constants for gui layout

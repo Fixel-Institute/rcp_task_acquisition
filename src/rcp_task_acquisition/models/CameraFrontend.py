@@ -8,7 +8,9 @@ import cv2
 import ctypes
 from multiprocessing import Queue, Value, Array
 import math
+from dataclasses import dataclass
 
+from rcp_task_acquisition.utils.constants import DOWNSAMPLE_VAL, CAM_MAX_WIDTH, CAM_MAX_HEIGHT
 import rcp_task_acquisition.models.CameraProcess as spin
 import rcp_task_acquisition.utils.file_utils as file_utils
 from rcp_task_acquisition.models.Crop import Crop
@@ -17,18 +19,27 @@ from rcp_task_acquisition.utils.logger import get_logger
 logger = get_logger("./models/CameraFrontend") 
 
 
+@dataclass
+class CamSettings:
+    serial: str
+    size: int
+    shape: list[int]
+    bin_val: int
+    frame_dims: list[int]
 
+
+
+
+ 
 class Camera():
     def __init__(self, serial, panel, image_panel, contrast_test, focus_test):
         self.serial = serial
-        self.frmDims = [0,540,0,720]
+        
         self.shared = Value(ctypes.c_byte, 0)
         self.camaq = Value(ctypes.c_byte, 0)
         self.frmaq = Value(ctypes.c_int, 0)
         self.reset_variables()
         self.dtype = 'uint8'
-        self.size = self.frmDims[1]*self.frmDims[3]*3
-        self.shape = [self.frmDims[1], self.frmDims[3],3] 
         self.cam_crop = Crop()
         self.ctrl_panel = panel
         self.image_panel = image_panel
@@ -37,10 +48,19 @@ class Camera():
         self.warning = Warning()
         self.unconnected = list()
         self.camStrList = list()
+        self.cam_settings = list()
 
 
     def setup(self, config, is_unconnected):
         self.cam_cfg = config
+        # self.frmDims = [0,
+        #                 int(CAM_MAX_HEIGHT/DOWNSAMPLE_VAL/2),
+        #                 0,
+        #                 int(CAM_MAX_WIDTH/DOWNSAMPLE_VAL/2)]
+        
+        # self.size = self.frmDims[1]*self.frmDims[3]*3
+        # self.shape = [self.frmDims[1], self.frmDims[3],3] 
+        
         if is_unconnected:
             for s in self.cam_cfg:
                 self.unconnected.append(str(self.cam_cfg[s]['serial']))
@@ -63,20 +83,37 @@ class Camera():
         
         self.ctrl_panel.hardware_test(30*2, camCt, self.camStrList)
         self.figure,self.axes,self.canvas = self.image_panel.getfigure()
-        frame = np.zeros(self.shape, dtype='ubyte')
-        frameBuff = np.zeros(self.size, dtype='ubyte')
+        # frame = np.zeros(self.shape, dtype='ubyte')
+        # frameBuff = np.zeros(self.size, dtype='ubyte')
         for ndx, s in enumerate(self.camStrList):
+            
+            cam_bin = int(self.cam_cfg[s]['bin'])
+            cam_dims = [0,
+                        int(CAM_MAX_HEIGHT/DOWNSAMPLE_VAL/cam_bin),
+                        0,
+                        int(CAM_MAX_WIDTH/DOWNSAMPLE_VAL/cam_bin)]
+            cam = CamSettings(str(self.cam_cfg[s]['serial']),  
+                              cam_dims[1]*cam_dims[3]*3,
+                              [cam_dims[1], cam_dims[3], 3],
+                              cam_bin, 
+                              cam_dims
+                              )
+            self.cam_settings.append(cam)
+            frame = np.zeros(cam.shape, dtype='ubyte')
+            frameBuff = np.zeros(cam.size, dtype='ubyte')
             self.camIdList.append(str(self.cam_cfg[s]['serial']))
             self.cam_crop.add_crop(self.cam_cfg[s]['crop'])
-            self.array4feed.append(Array(ctypes.c_ubyte, self.size))
+            self.array4feed.append(Array(ctypes.c_ubyte, cam.size))
             self.frmGrab.append(Value(ctypes.c_byte, 0))
             self.frame.append(frame)
             self.frameBuff.append(frameBuff)
+            
+                              
         
         for ndx in range(self.cam_pointer, self.cam_pointer+2):
             self.im.append(self.axes[ndx].imshow(self.frame[ndx]))
             self.im[ndx].set_clim(0,255)
-            self.cam_crop.update_crop(ndx, self.axes[ndx], self.frmDims)
+            self.cam_crop.update_crop(ndx, self.axes[ndx], self.cam_settings[ndx].frame_dims)
         self.image_panel.update_names([self.camStrList[self.cam_pointer], self.camStrList[self.cam_pointer+1]])
         self.image_panel.draw()
     
@@ -115,19 +152,19 @@ class Camera():
         self.w = list()
         self.dispSize = list()
         for ndx, im in enumerate(self.frame):
-            self.frame[ndx] = np.zeros(self.shape, dtype='ubyte')
-            self.frameBuff[ndx][0:] = np.frombuffer(self.array4feed[ndx].get_obj(), self.dtype, self.size)
+            self.frame[ndx] = np.zeros(self.cam_settings[ndx].shape, dtype='ubyte')
+            self.frameBuff[ndx][0:] = np.frombuffer(self.array4feed[ndx].get_obj(), self.dtype, self.cam_settings[ndx].size)
             if self.crop:
-                self.h.append(self.cam_crop.croproi[ndx][3])
-                self.w.append(self.cam_crop.croproi[ndx][1])
-                self.y1.append(self.cam_crop.croproi[ndx][2])
-                self.x1.append(self.cam_crop.croproi[ndx][0])
+                self.h.append(int(self.cam_crop.croproi[ndx][3]))
+                self.w.append(int(self.cam_crop.croproi[ndx][1]))
+                self.y1.append(int(self.cam_crop.croproi[ndx][2]))
+                self.x1.append(int(self.cam_crop.croproi[ndx][0]))
                 # self.set_crop.Enable(False)
             else:
-                self.h.append(self.frmDims[1])
-                self.w.append(self.frmDims[3])
-                self.y1.append(self.frmDims[0])
-                self.x1.append(self.frmDims[2])
+                self.h.append(self.cam_settings[ndx].frame_dims)
+                self.w.append(self.cam_settings[ndx].frame_dims)
+                self.y1.append(self.cam_settings[ndx].frame_dims)
+                self.x1.append(self.cam_settings[ndx].frame_dims)
                 # self.set_crop.Enable(True)
 
             self.dispSize.append(self.h[ndx]*self.w[ndx]*3)
@@ -149,7 +186,7 @@ class Camera():
     def deinitialize(self):
         self.serial.close()
         for ndx, im in enumerate(self.im):
-            self.frame[ndx] = np.zeros(self.shape, dtype='ubyte')
+            self.frame[ndx] = np.zeros(self.cam_settings[ndx].shape, dtype='ubyte')
             im.set_data(self.frame[ndx])
             self.cam_crop.croprec[ndx].set_alpha(0)
 
@@ -180,7 +217,7 @@ class Camera():
             return
         for ndx, im in enumerate(self.frame):
             if self.frmGrab[ndx].value == 1:
-                self.frameBuff[ndx][0:] = np.frombuffer(self.array4feed[ndx].get_obj(), self.dtype, self.size)
+                self.frameBuff[ndx][0:] = np.frombuffer(self.array4feed[ndx].get_obj(), self.dtype, self.cam_settings[ndx].size)
                 frame = self.frameBuff[ndx][0:self.dispSize[ndx]].reshape([self.h[ndx], self.w[ndx], 3])
                 for f in range(3):
                     self.frame[ndx][self.y1[ndx]:self.y2[ndx],self.x1[ndx]:self.x2[ndx],f] = frame[:,:,f]
@@ -251,8 +288,9 @@ class Camera():
             self.camq_p2read[camID] = Queue()
             self.cam.append(spin.multiCam_DLC_Cam(self.camq[camID], self.camq_p2read[camID],
                                                camID, self.camIdList,
-                                               self.frmDims, self.camaq,
-                                               self.frmaq, self.array4feed[ndx], self.frmGrab[ndx]))
+                                               self.cam_settings[ndx].frame_dims, self.camaq,
+                                               self.frmaq, self.array4feed[ndx],
+                                               self.frmGrab[ndx], DOWNSAMPLE_VAL))
 
             self.cam[ndx].start()
         time.sleep(1)
@@ -419,7 +457,7 @@ class Camera():
             self.cam_pointer+=2
         self.im[0].set_data(self.frame[self.cam_pointer])
         if len(self.camStrList) <= self.cam_pointer+1:
-            self.im[1].set_data(np.zeros(self.shape, dtype='ubyte')) 
+            self.im[1].set_data(np.zeros(self.cam_settings[0].shape, dtype='ubyte')) 
             self.image_panel.update_names([self.camStrList[self.cam_pointer], " "])
         else:
             self.im[1].set_data(self.frame[self.cam_pointer+1])

@@ -1,8 +1,7 @@
-n_back:
+naturalistic_speech:
   settings:
   - Audio
   - Cameras
-  - Button
   - Photodiode
   - Microphone 1
   - Microphone 2
@@ -10,10 +9,11 @@ n_back:
   - TENS
   - leftCamTop
   - rightCamTop
-naturalistic_speech:
+n_back:
   settings:
   - Audio
   - Cameras
+  - Button
   - Photodiode
   - Microphone 1
   - Microphone 2

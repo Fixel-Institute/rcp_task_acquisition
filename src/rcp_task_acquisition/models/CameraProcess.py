@@ -2,27 +2,30 @@
 import time
 from math import floor
 from multiprocessing import Process
-from queue import Empty
 import numpy as np
 import PySpin
 import sys, linecache
 import cv2
-
+import os
+from pathlib import Path
 import rcp_task_acquisition.utils.file_utils as file_utils
+from rcp_task_acquisition.models.AsyncVideoWriter import AsyncVideoWriter
 from rcp_task_acquisition.utils.camera_utils import identify_dropped_frames
 from rcp_task_acquisition.utils.logger import get_logger
+from queue import Empty
 logger = get_logger("./models/CameraProcess") 
+
 
         
 class multiCam_DLC_Cam(Process):
     def __init__(self, camq, camq_p2read, camID,
-                 idList,cpt, aq, frm, array4feed, frmGrab):
+                 idList,frmdim, aq, frm, array4feed, frmGrab, dwnsmplfac):
         super().__init__()
         self.camID = camID
         self.camq = camq
         self.camq_p2read = camq_p2read
         self.idList = idList
-        self.cpt = cpt
+        self.frmdim = frmdim
         self.aq = aq
         self.frm = frm
         self.array4feed = array4feed
@@ -34,14 +37,15 @@ class multiCam_DLC_Cam(Process):
         self.fps = None
         self.width = None
         self.height = None
+        self.dwnsmplfac = dwnsmplfac
         
         
     def run(self):
         record = False
         ismaster = False
         isunconnected = False
-        record_frame_rate = 30
-        exposure_max = 4000
+        record_frame_rate = None #30
+        # exposure_max = 4000
         config = file_utils.read_config('userdata.yaml')
         user_cfg = config["cameras"]
         test_num = 0
@@ -63,10 +67,15 @@ class multiCam_DLC_Cam(Process):
         else:
             self.framerate =int(config['cam_config']['framerate'])
         current_exposure_time = int(user_cfg[camStr]['exposure'])
-        frameSml = np.zeros([user_cfg[camStr]['crop'][3],user_cfg[camStr]['crop'][1]],'ubyte')
-        aqW = self.cpt[3]
-        aqH = self.cpt[1]
-        frame = np.zeros([aqH,aqW,3],'ubyte')
+        
+        aqW = int(user_cfg[camStr]['crop'][1]*self.dwnsmplfac)
+        aqH = int(user_cfg[camStr]['crop'][3]*self.dwnsmplfac)
+        
+        
+        # frame_results = np.zeros([int(self.frmdim[1]*self.dwnsmplfac),int(self.frmdim[3]*self.dwnsmplfac),3],'ubyte')
+        frame_results = np.zeros([aqH,aqW,3],'ubyte')
+        frameSml = np.zeros([int(aqH/self.dwnsmplfac),int(aqW/self.dwnsmplfac),3],'ubyte')
+        
         method = 'none'
         system = PySpin.System.GetInstance()
         
@@ -136,15 +145,40 @@ class multiCam_DLC_Cam(Process):
                         self.height = aqH
                         self.width = aqW
                         self.fps = round(write_frame_rate,2)
-                        self.video_file = path_base+".mp4"
-                        self.prepare_writers()
-                        file_path = f'{path_base}_timestamps.txt'
-                        f = open(file_path, 'w')
+                        
+                        file_dir, base_name = os.path.split(path_base)
+                        image_dir = os.path.join(file_dir,base_name+'_images')
+                        new_dir = Path(image_dir)
+                        # Ensure the log directory exists
+                        new_dir.mkdir(parents=True, exist_ok=True)
+                        
+                        self.video_file = path_base + ".mp4"
+                        file_path = f"{path_base}_timestamps.txt"
+                        
+                        self.async_writer = AsyncVideoWriter(
+                            video_file=self.video_file,
+                            timestamp_file=file_path,
+                            fps=self.fps,
+                            width=self.width,
+                            height=self.height,
+                            max_queue=256
+                        )
+                        
                         start_time = 0
                         capture_duration = 0
                         record = True
-                        f.write("frame_id,timestamp\n")
                         self.camq_p2read.put('done')
+                        
+                        # # avi.Open(path_base, option)
+                        # self.video_file = path_base+".mp4"
+                        # self.prepare_writers()
+                        # file_path = f'{path_base}_timestamps.txt'
+                        # f = open(file_path, 'w')
+                        # start_time = 0
+                        # capture_duration = 0
+                        # record = True
+                        # f.write("frame_id,timestamp\n")
+                        # self.camq_p2read.put('done')
                     elif msg == 'Start':
                         cam.BeginAcquisition()
                         
@@ -163,37 +197,74 @@ class multiCam_DLC_Cam(Process):
                                 # cam.DeInit()
                                 continue
                             image_result = processor.Convert(image_result, PySpin.PixelFormat_RGB8)
-                            frame_results = image_result.GetNDArray()
+                            if self.aq.value == 2:
+                                frame_results = image_result.GetNDArray()
+                            elif self.aq.value == 1:
+                                frame_results[:,:,:] = image_result.GetNDArray()
                             if record:
-                                frame_results_rgb = cv2.cvtColor(frame_results, cv2.COLOR_RGB2BGR)
-                                test_num+=1
-                                self.video_writer.write(frame_results_rgb)
-                                if start_time == 0:
-                                    start_time = image_result.GetTimeStamp()
-                                    time_test = 0
-                                else:
-                                    time_test = image_result.GetTimeStamp()
-                                    capture_duration = time_test- start_time
-                                    start_time = time_test #image_result.GetTimeStamp()
+                                timestamp = image_result.GetTimeStamp()
                                 frame_id = image_result.GetFrameID()
-                                f.write("%s,%s\n" % (frame_id, round(capture_duration)))
+                                
+                                if start_time == 0:
+                                    start_time = timestamp
+                                    capture_duration = 0
+                                else:
+                                    capture_duration = timestamp - start_time
+                                    start_time = timestamp
+                                
+                                # Important: make a real owned NumPy copy before releasing image_result.
+                                frame_bgr = cv2.cvtColor(frame_results, cv2.COLOR_RGB2BGR).copy()
+                                
+                                ok = self.async_writer.write(frame_bgr, frame_id, capture_duration)
+                                if not ok:
+                                    logger.error(f"{self.camID}: async writer queue full; dropped frame {frame_id}")
+
+                                
+                                # frame_results_rgb = cv2.cvtColor(frame_results, cv2.COLOR_RGB2BGR)
+                                
+                                # test_num+=1
+                                # self.video_writer.write(frame_results_rgb)
+                                # if start_time == 0:
+                                #     start_time = image_result.GetTimeStamp()
+                                #     time_test = 0
+                                # else:
+                                #     time_test = image_result.GetTimeStamp()
+                                #     capture_duration = time_test- start_time
+                                #     start_time = time_test #image_result.GetTimeStamp()
+                                # frame_id = image_result.GetFrameID()
+                                # # image_result.Save(os.path.join(image_dir,base_name+str(frame_id)+'.bmp'))
+                                # # avi.Append(image_result)
+                                # f.write("%s,%s\n" % (frame_id, round(capture_duration)))
                             
-                            image_result.Release()     
+                            
                             if self.aq.value == 1:
                                 # Live feed array
                                 if self.frmGrab.value == 0:
                                     if np.shape(image_result.GetNDArray())[2] == 3:
-                                        frame[:,:,:] = image_result.GetNDArray() #frame_results
-                                        self.array4feed[0:aqH*aqW*3] = frame.flatten()
+                                        # frameA = np.zeros([int(len(frame_results)/4), int(len(frame_results[0])/4), 3])
+                                        frameSml[:, :, :] = frame_results[::self.dwnsmplfac, ::self.dwnsmplfac, :]
+                                        # frame[:,:,:] = frameSml #frame_results
+                                        logger.debug(f"val ={aqH}, {aqW}, {frameSml.shape}")
+                                        self.array4feed[0:int(aqH*aqW*3/self.dwnsmplfac/self.dwnsmplfac)] = frameSml.flatten()
                                     self.frmGrab.value = 1
+                            image_result.Release()     
                             if ismaster:
                                 self.frm.value+=1
                             
                         self.camq.get()
                         percentage_dropped = 0
                         if record:
-                            f.close()
-                            self.video_writer.release()
+                            # avi.Close()
+                            # f.close()
+                            # self.video_writer.release()
+                            self.async_writer.close()
+
+                            if self.async_writer.dropped_by_writer:
+                                logger.error(
+                                    f"{self.camID}: writer dropped {self.async_writer.dropped_by_writer} "
+                                    f"frames because the queue filled"
+                                )
+                                
                             dropped_frame, total_frames, files_len = identify_dropped_frames(file_path, 
                                                                     self.framerate) #int(user_cfg["cam_config"]['framerate']))
                             percentage_dropped = int(np.ceil((dropped_frame/total_frames)*100))
@@ -308,7 +379,7 @@ class multiCam_DLC_Cam(Process):
                         method = self.camq.get()
                         if method == 'crop':
                                 
-                            roi = self.cpt
+                            roi = self.frmdim
                             
                             record_frame_rate = self.framerate #int(user_cfg['cam_config']['framerate'])
                             # Set width
@@ -343,15 +414,17 @@ class multiCam_DLC_Cam(Process):
                             else:
                                 logger.warn('Offset Y not available...')
                                 
-                            aqW = user_cfg[camStr]['crop'][1]
-                            aqH = user_cfg[camStr]['crop'][3]
+                            aqW = int(user_cfg[camStr]['crop'][1]*self.dwnsmplfac)
+                            aqH = int(user_cfg[camStr]['crop'][3]*self.dwnsmplfac)
                         
                         else:
-                            aqW = self.cpt[3]
-                            aqH = self.cpt[1]
+                            aqW = int(self.frmdim[3]*self.dwnsmplfac)
+                            aqH = int(self.frmdim[1]*self.dwnsmplfac)
                             record_frame_rate = int(10)
                             
-                        frame = np.zeros([aqH,aqW,3],'ubyte')
+                        frame_results = np.zeros([aqH,aqW,3],'ubyte')
+                        frameSml = np.zeros([int(aqH/self.dwnsmplfac),int(aqW/self.dwnsmplfac),3],'ubyte')
+                        
                         cam.AcquisitionFrameRateEnable.SetValue(True)
                         cam.Gain.SetValue(user_cfg[camStr]['gain'])
                         
@@ -378,6 +451,7 @@ class multiCam_DLC_Cam(Process):
                         if exposure_time_request <= exposure_time_to_set:
                             exposure_time_to_set = exposure_time_request
                         max_exposure = cam.ExposureTime.GetMax()
+                        logger.debug(f"max exposure: {max_exposure}")
                         current_exposure_time = min(max_exposure, exposure_time_to_set)
                         cam.ExposureTime.SetValue(current_exposure_time)
 
@@ -404,9 +478,9 @@ class multiCam_DLC_Cam(Process):
                     elif msg == 'getExposure':
                         
                         logger.info(f"Current exposure: {current_exposure_time}" )
-                        current_exposure_time = cam.ExposureTime.GetValue()*.9
+                        current_exposure_time = cam.ExposureTime.GetValue()*.99
                         cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Off)
-                        current_exposure_time = min(current_exposure_time,exposure_max)
+                        # current_exposure_time = min(current_exposure_time,exposure_max)
                         cam.ExposureTime.SetValue(current_exposure_time)
                         logger.info(f"Auto-exposure result {camStr}: {current_exposure_time}")
                         logger.debug(f"exposure: {cam.ExposureTime.GetValue()}")
@@ -415,7 +489,6 @@ class multiCam_DLC_Cam(Process):
                         cam.BalanceWhiteAuto.SetValue(PySpin.BalanceWhiteAuto_Continuous)
                     
                     elif msg == 'getBalance':
-                        
                         cam.BalanceWhiteAuto.SetValue(PySpin.BalanceWhiteAuto_Off)
                         cam.Gain.SetValue(user_cfg[camStr]['gain'])
                         cam.Gamma.SetValue(user_cfg[camStr]['gamma'])
