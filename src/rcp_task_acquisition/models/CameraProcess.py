@@ -470,7 +470,7 @@ class multiCam_DLC_Cam(Process):
                         if exposure_time_request <= exposure_time_to_set:
                             exposure_time_to_set = exposure_time_request
                         # max_exposure = cam.ExposureTime.GetMax()
-                        max_exposure = min(max_exposure, exposure_time_to_set)*0.99
+                        max_exposure = min(max_exposure, exposure_time_to_set)*0.75
                         cam.ExposureTime.SetValue(current_exposure_time)
 
                         cam.AcquisitionFrameRateEnable.SetValue(True)

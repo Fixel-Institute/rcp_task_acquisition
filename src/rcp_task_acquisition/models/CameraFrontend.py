@@ -179,8 +179,8 @@ class Camera():
             self.im[0].set_data(self.frame[self.cam_pointer])
             self.im[1].set_data(self.frame[self.cam_pointer+1])
                 
-            self.cam_crop.croprec[0].set_alpha(0.6)
-            self.cam_crop.croprec[1].set_alpha(0.6)
+            # self.cam_crop.croprec[0].set_alpha(0.6)
+            # self.cam_crop.croprec[1].set_alpha(0.6)
         return True
 
     

@@ -4,21 +4,7 @@ cam_config:
   is_unconnected: false
 cameras:
   leftCamTop:
-    serial: '24044011'
-    ismaster: false
-    crop:
-    - 20
-    - 320
-    - 15
-    - 240
-    bin: 2
-    gain: 15
-    gamma: 0.8
-    gig_e: false
-    flip: false
-    in_use: true
-  rightCamTop:
-    serial: '24041797'
+    serial: '26127411'
     ismaster: true
     crop:
     - 20
@@ -31,8 +17,22 @@ cameras:
     gig_e: false
     flip: false
     in_use: true
+  rightCamTop:
+    serial: '26063923'
+    ismaster: false
+    crop:
+    - 20
+    - 320
+    - 15
+    - 240
+    bin: 2
+    gain: 15
+    gamma: 0.8
+    gig_e: false
+    flip: false
+    in_use: true
   leftCamFace:
-    serial: '23531686'
+    serial: '26127421'
     ismaster: false
     crop:
     - 40
@@ -46,7 +46,7 @@ cameras:
     flip: false
     in_use: true
   rightCamFace:
-    serial: '24043993'
+    serial: '26127422'
     ismaster: false
     crop:
     - 40
@@ -60,33 +60,33 @@ cameras:
     flip: false
     in_use: true
   leftCamTripod:
-    serial:
+    serial: '26125063'
     ismaster: false
     crop:
-    - 80
-    - 1280
-    - 60
-    - 960
+    - 40
+    - 640
+    - 90
+    - 360
     bin: 1
-    gain: 10
-    gamma: 0.8
-    gig_e: false
-    flip: false
-    in_use: false
-  rightCamTripod:
-    serial:
-    ismaster: false
-    crop:
-    - 80
-    - 1280
-    - 60
-    - 960
-    bin: 1
-    gain: 10
+    gain: 15
     gamma: 0.8
     gig_e: true
     flip: false
-    in_use: false
+    in_use: true
+  rightCamTripod:
+    serial: '25476395'
+    ismaster: false
+    crop:
+    - 40
+    - 640
+    - 90
+    - 360
+    bin: 1
+    gain: 15
+    gamma: 0.8
+    gig_e: true
+    flip: false
+    in_use: true
 
 
 unitRef: unitME
@@ -97,16 +97,16 @@ VideoDir: C:\Users\Public\Videos\task_videos
 
 hardware:
   Audio:
-    labjack_input: AIN1
+    labjack_input: AIN3
     voltage_range:
     - -0.075
     - 0.075
     graph: ''
   Cameras:
-    labjack_input: AIN0
+    labjack_input: FIO0
     voltage_range:
-    - -11.0
-    - 11.0
+    - 0
+    - 1
     graph: ''
   Button:
     labjack_input: EIO0
@@ -115,10 +115,10 @@ hardware:
     - 1
     graph: ''
   Photodiode:
-    labjack_input: FIO5
+    labjack_input: AIN0
     voltage_range:
-    - 0
-    - 1
+    - -0.015
+    - 0.015
     graph: ''
   Grasp Button:
     labjack_input: FIO1
@@ -127,13 +127,13 @@ hardware:
     - 1
     graph: ''
   Microphone 1:
-    labjack_input: AIN2
+    labjack_input: AIN1
     voltage_range:
     - -0.6
     - 0.6
     graph: ''
   Microphone 2:
-    labjack_input: AIN3
+    labjack_input: AIN2
     voltage_range:
     - -0.6
     - 0.6
