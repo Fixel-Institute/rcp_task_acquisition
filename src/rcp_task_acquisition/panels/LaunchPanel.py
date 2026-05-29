@@ -275,9 +275,11 @@ class LaunchPanel():
     
     def get_metadata(self) -> None: 
         participant_index = self.participant_id.GetSelection()
-        participant_id = self.participant_tuple[participant_index][0] 
+         
         if participant_index == -1:
             participant_id = ""
+        else:
+            participant_id = self.participant_tuple[participant_index][0]
         self.protocol_button.Enable(False)
         self.hardware_panel.Hide()
         self.dialog.SetSize(self.regular_size)
