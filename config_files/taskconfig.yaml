@@ -7,10 +7,13 @@ naturalistic_speech:
   - Microphone 2
   - Barcode
   - TENS
+  - Slow Barcode
   - leftCamTop
   - rightCamTop
   - leftCamFace
   - rightCamFace
+  - leftCamTripod
+  - rightCamTripod
 n_back:
   settings:
   - Audio

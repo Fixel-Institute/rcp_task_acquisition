@@ -273,6 +273,8 @@ class MainFrame(wx.Frame):
         if self.trial_button.GetValue():
             time.sleep(1)
             self.count += 1
+            self.cams.trial = self.count
+            self.cams.session = self.session
             if self.video_status.value != 0 and self.video_status.value != 4:
                 self.video_status.value = 4
                 self.trial_panel.stop_video()
@@ -636,6 +638,7 @@ class MainFrame(wx.Frame):
         
         prev_expt_list = [name for name in os.listdir(self.base_dir) if name.startswith('session')]
         file_count = len(prev_expt_list)+1
+        self.session = file_count
         self.sess_string = '%s%03d' % ('session', file_count)
         self.sess_dir = os.path.join(self.base_dir, self.sess_string)
         if not os.path.exists(self.sess_dir):

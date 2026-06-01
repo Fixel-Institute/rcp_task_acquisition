@@ -36,7 +36,7 @@ HEADERS = ["In Use", "Hardware", "Labjack Pin", "Voltage Range"]#"Graph Min", "G
 HARDWARE_LIST = ["Audio", "Cameras", "Button", "Photodiode", 
                  "Grasp Button", "Microphone 1", "Microphone 2", 
                  "String Potentiometer", "Force Sensor X", "Force Sensor Y", 
-                 "Force Sensor Z", "Barcode", "TENS", "TENS-out"]
+                 "Force Sensor Z", "Barcode", "TENS", "TENS-out", "Slow Barcode"]
 LABJACK_PIN_LIST = ["AIN0", "AIN1", "AIN2", "AIN3", "AIN4", "AIN5", "AIN6", "AIN7", 
                     "FIO0", "FIO1", "FIO2", "FIO3", "FIO4", "FIO5", "FIO6", "FIO7",
                     "EIO0", "EIO1", "EIO2", "EIO3", "EIO4", "EIO5", "EIO6", "EIO7"]

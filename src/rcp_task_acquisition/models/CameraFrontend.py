@@ -49,6 +49,8 @@ class Camera():
         self.unconnected = list()
         self.camStrList = list()
         self.cam_settings = list()
+        self.trial = 0
+        self.session = 0
 
 
     def setup(self, config, is_unconnected):
@@ -321,7 +323,7 @@ class Camera():
             
     def startAq(self):
         if self.serial.serSuccess:
-            msg = 'Sx'
+            msg = f'S{self.session}x{self.trial}x'
             self.serial.write(msg)
         if self.camaq.value < 2:
             self.camaq.value = 1

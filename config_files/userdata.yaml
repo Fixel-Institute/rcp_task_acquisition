@@ -35,10 +35,10 @@ cameras:
     serial: '26127421'
     ismaster: false
     crop:
-    - 40
-    - 640
     - 90
-    - 360
+    - 540
+    - 0
+    - 540
     bin: 1
     gain: 15
     gamma: 0.8
@@ -49,10 +49,10 @@ cameras:
     serial: '26127422'
     ismaster: false
     crop:
-    - 40
-    - 640
     - 90
-    - 360
+    - 540
+    - 0
+    - 540
     bin: 1
     gain: 15
     gamma: 0.8
@@ -63,10 +63,10 @@ cameras:
     serial: '26125063'
     ismaster: false
     crop:
-    - 40
-    - 640
     - 90
-    - 360
+    - 540
+    - 0
+    - 540
     bin: 1
     gain: 15
     gamma: 0.8
@@ -77,10 +77,10 @@ cameras:
     serial: '25476395'
     ismaster: false
     crop:
-    - 40
-    - 640
     - 90
-    - 360
+    - 540
+    - 0
+    - 540
     bin: 1
     gain: 15
     gamma: 0.8
@@ -170,6 +170,12 @@ hardware:
     graph: ''
   TENS-out:
     labjack_input: FIO3
+    voltage_range:
+    - 0
+    - 1
+    graph: ''
+  Slow Barcode:
+    labjack_input: FIO4
     voltage_range:
     - 0
     - 1
