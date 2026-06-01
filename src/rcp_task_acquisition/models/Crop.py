@@ -61,8 +61,8 @@ class Crop():
         self.croprec[ndx].set_y(self.croproi[ndx][2])
         self.croprec[ndx].set_width(self.croproi[ndx][1])
         self.croprec[ndx].set_height(self.croproi[ndx][3])
-        if not self.croproi[ndx][0] == 0:
-            self.croprec[ndx].set_alpha(0.6)
+        # if not self.croproi[ndx][0] == 0:
+        #     self.croprec[ndx].set_alpha(0.6)
         # self.figure.canvas.draw()
         
         

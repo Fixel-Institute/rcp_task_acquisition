@@ -1,19 +1,24 @@
-n_back:
+naturalistic_speech:
   settings:
   - Audio
   - Cameras
-  - Button
   - Photodiode
   - Microphone 1
   - Microphone 2
   - Barcode
   - TENS
+  - Slow Barcode
   - leftCamTop
   - rightCamTop
-naturalistic_speech:
+  - leftCamFace
+  - rightCamFace
+  - leftCamTripod
+  - rightCamTripod
+n_back:
   settings:
   - Audio
   - Cameras
+  - Button
   - Photodiode
   - Microphone 1
   - Microphone 2

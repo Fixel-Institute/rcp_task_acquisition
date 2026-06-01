@@ -4,7 +4,7 @@ from psychopy import core
 from pathlib import Path
 import ruamel.yaml
 
-BASEDIR = Path(__file__).resolve().parent.parent.parent.parent.parent
+BASEDIR = Path(__file__).resolve().parent.parent.parent.parent
 CODE_DIR = Path(__file__).resolve().parent.parent
 
 STIM_CONFIG_FILE_PATH = CONFIG_FILE_PATH = os.path.join(CODE_DIR.resolve().parent.parent, 'config_files')
@@ -36,7 +36,7 @@ HEADERS = ["In Use", "Hardware", "Labjack Pin", "Voltage Range"]#"Graph Min", "G
 HARDWARE_LIST = ["Audio", "Cameras", "Button", "Photodiode", 
                  "Grasp Button", "Microphone 1", "Microphone 2", 
                  "String Potentiometer", "Force Sensor X", "Force Sensor Y", 
-                 "Force Sensor Z", "Barcode", "TENS", "TENS-out"]
+                 "Force Sensor Z", "Barcode", "TENS", "TENS-out", "Slow Barcode"]
 LABJACK_PIN_LIST = ["AIN0", "AIN1", "AIN2", "AIN3", "AIN4", "AIN5", "AIN6", "AIN7", 
                     "FIO0", "FIO1", "FIO2", "FIO3", "FIO4", "FIO5", "FIO6", "FIO7",
                     "EIO0", "EIO1", "EIO2", "EIO3", "EIO4", "EIO5", "EIO6", "EIO7"]
@@ -46,6 +46,10 @@ DELSYS_SENSOR_HEMISPHERE_LIST = ["Left", "Right", "Analog Sensor"]
 
 ANALOG_RANGES = [11, 9.6, 4.8, 2.4, 1.2, 0.6, 0.3, 0.15, 0.075, 0.036, 0.015]
 
+#Camera val constants
+DOWNSAMPLE_VAL = 2
+CAM_MAX_HEIGHT = 1080
+CAM_MAX_WIDTH = 1440
 
 
 #constants for gui layout

@@ -577,10 +577,10 @@ class HardwarePanel(wx.Panel):
                     camera_dict[self._get_name(camera)]["ismaster"] = camera.is_primary.GetValue()
                     camera_dict[self._get_name(camera)]["serial"] = camera.serial.GetStrings()[serial]
                     camera_dict[self._get_name(camera)]["in_use"] = camera.in_use_all
-                    if camera.gig_e.GetValue():
-                        camera_dict[self._get_name(camera)]["framerate"] = int(240/2)
-                    else:
-                        camera_dict[self._get_name(camera)]["framerate"] = int(240)
+                    # if camera.gig_e.GetValue():
+                    #     camera_dict[self._get_name(camera)]["framerate"] = int(240/2)
+                    # else:
+                    #     camera_dict[self._get_name(camera)]["framerate"] = int(240)
                     camera_dict[self._get_name(camera)]["gig_e"] = camera.gig_e.GetValue()
                     camera_dict[self._get_name(camera)]["flip"] = camera.flip_vid.GetValue()
                 

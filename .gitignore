@@ -1,5 +1,6 @@
 **/__pycache__/
 config_files/
+database/
 
 # Distribution / packaging
 .Python

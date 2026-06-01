@@ -4,101 +4,89 @@ cam_config:
   is_unconnected: false
 cameras:
   leftCamTop:
-    serial: '24044011'
-    ismaster: false
-    crop:
-    - 40
-    - 640
-    - 30
-    - 480
-    exposure: 1000
-    bin: 2
-    gain: 15
-    gamma: 0.8
-    gig_e: false
-    flip: false
-    in_use: true
-    framerate: 240
-  rightCamTop:
-    serial: '24041797'
+    serial: '26127411'
     ismaster: true
     crop:
-    - 40
-    - 640
-    - 30
-    - 480
-    exposure: 1000
+    - 20
+    - 320
+    - 15
+    - 240
     bin: 2
     gain: 15
     gamma: 0.8
     gig_e: false
     flip: false
     in_use: true
-    framerate: 240
+  rightCamTop:
+    serial: '26063923'
+    ismaster: false
+    crop:
+    - 20
+    - 320
+    - 15
+    - 240
+    bin: 2
+    gain: 15
+    gamma: 0.8
+    gig_e: false
+    flip: false
+    in_use: true
   leftCamFace:
-    serial: '23531686'
+    serial: '26127421'
     ismaster: false
     crop:
-    - 40
-    - 640
-    - 30
-    - 480
-    exposure: 1000
-    bin: 2
-    gain: 15
-    gamma: 0.8
-    gig_e: false
-    flip: false
-    in_use: true
-    framerate: 240
-  rightCamFace:
-    serial: '25504066'
-    ismaster: false
-    crop:
-    - 40
-    - 640
-    - 30
-    - 480
-    exposure: 1000
-    bin: 2
-    gain: 15
-    gamma: 0.8
-    gig_e: false
-    flip: false
-    in_use: true
-
-    framerate: 240
-  leftCamTripod:
-    serial:
-    ismaster: false
-    crop:
-    - 40
-    - 640
-    - 30
-    - 480
-    exposure: 1000
-    bin: 2
-    gain: 15
-    gamma: 0.8
-    gig_e: false
-    flip: false
-    in_use: false
-  rightCamTripod:
-    serial:
-    ismaster: false
-    crop:
-    - 40
-    - 640
-    - 30
-    - 480
-    exposure: 1000
-    bin: 2
+    - 90
+    - 540
+    - 0
+    - 540
+    bin: 1
     gain: 15
     gamma: 0.8
     gig_e: true
     flip: false
-    in_use: false
-    framerate: 240
+    in_use: true
+  rightCamFace:
+    serial: '26127422'
+    ismaster: false
+    crop:
+    - 90
+    - 540
+    - 0
+    - 540
+    bin: 1
+    gain: 15
+    gamma: 0.8
+    gig_e: true
+    flip: false
+    in_use: true
+  leftCamTripod:
+    serial: '26125063'
+    ismaster: false
+    crop:
+    - 90
+    - 540
+    - 0
+    - 540
+    bin: 1
+    gain: 15
+    gamma: 0.8
+    gig_e: true
+    flip: false
+    in_use: true
+  rightCamTripod:
+    serial: '25476395'
+    ismaster: false
+    crop:
+    - 90
+    - 540
+    - 0
+    - 540
+    bin: 1
+    gain: 15
+    gamma: 0.8
+    gig_e: true
+    flip: false
+    in_use: true
 
 
 unitRef: unitME
@@ -106,10 +94,10 @@ RawDataDir: C:\Users\Public\Documents\RawDataLocal
 VideoDir: C:\Users\Public\Videos\task_videos
 
 
-  
+
 hardware:
   Audio:
-    labjack_input: AIN1
+    labjack_input: AIN3
     voltage_range:
     - -0.075
     - 0.075
@@ -139,13 +127,13 @@ hardware:
     - 1
     graph: ''
   Microphone 1:
-    labjack_input: AIN2
+    labjack_input: AIN1
     voltage_range:
     - -0.6
     - 0.6
     graph: ''
   Microphone 2:
-    labjack_input: AIN3
+    labjack_input: AIN2
     voltage_range:
     - -0.6
     - 0.6
@@ -182,6 +170,12 @@ hardware:
     graph: ''
   TENS-out:
     labjack_input: FIO3
+    voltage_range:
+    - 0
+    - 1
+    graph: ''
+  Slow Barcode:
+    labjack_input: FIO4
     voltage_range:
     - 0
     - 1
