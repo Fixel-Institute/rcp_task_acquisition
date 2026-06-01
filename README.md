@@ -11,6 +11,7 @@ This is the outline for installing this program with the expected hardware confi
 
 ### Installing Windows
 1. Install Windows 11 per University standards. It will be helpful to have some level of admin acess to install programs.
+    - If creating a local account instead of a university account DO NOT connect to wifi during installation. If you accidentally connect, you can press either Shift+Fn+F10 or press Shift+F10 and type `start ms-cxh:localonly`.
 2. Adjust settings
     - Set Main Display:
         1. Go to **Settings -> System -> Display**
