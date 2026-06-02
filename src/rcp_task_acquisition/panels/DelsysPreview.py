@@ -6,22 +6,21 @@ from collections import deque
 class DelsysPreview(wx.Frame):
     def __init__(self, delsys, parent):
         super(DelsysPreview, self).__init__(parent, title="Delsys Sensor Preview", size=(800, 500))
-        splitter = wx.SplitterWindow(self)
+        self.splitter = wx.SplitterWindow(self)
 
         self.delsys = delsys
-        self.preview_panel = DelsysPreviewPanel(splitter, delsys)
-        self.control_panel = DelsysControlPanel(splitter, onSensorChange=self.preview_panel.on_sensor_change, onIMUChange=self.preview_panel.on_imu_change)
-        splitter.SplitHorizontally(self.control_panel, self.preview_panel, sashPosition=100)
+        self.preview_panel = DelsysPreviewPanel(self.splitter, delsys)
+        self.control_panel = DelsysControlPanel(self.splitter, onSensorChange=self.preview_panel.on_sensor_change, onIMUChange=self.preview_panel.on_imu_change)
+        sensor_ids = self.delsys.get_sensors()
+        self.control_panel.setup_controls(sensor_ids)
+        self.splitter.SplitHorizontally(self.control_panel, self.preview_panel, sashPosition=100)
 
         self.Bind(wx.EVT_CLOSE, self.on_close)
 
     def on_close(self, event):
         self.preview_panel.stop()
-        event.Skip()
     
     def Show(self, show = True):
-        sensor_ids = self.delsys.get_sensors()
-        self.control_panel.setup_controls(sensor_ids)
         #self.preview_panel.start()
         return super().Show(show)
 
@@ -100,13 +99,6 @@ class DelsysPreviewPanel(wx.Panel):
         self._interval_ms = 1
         self._timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.on_timer, self._timer)
-        #self._timer.Start(self._interval_ms)
-
-        # Measuring timer/callback rate and processing time, remove for production
-        self._last_timer_ts = None
-        self._intervals = deque(maxlen=120)
-        self._timer_count = 0
-        self.measured_fps = 0.0
 
     def start(self):
         self._timer.Start(self._interval_ms)
@@ -248,20 +240,8 @@ class DelsysPreviewPanel(wx.Panel):
         event.Skip()
 
     def on_timer(self, event):
-        # Measure callback interval and processing time (remove for production)
-        t_start = time.perf_counter()
-        if self._last_timer_ts is not None:
-            interval = t_start - self._last_timer_ts
-            self._intervals.append(interval)
-            if len(self._intervals) >= 3:
-                mean_int = sum(self._intervals) / len(self._intervals)
-                self.measured_fps = 1.0 / mean_int if mean_int > 0 else 0.0
-        self._last_timer_ts = t_start
-
         # Main processing (get data and update buffer)
         # But wait, this actually only works for normal sensor, not the analog sensor... 
-        #emg_data = self.get_emg_data()
-        #imu_data = self.get_imu_data()
         emg_data, imu_data = self.delsys.get_streaming_data()
         if len(emg_data) > 0:
             n = emg_data.shape[0]
@@ -277,15 +257,6 @@ class DelsysPreviewPanel(wx.Panel):
             else:
                 self.imu_y[:-n, :] = self.imu_y[n:, :]
                 self.imu_y[-n:, :] = imu_data
-
-            proc_time = time.perf_counter() - t_start
-            self._timer_count += 1
-
-            # Print stats every 200 callbacks to avoid spam (remove for production) 
-            # Testing environment is about 200Hz refresh rate on a 2017 iMac without considering Delsys delays. 
-            # RCP Cart performance seems to cap at 60Hz ish but still more than sufficient for smooth display of data.
-            if self._timer_count % 200 == 0:
-                print(f"Timer called {self._timer_count} times — mean interval { (sum(self._intervals)/len(self._intervals)) if self._intervals else 0:.4f}s -> {self.measured_fps:.1f} Hz; processing {proc_time*1000:.1f} ms")
 
             if self and self.canvas:
                 self.canvas.Refresh(False)
