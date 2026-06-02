@@ -248,6 +248,10 @@ class MainFrame(wx.Frame):
             self.trial_panel.start_new_trial()
             self.trial_panel.show()
 
+            if self.task == "indefinite_recording":
+                self.trial_button.SetValue(True)
+                self.trial_event(event)
+
             # Start Delsys
             if self.delsys.is_connected():
                 self.delsys.start(filename=os.path.join(self.sess_dir, f"{self.date_string}_{self.user_cfg['unitRef']}_{self.sess_string}_delsys.mdat"))
@@ -299,7 +303,6 @@ class MainFrame(wx.Frame):
             self.finish.value = 0
             try:
                 self.msgq.put("update_data")
-                
                 data = str(self.trial_panel.get_result())
                 self.msgq.put(data)
             except:

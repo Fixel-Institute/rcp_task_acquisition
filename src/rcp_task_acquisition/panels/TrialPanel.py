@@ -4,7 +4,21 @@ import wx
 from rcp_task_acquisition.utils.logger import get_logger
 logger = get_logger("./panels/TrialPanel") 
 
+class HiddenButton():
+    def __init__(self):
+        self.value = False
 
+    def GetValue(self):
+        return self.value
+
+    def SetValue(self, value):
+        self.value = value
+
+    def SetLabel(self, text):
+        self.label = text
+    
+    def Bind(self, event_type, event):
+        pass
 
 class TrialPanel(wx.Panel):
     def __init__(self, parent=None):
@@ -40,6 +54,8 @@ class TrialPanel(wx.Panel):
         grid_sizer.Add(self.repeat_trial , pos=(1, 0), span=(0,2), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
         return grid_sizer
     
+    def _setup_blank_controls(self):
+        self.continue_button = HiddenButton()
     
     def setup_instruction_playback(self):
         self.video_title = wx.StaticText(self, label="")

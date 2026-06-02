@@ -121,3 +121,26 @@ verb_generation:
   - TENS
   - leftCamTop
   - rightCamTop
+  - leftCamFace
+  - rightCamFace
+
+indefinite_recording:
+  settings:
+  - Audio
+  - Cameras
+  - Photodiode
+  - Grasp Button
+  - Microphone 1
+  - Microphone 2
+  - Force Sensor X
+  - Force Sensor Y
+  - Force Sensor Z
+  - Barcode
+  - Slow Barcode
+  - TENS
+  - leftCamTop
+  - rightCamTop
+  - leftCamFace
+  - rightCamFace
+  - leftCamTripod
+  - rightCamTripod

@@ -9,6 +9,7 @@ import rcp_task_acquisition.utils.file_utils as files
 from rcp_task_acquisition.tasks.UpdrsTap.BasicTaps import BasicTaps
 from rcp_task_acquisition.utils.displays import Window
 from rcp_task_acquisition.tasks.NaturalisticSpeech.NaturalisticSpeech import NaturalisticSpeech
+from rcp_task_acquisition.tasks.IndefiniteRecording.IndefiniteRecording import IndefiniteRecording
 from rcp_task_acquisition.tasks.Diadochokinesis.Diadochokinesis import Diadochokinesis
 from rcp_task_acquisition.tasks.VerbalFluency.VerbalFluency import VerbalFluency
 from rcp_task_acquisition.tasks.VowelSpace.VowelSpace import VowelSpace
@@ -164,7 +165,6 @@ class StimulusThread(Process):
             
         logger.info(f"iterable: {self.stimulus}")
             
-        
     def end_stimulus(self):
         self.window.idle(time_list = [])
         if hasattr(self.stimulus, 'saveMetadata'):
@@ -173,7 +173,6 @@ class StimulusThread(Process):
             json_str = json.dumps(results)
             logger.debug(f"jsonstr: {json_str}")
             self.resultsq.put(json_str)
-    
     
     def close_window(self):
         self.alive = False
@@ -189,8 +188,6 @@ class StimulusThread(Process):
         pass
         
         
-        
-
     def play_video(self, trial=None):
         if self.stimulus != None:
             self.stimulus.play_instructional_video(trial)
