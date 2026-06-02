@@ -18,7 +18,7 @@ from rcp_task_acquisition.tasks.IndefiniteRecording.panel import IndefiniteRecor
 
 class ControlsPanel(wx.Panel):
     def __init__(self,parent, ctrl_panel, task="task"):
-        wx.Panel.__init__(self, parent, -1,style=wx.SUNKEN_BORDER)
+        wx.Panel.__init__(self, parent, -1,style=wx.SUNKEN_BORDER | wx.WANTS_CHARS)
         
         vertical_spacer = wx.GridBagSizer(5, 5)
         vertical_position = 0

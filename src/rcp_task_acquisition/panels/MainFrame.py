@@ -90,7 +90,7 @@ class MainFrame(wx.Frame):
         self.image_panel.updateImage(self.gui_size)
         self.ctrl_panel = GraphPanel(vSplitter, self.gui_size)
         self.widget_panel = ControlsPanel(topSplitter, self.ctrl_panel)
-
+        self.widget_panel.Bind(wx.EVT_CHAR_HOOK, self._on_key_control)
         vSplitter.SplitHorizontally(self.image_panel, self.ctrl_panel, sashPosition=int(self.gui_size[1]*0.6))
         topSplitter.SplitVertically(vSplitter, self.widget_panel, sashPosition=int(self.gui_size[0]*0.78))
 
@@ -210,7 +210,17 @@ class MainFrame(wx.Frame):
         wx.CallAfter(self.image_panel.reset_sizing)
         event.Skip() 
         # pass
-    
+
+    def _on_key_control(self, event):
+        key_code = event.GetKeyCode()
+        if key_code == 325: # numpad 1
+            self.task_button.SetValue(not self.task_button.GetValue())
+            self.run_task(event)
+        elif key_code == 326:
+            if self.task_active:
+                self.trial_button.SetValue(not self.trial_button.GetValue())
+                self.trial_event(event)
+
     def run_task(self, event):
         self.Enable()
         if self.task_button.GetValue():
