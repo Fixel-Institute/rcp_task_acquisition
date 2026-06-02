@@ -737,7 +737,7 @@ class MainFrame(wx.Frame):
         self.lj.stop_labjack()
         
         if self.delsys_preview:
-            self.delsys_preview.Destroy()
+            self.delsys_preview.Hide()
         if self.delsys.is_connected():
             self.delsys.stop()
         
@@ -879,7 +879,8 @@ class MainFrame(wx.Frame):
             if self.task == "vowel_space":
                 self.trial_panel.next_button.Bind(wx.EVT_BUTTON, self.next_trial)
 
-        self.delsys_preview.Show()
+        if self.delsys_preview:
+            self.delsys_preview.Show()
         super().Show()
         return True
         

@@ -314,17 +314,18 @@ class HardwarePanel(wx.Panel):
             self.trigno_list[sensor_id].hemisphere.Enable(True)
             self.trigno_list[sensor_id].position.Enable(True)
             
-            sensor_name = self.trigno_list[sensor_id].name.GetLabel() 
-            if sensor_name in self.user_config["delsys"]:
-                try:
-                    self.trigno_list[sensor_id].hemisphere.SetSelection(DELSYS_SENSOR_HEMISPHERE_LIST.index(self.user_config["delsys"][sensor_name]["hemisphere"])) 
-                except:
-                    logger.error(f"{sensor_name} is configured for Hemisphere {self.user_config['delsys'][sensor_name]['hemisphere']}, not part of the options.")
-                
-                try:
-                    self.trigno_list[sensor_id].position.SetSelection(DELSYS_SENSOR_POSITION_LIST.index(self.user_config["delsys"][sensor_name]["position"])) 
-                except:
-                    logger.error(f"{sensor_name} is configured for Hemisphere {self.user_config['delsys'][sensor_name]['hemisphere']}, not part of the options.")
+            sensor_name = self.trigno_list[sensor_id].name.GetLabel()
+            if "delsys" in self.user_config:
+                if sensor_name in self.user_config["delsys"]:
+                    try:
+                        self.trigno_list[sensor_id].hemisphere.SetSelection(DELSYS_SENSOR_HEMISPHERE_LIST.index(self.user_config["delsys"][sensor_name]["hemisphere"])) 
+                    except:
+                        logger.error(f"{sensor_name} is configured for Hemisphere {self.user_config['delsys'][sensor_name]['hemisphere']}, not part of the options.")
+                    
+                    try:
+                        self.trigno_list[sensor_id].position.SetSelection(DELSYS_SENSOR_POSITION_LIST.index(self.user_config["delsys"][sensor_name]["position"])) 
+                    except:
+                        logger.error(f"{sensor_name} is configured for Hemisphere {self.user_config['delsys'][sensor_name]['hemisphere']}, not part of the options.")
 
         delsys_box = wx.StaticBox(self, label="Delsys Setup")
         hardware_sizer = wx.StaticBoxSizer(delsys_box, wx.HORIZONTAL)

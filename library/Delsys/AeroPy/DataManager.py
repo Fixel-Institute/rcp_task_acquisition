@@ -35,8 +35,6 @@ class DataKernel():
             except IndexError:
                 pass
 
-            print(outArr)
-
     def processYTData(self, data_queue):
         """Processes the data from the DelsysAPI and place it in the data_queue argument"""
         outArr = self.GetYTData()
@@ -71,7 +69,6 @@ class DataKernel():
             try:
                 # Dictionary<string, List<double>> (key = Guid (Unique channel ID), value = List(Y) (Y = sample value)
                 DataOut = self.TrigBase.PollDataByString()
-                print(list(DataOut.Keys))
                 if len(list(DataOut.Keys)) > 0:
                     # Set output array size to the amount of channels set during ConfigureCollectionOutput() in TrignoBase.py
                     outArr = [[] for _ in range(len(self.trigno_base.channel_guids))]

@@ -15,9 +15,7 @@ class ReachGraspPanel(TrialPanel):
         vertical_sizer = wx.BoxSizer(wx.VERTICAL)
         vertical_sizer.Add(self._setup_fingertap(), 0, wx.ALIGN_LEFT | wx.ALL, self.border)
         self.SetSizer(vertical_sizer)
-
-
-        
+    
     def _setup_fingertap(self):
         self.trial_text = wx.StaticText(self, label="Trial # 1")
         

@@ -72,6 +72,9 @@ class TrignoBase:
             case "Trigno Base Station":
                 self.trigno_station_type = TrignoType.BASESTATION
 
+    def pair_sensor(self, pairnumber):
+        return self.TrigBase.PairSensor(pairnumber)
+
     def Pair_Callback(self):
         return self.TrigBase.PairSensor(self.pairnumber)
 

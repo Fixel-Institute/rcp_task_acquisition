@@ -140,7 +140,7 @@ class LabjackFrontend():
         else:
             # Warning("labjack").display()
             labjack_button = self.graph_panel.get_graph_button()
-            labjack_button.SetValue(False)
+            labjack_button.Enable(False)
             return False
 
     def stop_labjack(self):

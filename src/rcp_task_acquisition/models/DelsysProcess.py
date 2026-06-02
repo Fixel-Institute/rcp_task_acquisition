@@ -174,6 +174,9 @@ class DelsysController():
         self.DataWriter.close()
         logger.info("Delsys device stopped streaming.")
     
+    def pair_sensor(self, sensor_id):
+        self.Trigno.TrigBase.PairSensor(sensor_id)
+
     def get_sensors(self):
         sensor_ids = []
         for sensor in self.SensorList:
