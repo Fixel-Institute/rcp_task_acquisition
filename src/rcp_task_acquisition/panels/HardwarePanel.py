@@ -139,7 +139,6 @@ class HardwarePanel(wx.Panel):
         for hardware in hardware_config:
             if hardware not in self.row_list:
                 user_input_list.append(hardware)
-                
         for hardware in self.row_list:
             in_use = wx.CheckBox(self, id=wx.ID_ANY)
             in_use.Bind(wx.EVT_CHECKBOX, self.update_options)
@@ -169,7 +168,7 @@ class HardwarePanel(wx.Panel):
             
             labjack_sizer.Add(voltage_ranges, pos=(vertical_pos,3), span=(0,1), flag=wx.ALIGN_CENTER | wx.ALL, border=self.border)
             vertical_pos+=1
-
+            logger.debug(f"hardware:  {hardware}")
             new_hardware = HardwareRow(name, in_use, labjack, voltage_ranges) #min_graph, max_graph, voltage_ranges)
             if hardware in hardware_config.keys():
                 labjack.Enable(True)
@@ -179,6 +178,7 @@ class HardwarePanel(wx.Panel):
                 labjack_value = LABJACK_PIN_LIST.index(hardware_config[hardware]["labjack_input"])
                 labjack.SetSelection(labjack_value)
                 voltage_ranges.Enable(True)
+                
                 if "voltage_range" in hardware_config[hardware].keys() and "A" in hardware_config[hardware]["labjack_input"]:
                     volt_index = ANALOG_RANGES.index(hardware_config[hardware]["voltage_range"][1])
                     voltage_ranges.SetSelection(volt_index)

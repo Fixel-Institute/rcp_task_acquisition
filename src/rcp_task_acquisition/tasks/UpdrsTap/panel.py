@@ -28,7 +28,7 @@ class FingerTapPanel(TrialPanel):
         self.left_radio.Bind(wx.EVT_RADIOBUTTON, self.on_select)
         self.right_radio = wx.RadioButton(self, label="Right Hand")
         self.right_radio.Bind(wx.EVT_RADIOBUTTON, self.on_select)
-        
+        self.right_radio.SetValue(True)
         self.seconds_text = wx.StaticText(self, label= "Time: 10 secs")
         
         self.continue_button = wx.ToggleButton(self, label="Begin Trial", size=(self.button_width*2, -1))
