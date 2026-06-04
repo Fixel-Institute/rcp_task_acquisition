@@ -1,10 +1,9 @@
 import os
 import wx
-import numpy as np 
-import time
-from collections import deque
+import threading
 
 from rcp_task_acquisition.utils import file_utils
+from rcp_task_acquisition.utils.bravo_uploader import uploadRCPSession
 
 class UploadDataFrame(wx.Frame):
     def __init__(self, parent):
@@ -22,7 +21,7 @@ class DirectoryLookupPanel(wx.Panel):
         self.upload_directory = ""
 
         self.layout = wx.BoxSizer(wx.VERTICAL)
-        
+
         # Root directory input
         self.root_dir_label = wx.StaticText(self, label="Root Directory:")
         self.root_dir_input = wx.TextCtrl(self)
@@ -47,8 +46,13 @@ class DirectoryLookupPanel(wx.Panel):
         self.layout.Add(self.upload_button, 0, wx.ALL, 5)
         
         self.root_dir_input.SetValue(self.root_directory)
+
         self.SetSizer(self.layout)
-    
+
+        self.overlay = wx.Overlay()
+        self.spinner = wx.ActivityIndicator(self)
+        self.spinner.Hide()  # Hide it initially
+
     def on_root_dir_change(self, event):
         new_root = self.root_dir_input.GetValue()
         if new_root.endswith(os.path.sep):
@@ -67,14 +71,14 @@ class DirectoryLookupPanel(wx.Panel):
                     self.update_subdirectories()
             else: 
                 if len(self.subdirectories) == 0 or not selected_subdir == self.subdirectories[-1]:
-                    has_more_level = False
+                    has_session_file = False
                     subpath = os.path.sep.join(self.subdirectories)
                     for item in os.listdir(os.path.join(self.root_directory, subpath, selected_subdir)):
-                        if os.path.isdir(os.path.join(self.root_directory, subpath, selected_subdir, item)):
-                            has_more_level = True
+                        if item.endswith(".yaml"):
+                            has_session_file = True
                             break
 
-                    if has_more_level:
+                    if not has_session_file:
                         self.subdirectories.append(selected_subdir)
                         self.update_subdirectories()
                     else:
@@ -93,6 +97,40 @@ class DirectoryLookupPanel(wx.Panel):
     def on_upload(self, event):
         if self.upload_directory:
             wx.MessageBox(f"Uploading data from: {self.upload_directory}", "Upload", wx.OK | wx.ICON_INFORMATION)
-            # TODO: I was writing this at home so I don't have a good way to test yet. 
+
+            self.uploading_worker_thread = threading.Thread(target=uploadRCPSession, args=(self.upload_directory, self.upload_directory.replace(self.root_directory + os.path.sep, "").replace(os.path.sep, "_"),
+                                                                                           self.on_upload_complete, self.on_upload_error), daemon=True)
+            self.uploading_worker_thread.start()
+            self.upload_button.Enable(False)
+            self.subdir_listbox.Enable(False)
+
+            panel_size = self.GetSize()
+            spinner_size = self.spinner.GetSize()
+            x = (panel_size.width - spinner_size.width) // 2
+            y = (panel_size.height - spinner_size.height) // 2
+            self.spinner.SetPosition(wx.Point(x, y))
+            self.spinner.Show()
+            self.spinner.Start()
+
         else:
             wx.MessageBox("Please select a valid directory to upload.", "Error", wx.OK | wx.ICON_ERROR)
+
+    def on_upload_error(self, error_message):
+        wx.MessageBox(f"Upload failed: {error_message}", "Error", wx.OK | wx.ICON_ERROR)
+        self.upload_button.Enable(True)
+        self.subdir_listbox.Enable(True)
+
+        self.spinner.Stop()
+        self.spinner.Hide()
+        self.overlay.Reset()  # Clear the overlay
+        self.Refresh()
+
+    def on_upload_complete(self, result):
+        wx.MessageBox(f"Upload complete: {result}", "Success", wx.OK | wx.ICON_INFORMATION)
+        self.upload_button.Enable(True)
+        self.subdir_listbox.Enable(True)
+
+        self.spinner.Stop()
+        self.spinner.Hide()
+        self.overlay.Reset()  # Clear the overlay
+        self.Refresh()

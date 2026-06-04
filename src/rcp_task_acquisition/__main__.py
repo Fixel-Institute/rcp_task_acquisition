@@ -4,6 +4,9 @@ import wx
 import matplotlib
 matplotlib.use("qtagg")
 
+from dotenv import load_dotenv
+load_dotenv()
+
 from rcp_task_acquisition.panels.SwitchPanel import SwitchPanel
 
 def run_app():

@@ -1,7 +1,7 @@
 """
 This class creates an instance of the Trigno base. Put your key and license here.
 """
-import threading
+import os, sys
 import time
 from pythonnet import load
 from enum import Enum
@@ -15,8 +15,8 @@ clr.AddReference("System.Collections")
 
 from Aero import AeroPy
 
-#key = ""
-#license = ""
+key = os.getenv("DelsysKey")
+license = os.getenv("DelsysLicense")
 
 class TrignoType(Enum):
     LITE = 0
