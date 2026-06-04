@@ -4,6 +4,8 @@ import numpy as np
 import time
 from collections import deque
 
+from rcp_task_acquisition.utils import file_utils
+
 class UploadDataFrame(wx.Frame):
     def __init__(self, parent):
         super(UploadDataFrame, self).__init__(parent, title="Data Upload Panel", size=(800, 500))
@@ -14,7 +16,8 @@ class DirectoryLookupPanel(wx.Panel):
     def __init__(self, parent):
         super(DirectoryLookupPanel, self).__init__(parent)
         
-        self.root_directory = "/Users/jcagle/Documents/Github/rcp_task_acquisition/Data"
+        self.user_cfg = file_utils.read_config('userdata.yaml')
+        self.root_directory = self.user_cfg.get('RawDataDir', "")
         self.subdirectories = []
         self.upload_directory = ""
 
