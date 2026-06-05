@@ -31,6 +31,9 @@ class StimulusBase():
         self.trial = 0
         return
 
+    def present_prep(self):
+        pass
+
     def present(self):
         
         self.trial+=1

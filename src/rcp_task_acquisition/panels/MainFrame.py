@@ -254,7 +254,11 @@ class MainFrame(wx.Frame):
             # self.hardware_button.Enable(False)
             if self.task == "vowel_space":
                 self.msgq.put("vowel_space")
-                trial_info = self.resultsq.get()
+                try:
+                    trial_info = self.resultsq.get(block=False)
+                except:
+                    trial_info = ""
+
                 trial, syllable, finish = trial_info.split(",")
                 trial = int(trial)
                 finish = str(finish) == "True"
@@ -270,6 +274,8 @@ class MainFrame(wx.Frame):
             # Start Delsys
             if self.delsys.is_connected():
                 self.delsys.start(filename=os.path.join(self.sess_dir, f"{self.date_string}_{self.user_cfg['unitRef']}_{self.sess_string}_delsys.mdat"))
+
+            self.add_metadata(temp=True)
 
         else:
             self.task_active = False
@@ -348,6 +354,9 @@ class MainFrame(wx.Frame):
             self.liveTimer.Start(150)
             self.msgq.put("run_stimulus")
 
+            time.sleep(1)
+            self.add_metadata(temp=True)
+
         else:
             self.rest_timer.Stop()
             self.finish.value = 2
@@ -371,7 +380,6 @@ class MainFrame(wx.Frame):
             self.trial_panel.reset(self.count)
             self.trial_panel.end_trial()
             self.liveTimer.Stop()
-    
     
     def next_trial(self, event):  
         logger.debug("UPDATING DATA")
@@ -603,14 +611,19 @@ class MainFrame(wx.Frame):
             self.task_button.Enable(True)
             
             
-    def add_metadata(self):
-        metadata = MetadataPanel()
+    def add_metadata(self, temp=False):
+        toSave = False
+        if not temp:
+            metadata = MetadataPanel()
+            toSave = metadata.show() == wx.ID_OK
+
         params = None
         try:
-            params = json.loads(self.resultsq.get())
+            params = json.loads(self.resultsq.get(block=False))
         except:
-            pass
-        if metadata.show() == wx.ID_OK:
+            params = "{}"
+
+        if toSave or temp:
             self.meta,ruamelFile = file_utils.metadata_template()
             date_string = datetime.datetime.utcnow().strftime("%Y%m%d")
             cameras = {}
@@ -653,11 +666,14 @@ class MainFrame(wx.Frame):
             if self.task == "sara":
                 self.meta["trial_data"] = self.trial_panel.add_metadata()
 
-            for data in metadata.data:
-                self.meta[data] = metadata.data[data]
-                logger.debug(data)
-            self.meta['EndTime_Local']= self.end_time
-            self.meta['EndTime_UTC']= self.end_time_utc
+            if not temp:
+                for data in metadata.data:
+                    self.meta[data] = metadata.data[data]
+                    logger.debug(data)
+
+            if not temp:
+                self.meta['EndTime_Local']= self.end_time
+                self.meta['EndTime_UTC']= self.end_time_utc
             file_utils.write_metadata(self.meta, self.metapath)
         else:
             #remove entire directory

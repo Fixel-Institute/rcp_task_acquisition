@@ -362,37 +362,28 @@ class N_back(bases.StimulusBase):
                 self.button_press = True
         self.display.switch_patch()
         return [ timeData, thisFlipTime]
-            
-    def present(self, test=True, getTime=False):
+    
+    def present_prep(self):
         # clear global event keys
         self.trial+=1
-
         self.instructions = cfg.ONE_BACK_DISPLAY if self.type == 1 else cfg.TWO_BACK_DISPLAY
         event.globalKeys.clear()
-        end_text = visual.TextStim(self.display, text="Task Finished. Thank you.", name="Finish", height=50)
+
         logger.debug(self.type)
         logger.debug(self.is_real)
         # Initialize the display window
-        fixation, texts, correct_ims, incorrect_ims = self.setupWinStims(imdir)
         # Set up a dataframe to hold time data
-        timeDataColumns = ['Event_Name', 'Trial_Num', 'Time_Since_Start']
-        timeData = pd.DataFrame(columns=timeDataColumns)
-        fixation = visual.TextStim(self.display, text="+", name="FixationCross", pos=(0, 0), height=50)
 
         trial_list=[]
         answer_list = []
-        intertrial_text =  self.intertrial_instructions()
-        
         
         #show intro based on data:
         if self.is_real:
-            text = self.real_instructions()
             for i in range(0,3):
                 trials, answers =pull_stimuli_1back(21) if self.type == 1 else pull_stimuli_2back(22)
                 trial_list.append(trials)
                 answer_list.append(answers)
         else:
-            text = self.practice_instructions()
             for i in range(0,2):
                 trials, answers =pull_stimuli_1back(10) if self.type == 1 else pull_stimuli_2back(10)
                 trial_list.append(trials)
@@ -403,6 +394,22 @@ class N_back(bases.StimulusBase):
                                         "n_back_type": self.type,
                                         "real": self.is_real}
         self.trial_list = trial_list
+        self.answer_list = answer_list
+        return super().present_prep()
+    
+    def present(self, test=True, getTime=False):
+        fixation, texts, correct_ims, incorrect_ims = self.setupWinStims(imdir)
+        timeDataColumns = ['Event_Name', 'Trial_Num', 'Time_Since_Start']
+        timeData = pd.DataFrame(columns=timeDataColumns)
+        fixation = visual.TextStim(self.display, text="+", name="FixationCross", pos=(0, 0), height=50)
+
+        if self.is_real:
+            text = self.real_instructions()
+        else:
+            text = self.practice_instructions()
+        intertrial_text =  self.intertrial_instructions()
+        end_text = visual.TextStim(self.display, text="Task Finished. Thank you.", name="Finish", height=50)
+
         for index, _ in enumerate(text):
             
             while not self.button.value:
@@ -424,8 +431,7 @@ class N_back(bases.StimulusBase):
         timeData, fixFlipTime =self.showAndLog(self.display, timeData, 0, fixation, PARAMS["ISITime"], "Initial_Fixation_Shown")
         # PARAMS[f"trial_{self.trial}"] = list(trial_list)
 
-
-        for index, trial_set in enumerate(trial_list):
+        for index, trial_set in enumerate(self.trial_list):
             for t_index, trial in enumerate(trial_set):
                 if self.finished.value == 2:
                     self.display.flip()
@@ -440,17 +446,18 @@ class N_back(bases.StimulusBase):
                     if self.button.value:
                         self.button_press
                     if self.button_press:
-                        if answer_list[index][t_index] == Answer.DIFFERENT:
+                        if self.answer_list[index][t_index] == Answer.DIFFERENT:
                             
                             timeData, fixFlipTime =self.showAndLog(self.display, timeData, 0, incorrect_ims, 2, "Initial_Fixation_Shown")
-                        elif answer_list[index][t_index] == Answer.SAME or answer_list[index][t_index] == Answer.NOGO:
+                        elif self.answer_list[index][t_index] == Answer.SAME or self.answer_list[index][t_index] == Answer.NOGO:
                             timeData, fixFlipTime =self.showAndLog(self.display, timeData, 0, correct_ims, 2, "Initial_Fixation_Shown")
-                    elif answer_list[index][t_index] == Answer.DIFFERENT or answer_list[index][t_index] == Answer.NOGO:
+                    elif self.answer_list[index][t_index] == Answer.DIFFERENT or self.answer_list[index][t_index] == Answer.NOGO:
                             timeData, fixFlipTime =self.showAndLog(self.display, timeData, 0, correct_ims, 2, "Initial_Fixation_Shown")
-                    elif answer_list[index][t_index] == Answer.SAME:
+                    elif self.answer_list[index][t_index] == Answer.SAME:
                         timeData, fixFlipTime =self.showAndLog(self.display, timeData, 0, incorrect_ims, 2, "Initial_Fixation_Shown")
                     self.button_press = False
-            if index < len(trial_list)-1:
+
+            if index < len(self.trial_list)-1:
                 if self.finished.value == 2:
                     self.display.flip()
                     self.is_real=None
@@ -469,7 +476,6 @@ class N_back(bases.StimulusBase):
         self.button_press = False
         logger.debug(f"RUN PARAMS: {PARAMS}")
         
-
     def saveMetadata(self, name, sessionFolder):
         logger.debug(f"PARAMS: {PARAMS}")
         return PARAMS
