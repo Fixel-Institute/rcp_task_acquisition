@@ -8,7 +8,18 @@ class ExperimenterMonitor(wx.Frame):
     def __init__(self, parent):
         super(ExperimenterMonitor, self).__init__(parent, title="See What They See", size=(800, 600))
         self.panel = ExperimenterMonitorPanel(self)
-        self.Show()
+        self.allow_close = False
+        self.Bind(wx.EVT_CLOSE, self.on_close)
+
+    def on_close(self, event):
+        if self.allow_close:
+            event.Skip()  # allow normal destruction
+        else:
+            event.Veto()  # prevent close
+
+    def destroy(self):
+        self.allow_close = True
+        self.Close()
 
 class ExperimenterMonitorPanel(wx.Panel):
     def __init__(self, parent):

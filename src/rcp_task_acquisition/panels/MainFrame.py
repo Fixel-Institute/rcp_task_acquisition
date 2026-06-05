@@ -748,6 +748,7 @@ class MainFrame(wx.Frame):
         self.ctrl_panel.Destroy()
         self.statusbar.SetStatusText("")
         self.Destroy()
+        self.experimenter_view.destroy()
 
     
     def Hide(self, event):
