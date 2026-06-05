@@ -1,0 +1,6 @@
+-. Add Delsys Configuration to metadata YAML
+*. Save YAML mid-experiment
+-. Use mss to Add Patient-view to Experimenter Page
+4. Add Task Features that researchers ask for
+-. Add Single LJ/Delsys Upload
+6. Integrate Eye Tracking Task
