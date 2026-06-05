@@ -22,6 +22,7 @@ from rcp_task_acquisition.models.LabjackFrontend import LabjackFrontend
 from rcp_task_acquisition.models.Crop import Crop
 from rcp_task_acquisition.panels.GraphPanel import GraphPanel
 from rcp_task_acquisition.panels.DelsysPreview import DelsysPreview
+from rcp_task_acquisition.panels.ExperimenterMonitor import ExperimenterMonitor
 from rcp_task_acquisition.models.Warnings import Warning
 from rcp_task_acquisition.panels.MetadataPanel import MetadataPanel
 from rcp_task_acquisition.utils.constants import RAW_DATA_DIR, PLOT_LENGTH
@@ -60,6 +61,7 @@ class MainFrame(wx.Frame):
         screenSizes = [display.GetGeometry().GetSize() for display in displays] # Gets the size of each display
         logger.debug(f"screenSizes: {screenSizes}")
         # index = 1 # For display 1.
+        
         if len(screenSizes) != 2:
             self.warning.update_error("display")
             self.warning.display()
@@ -67,7 +69,7 @@ class MainFrame(wx.Frame):
         index = 0
         psychopy_monitor = 1
         if screenSizes[0][0] > screenSizes[1][0]:
-            logger.debug("Fist monitor is patient monitor")
+            logger.debug("First monitor is patient monitor")
             index = 1
             psychopy_monitor = 0
         screenW = screenSizes[index][0]
@@ -102,6 +104,9 @@ class MainFrame(wx.Frame):
 
         # Add Delsys Graph Frame
         self.delsys_preview = DelsysPreview(delsys, self)
+
+        # Add Experimenter View
+        self.experimenter_view = ExperimenterMonitor(None)
     
         # Add Buttons to the WidgetPanel and bind them to their respective functions.
         (self.init,self.reset,self.update_settings,self.play,self.rec,
@@ -753,6 +758,9 @@ class MainFrame(wx.Frame):
             self.delsys_preview.Hide()
         if self.delsys.is_connected():
             self.delsys.stop()
+
+        if self.experimenter_view:
+            self.experimenter_view.Hide()
         
         self.rest_timer.Stop()
         self.video_status.value = 4
@@ -894,6 +902,10 @@ class MainFrame(wx.Frame):
 
         if self.delsys_preview:
             self.delsys_preview.Show()
+        
+        if self.experimenter_view:
+            self.experimenter_view.Show()
+
         super().Show()
         return True
         

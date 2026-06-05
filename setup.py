@@ -22,6 +22,7 @@ if __name__ == "__main__":
             f"spinnaker_python @ {local_path}",
             # other dependencies...
             "pythonnet==3.0.5",
+            "mss==10.2.0"
         ]
     )
 
