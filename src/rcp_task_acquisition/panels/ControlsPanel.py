@@ -142,7 +142,7 @@ class ControlsPanel(wx.Panel):
             return SaraPanel(self)
         elif task == "verb_generation":
             return VerbGenerationPanel(self)
-        elif task == "indefinite_recording":
+        elif task == "continuous_recording":
             return IndefiniteRecordingPanel(self)
         else:
             basic_panel = TrialPanel(self)

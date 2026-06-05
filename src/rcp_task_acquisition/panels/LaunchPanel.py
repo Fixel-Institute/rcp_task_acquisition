@@ -4,6 +4,7 @@ import wx.lib.scrolledpanel as scrolled
 from rcp_task_acquisition.panels.HardwarePanel import HardwarePanel
 from rcp_task_acquisition.utils.file_utils import read_config
 from rcp_task_acquisition.panels.ParticipantPanel import ParticipantPanel
+from rcp_task_acquisition.panels.UploadDataFrame import UploadDataFrame
 from rcp_task_acquisition.utils.logger import get_logger
 logger = get_logger("./panels/LaunchPanel") 
 
@@ -114,25 +115,31 @@ class LaunchPanel():
         grid_sizer.Add(self.participant_detail, pos=(4,1), span=(0,3), flag=wx.ALIGN_CENTER_VERTICAL | wx.ALL, border=5)
         return grid_sizer
 
+    def show_upload_view(self, event):
+        frame = UploadDataFrame(None)
+        frame.Show()
 
     def _setup_buttons(self, button_width):
         button_width = wx.Size(200, -1)
         self.hardware_button = wx.ToggleButton(self.panel, size=button_width, label="Update Hardware")
         self.hardware_button.Bind(wx.EVT_TOGGLEBUTTON, self.hardware_event)
         
-        self.compress_button = wx.Button(self.panel, size=button_width, label="Compress Videos")
+        self.compress_button = wx.Button(self.panel, size=wx.Size(100, -1), label="Compress Videos")
         self.compress_button.Enable(False)
+        
+        self.upload_button = wx.Button(self.panel, size=wx.Size(100, -1), label="Upload Session")
+        self.upload_button.Enable(True)
+        self.upload_button.Bind(wx.EVT_BUTTON, self.show_upload_view)
         
         self.exit_button = wx.Button(self.panel, size=button_width, label="Exit")        
         
         row_sizer = wx.BoxSizer(wx.HORIZONTAL)
         row_sizer.Add(self.hardware_button, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 10)
-        row_sizer.Add(self.compress_button , 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 10)
+        row_sizer.Add(self.compress_button , 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 5)
+        row_sizer.Add(self.upload_button , 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 5)
         row_sizer.Add(self.exit_button, 0, wx.ALIGN_CENTER_VERTICAL)
         return row_sizer
     
-
-        
     def update_list(self, event):
         if self.ignore_pop_up:
             self.ignore_pop_up = False
@@ -202,13 +209,11 @@ class LaunchPanel():
         self.hardware_button.SetLabel("Update Hardware")
         self.panel.Update()
         
-        
     def exit_event(self)-> None:
         logger.debug("exit")
         self.panel.Destroy()
         self.participant_panel.exit_event()
         self.dialog.Destroy()
-    
     
     def add_participant(self, event):
         self.ignore_pop_up = True

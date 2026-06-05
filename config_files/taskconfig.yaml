@@ -2,12 +2,13 @@ naturalistic_speech:
   settings:
   - Audio
   - Cameras
+  - Button
   - Photodiode
   - Microphone 1
   - Microphone 2
   - Barcode
-  - TENS
   - Slow Barcode
+  - TENS
   - leftCamTop
   - rightCamTop
   - leftCamFace
@@ -23,35 +24,53 @@ n_back:
   - Microphone 1
   - Microphone 2
   - Barcode
+  - Slow Barcode
   - TENS
   - leftCamTop
   - rightCamTop
+  - leftCamFace
+  - rightCamFace
+  - leftCamTripod
+  - rightCamTripod
 motor_task_finger_taps:
   settings:
   - Audio
   - Cameras
+  - Button
   - Photodiode
   - Microphone 1
   - Microphone 2
   - Barcode
+  - Slow Barcode
   - TENS
   - leftCamTop
   - rightCamTop
+  - leftCamFace
+  - rightCamFace
+  - leftCamTripod
+  - rightCamTripod
 diadochokinesis:
   settings:
   - Audio
   - Cameras
+  - Button
   - Photodiode
   - Microphone 1
   - Microphone 2
   - Barcode
+  - Slow Barcode
   - TENS
   - leftCamTop
   - rightCamTop
+  - leftCamFace
+  - rightCamFace
+  - leftCamTripod
+  - rightCamTripod
 verbal_fluency:
   settings:
   - Audio
   - Cameras
+  - Button
   - Photodiode
   - Microphone 1
   - Microphone 2
@@ -59,10 +78,15 @@ verbal_fluency:
   - TENS
   - leftCamTop
   - rightCamTop
+  - leftCamFace
+  - rightCamFace
+  - leftCamTripod
+  - rightCamTripod
 vowel_space:
   settings:
   - Audio
   - Cameras
+  - Button
   - Photodiode
   - Microphone 1
   - Microphone 2
@@ -70,10 +94,15 @@ vowel_space:
   - TENS
   - leftCamTop
   - rightCamTop
+  - leftCamFace
+  - rightCamFace
+  - leftCamTripod
+  - rightCamTripod
 reach_grasp:
   settings:
   - Audio
   - Cameras
+  - Button
   - Photodiode
   - Grasp Button
   - Microphone 1
@@ -82,9 +111,12 @@ reach_grasp:
   - Force Sensor Y
   - Force Sensor Z
   - Barcode
+  - Slow Barcode
   - TENS
   - leftCamTop
   - rightCamTop
+  - leftCamFace
+  - rightCamFace
   - leftCamTripod
   - rightCamTripod
 tone_taps_closed:
@@ -99,21 +131,15 @@ tone_taps_closed:
   - TENS
   - leftCamTop
   - rightCamTop
+  - leftCamFace
+  - rightCamFace
+  - leftCamTripod
+  - rightCamTripod
 sara:
   settings:
   - Audio
   - Cameras
-  - Photodiode
-  - Microphone 1
-  - Microphone 2
-  - Barcode
-  - TENS
-  - leftCamTop
-  - rightCamTop
-verb_generation:
-  settings:
-  - Audio
-  - Cameras
+  - Button
   - Photodiode
   - Microphone 1
   - Microphone 2
@@ -123,11 +149,30 @@ verb_generation:
   - rightCamTop
   - leftCamFace
   - rightCamFace
-
-indefinite_recording:
+  - leftCamTripod
+  - rightCamTripod
+verb_generation:
   settings:
   - Audio
   - Cameras
+  - Button
+  - Photodiode
+  - Microphone 1
+  - Microphone 2
+  - Barcode
+  - TENS
+  - leftCamTop
+  - rightCamTop
+  - leftCamFace
+  - rightCamFace
+  - leftCamTripod
+  - rightCamTripod
+
+continuous_recording:
+  settings:
+  - Audio
+  - Cameras
+  - Button
   - Photodiode
   - Grasp Button
   - Microphone 1

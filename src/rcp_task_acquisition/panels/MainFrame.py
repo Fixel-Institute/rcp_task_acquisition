@@ -263,7 +263,7 @@ class MainFrame(wx.Frame):
             self.trial_panel.start_new_trial()
             self.trial_panel.show()
 
-            if self.task == "indefinite_recording":
+            if self.task == "continuous_recording":
                 self.trial_button.SetValue(True)
                 self.trial_event(event)
 
@@ -633,6 +633,7 @@ class MainFrame(wx.Frame):
             self.meta['unitRef']=self.user_cfg['unitRef']
             self.meta['Collection']='info'
             self.meta['hardware'] = self.user_cfg['hardware']
+            self.meta['delsys'] = self.user_cfg['delsys']
             # self.meta['screen_settings'] = self.user_cfg['screen_settings']
             meta_name = '%s_%s_%s_metadata.yaml' % (date_string, self.user_cfg['unitRef'], self.sess_string)
             self.metapath = os.path.join(self.sess_dir,meta_name)

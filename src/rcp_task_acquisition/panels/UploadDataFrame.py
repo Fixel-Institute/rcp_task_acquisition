@@ -85,6 +85,7 @@ class DirectoryLookupPanel(wx.Panel):
                         self.upload_directory = os.path.join(self.root_directory, subpath, selected_subdir)
     
     def update_subdirectories(self):
+        self.upload_directory = ""
         subpath = os.path.sep.join(self.subdirectories)
         available_subdirs = os.listdir(self.root_directory + os.path.sep + subpath)
         
@@ -96,8 +97,6 @@ class DirectoryLookupPanel(wx.Panel):
     
     def on_upload(self, event):
         if self.upload_directory:
-            wx.MessageBox(f"Uploading data from: {self.upload_directory}", "Upload", wx.OK | wx.ICON_INFORMATION)
-
             self.uploading_worker_thread = threading.Thread(target=uploadRCPSession, args=(self.upload_directory, self.upload_directory.replace(self.root_directory + os.path.sep, "").replace(os.path.sep, "_"),
                                                                                            self.on_upload_complete, self.on_upload_error), daemon=True)
             self.uploading_worker_thread.start()

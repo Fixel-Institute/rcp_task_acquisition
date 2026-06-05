@@ -8,7 +8,8 @@ import pandas as pd
 import yaml
 import json
 import datetime
-from BRAVO.BRAVORequestAPI import BRAVOPlatformRequest
+
+from library.BRAVO.BRAVORequestAPI import BRAVOPlatformRequest
 
 def getTimestamp(text):
     return datetime.datetime.fromisoformat(text[0:4] + "-" + text[4:6] + "-" + text[6:8] + "T" + text[8:10] + ":" + text[10:12] + ":" + text[12:14] + "+00:00").timestamp()
@@ -146,165 +147,170 @@ def uploadRCPSession(session_path, session_info, on_success=None, on_error=None)
 
         # Align Delsys and LabJack data
         LJData = pd.DataFrame()
+        DSData = {}
         for file in SessionFiles:
             if file.endswith("_delsys.mdat"):
                 DSData = loadDelsysData(open(os.path.join(session_path, file), 'rb').read())
             elif file.endswith("_labjack.txt"):
                 LJData = pd.read_csv(os.path.join(session_path, file), sep=",", header=0)
 
-        if LJData.empty or not DSData:
-            raise ValueError("Missing Delsys or LabJack data files in session directory.")
-
-        digital_series = LJData["Digital"].astype(int).values
-        for j in range(16):
-            if j < 8:
-                dio_name = f"FIO{j:01d}"
-            else:
-                dio_name = f"EIO{j:01d}"
-            LJData[dio_name] = (digital_series >> j) & 1
-            if np.unique(LJData[dio_name].values).size == 1:
-                LJData.drop(columns=[dio_name], inplace=True)
-            else:
-                LJData[dio_name] = LJData[dio_name].astype(np.uint8)
-        del LJData["Digital"]
-
-        LabJack_SamplingRate = SessionMetadata.get("actual_scan_rate")
-        ChannelNames = LJData.columns.tolist()
-        for i in range(len(ChannelNames)):
-            for key in SessionMetadata["hardware"].keys():
-                if SessionMetadata["hardware"][key].get("labjack_input") == ChannelNames[i]:
-                    ChannelNames[i] = f"{key} ({ChannelNames[i]})"
-                    break
-
-        Delsys_Barcode = np.zeros(0)
-        LabJack_Barcode = np.zeros(0)
-        for key in ChannelNames:
-            if key.startswith("Slow Barcode"):
-                col_name = key.split("(")[-1].rstrip(")")
-                LabJack_Barcode = LJData[col_name].values
-                break
-
-        for key in DSData["ChannelNames"]:
-            if DSData["ChannelInfos"][key]["Name"] == "Analog 2":
-                Delsys_Barcode = DSData["Data"][key]
-                Delsys_BarcodeSamplingRate = DSData["ChannelInfos"][key]["SamplingRate"]
-                break
-
-        time_scale = 1
-        time_offset = 0
-        if LabJack_Barcode.size > 0 and Delsys_Barcode.size > 1000:
-            Delsys_Barcode = Delsys_Barcode[500:]
-            Timestamp_Delsys = np.arange(len(Delsys_Barcode)) / Delsys_BarcodeSamplingRate
-            Timestamp_LJ = np.arange(len(LabJack_Barcode)) / LabJack_SamplingRate
-
-            time_offset, time_scale = getShift_PeakBased(LabJack_Barcode, Delsys_Barcode, Timestamp_LJ, Timestamp_Delsys)
-            print(f"Estimated time offset between LabJack and Delsys data: {time_offset:.3f} seconds with Delsys Sampling Rate scaled by {time_scale:.6f}")
-
-            """ Visual Checking
-            Timestamp_Delsys = np.arange(len(Delsys_Barcode)) / (Delsys_BarcodeSamplingRate / time_scale) + time_offset
-            fig = plt.figure(figsize=(15, 10))
-            ax = fig.add_subplot(1, 1, 1)
-            ax.plot(Timestamp_LJ, LabJack_Barcode, label="LabJack Barcode", color="b", alpha=0.5)
-            ax.plot(Timestamp_Delsys, Delsys_Barcode, label="Delsys Barcode", color="r", alpha=0.5)
-            ax.set_xlabel("Time (s)")
-            ax.set_ylabel("Amplitude")
-            ax.set_title("Analog Waveform Comparison")
-            ax.set_xlim(27.4,27.6)
-            fig.show()
-            """
+        if LJData.empty and len(DSData.keys()) == 0:
+            raise ValueError("Missing Delsys and LabJack data files in session directory.")
 
         SessionDate = getTimestamp(SessionMetadata.get("StartTime_UTC"))
         TimezoneOffset = getTimestamp(SessionMetadata.get("StartTime_Local")) - SessionDate
         timezone = f"UTC{int(TimezoneOffset // 3600):+03d}:{int((TimezoneOffset % 3600) // 60):02d}"
 
-        sio.savemat(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_LabJack.mat"), {
-            "Channels": ChannelNames,
-            "Fs": np.ones((len(ChannelNames), 1)) * LabJack_SamplingRate,
-            "Data": LJData.values.T,
-            "DataType": "CustomizedStreamingData",
-            "Metadata": json.dumps({**SessionMetadata,
-                                    **{"DataType": "LabJack", "StartTime": SessionDate, "Timezone": timezone,
-                                       "RecordingName": SessionMetadata.get("task", "")}}),
-        }, do_compression=True)
-        with open(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_LabJack.mat"), "rb") as file:
-            requester.UploadMATFile(ParticipantInfo['Id'], file, {**SessionMetadata,
-                                                                  **{"DataType": "LabJack", "StartTime": SessionDate,
-                                                                     "Timezone": timezone}})
+        if not LJData.empty:
+            digital_series = LJData["Digital"].astype(int).values
+            for j in range(16):
+                if j < 8:
+                    dio_name = f"FIO{j:01d}"
+                else:
+                    dio_name = f"EIO{j:01d}"
+                LJData[dio_name] = (digital_series >> j) & 1
+                if np.unique(LJData[dio_name].values).size == 1:
+                    LJData.drop(columns=[dio_name], inplace=True)
+                else:
+                    LJData[dio_name] = LJData[dio_name].astype(np.uint8)
+            del LJData["Digital"]
 
-        # Delsys Save
-        Delsys_ChannelNames = []
-        Delsys_Fs = []
-        for uid in DSData["ChannelNames"]:
-            Delsys_ChannelNames.append(
-                f"Sensor {int(DSData['ChannelInfos'][uid]['SensorId']):02d} - {DSData['ChannelInfos'][uid].get('Name', 'Unknown')}")
-            Delsys_Fs.append(DSData["ChannelInfos"][uid].get("SamplingRate", 0) / time_scale)
+            LabJack_SamplingRate = SessionMetadata.get("actual_scan_rate")
+            ChannelNames = LJData.columns.tolist()
+            for i in range(len(ChannelNames)):
+                for key in SessionMetadata["hardware"].keys():
+                    if SessionMetadata["hardware"][key].get("labjack_input") == ChannelNames[i]:
+                        ChannelNames[i] = f"{key} ({ChannelNames[i]})"
+                        break
 
-        unique_fs = np.unique(Delsys_Fs)
-        for fs in unique_fs:
-            indices = [i for i, f in enumerate(Delsys_Fs) if f == fs]
-            if np.abs(fs - 74) < 2:
-                sio.savemat(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysImpedance.mat"), {
-                    "Channels": [Delsys_ChannelNames[i] for i in indices],
-                    "Fs": np.ones((len(indices), 1)) * fs,
-                    "Data": np.array([DSData["Data"][DSData["ChannelNames"][i]] for i in indices]),
-                    "DataType": "CustomizedStreamingData",
-                    "Metadata": json.dumps({**SessionMetadata,
-                                            **{"DataType": "Delsys_Impedance", "StartTime": SessionDate + time_offset,
-                                               "Timezone": timezone, "SamplingRateScale": 1/time_scale,
-                                               "RecordingName": SessionMetadata.get("task", "")}}),
-                }, do_compression=True)
-                with open(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysImpedance.mat"), "rb") as file:
-                    requester.UploadMATFile(ParticipantInfo['Id'], file, {**SessionMetadata,
-                                                                          **{"DataType": "Delsys", "StartTime": SessionDate + time_offset,
-                                                                            "Timezone": timezone, "SamplingRateScale": 1/time_scale}})
+        time_scale = 1
+        time_offset = 0
+        if not LJData.empty and len(DSData.keys()) > 0:
+            Delsys_Barcode = np.zeros(0)
+            LabJack_Barcode = np.zeros(0)
+            for key in ChannelNames:
+                if key.startswith("Slow Barcode"):
+                    col_name = key.split("(")[-1].rstrip(")")
+                    LabJack_Barcode = LJData[col_name].values
+                    break
 
-            elif np.abs(fs - 148) < 2:
-                sio.savemat(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysIMU.mat"), {
-                    "Channels": [Delsys_ChannelNames[i] for i in indices],
-                    "Fs": np.ones((len(indices), 1)) * fs,
-                    "Data": np.array([DSData["Data"][DSData["ChannelNames"][i]] for i in indices]),
-                    "DataType": "CustomizedStreamingData",
-                    "Metadata": json.dumps({**SessionMetadata,
-                                            **{"DataType": "Delsys_IMU", "StartTime": SessionDate + time_offset,
-                                               "Timezone": timezone, "SamplingRateScale": 1/time_scale,
-                                               "RecordingName": SessionMetadata.get("task", "")}}),
-                }, do_compression=True)
-                with open(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysIMU.mat"), "rb") as file:
-                    requester.UploadMATFile(ParticipantInfo['Id'], file, {**SessionMetadata,
-                                                                          **{"DataType": "Delsys", "StartTime": SessionDate + time_offset,
-                                                                            "Timezone": timezone, "SamplingRateScale": 1/time_scale}})
+            for key in DSData["ChannelNames"]:
+                if DSData["ChannelInfos"][key]["Name"] == "Analog 2":
+                    Delsys_Barcode = DSData["Data"][key]
+                    Delsys_BarcodeSamplingRate = DSData["ChannelInfos"][key]["SamplingRate"]
+                    break
 
-            elif np.abs(fs - 1259) < 2:
-                sio.savemat(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysEMG.mat"), {
-                    "Channels": [Delsys_ChannelNames[i] for i in indices],
-                    "Fs": np.ones((len(indices), 1)) * fs,
-                    "Data": np.array([DSData["Data"][DSData["ChannelNames"][i]] for i in indices]),
-                    "DataType": "CustomizedStreamingData",
-                    "Metadata": json.dumps({**SessionMetadata,
-                                            **{"DataType": "Delsys_EMG", "StartTime": SessionDate + time_offset,
-                                               "Timezone": timezone, "SamplingRateScale": 1/time_scale,
-                                               "RecordingName": SessionMetadata.get("task", "")}}),
-                }, do_compression=True)
-                with open(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysEMG.mat"), "rb") as file:
-                    requester.UploadMATFile(ParticipantInfo['Id'], file, {**SessionMetadata,
-                                                                          **{"DataType": "Delsys", "StartTime": SessionDate + time_offset,
-                                                                            "Timezone": timezone, "SamplingRateScale": 1/time_scale}})
+            if LabJack_Barcode.size > 0 and Delsys_Barcode.size > 1000:
+                Delsys_Barcode = Delsys_Barcode[500:]
+                Timestamp_Delsys = np.arange(len(Delsys_Barcode)) / Delsys_BarcodeSamplingRate
+                Timestamp_LJ = np.arange(len(LabJack_Barcode)) / LabJack_SamplingRate
 
-            elif np.abs(fs - 2222) < 2:
-                sio.savemat(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysAnalog.mat"), {
-                    "Channels": [Delsys_ChannelNames[i] for i in indices],
-                    "Fs": np.ones((len(indices), 1)) * fs,
-                    "Data": np.array([DSData["Data"][DSData["ChannelNames"][i]] for i in indices]),
-                    "DataType": "CustomizedStreamingData",
-                    "Metadata": json.dumps({**SessionMetadata,
-                                            **{"DataType": "Delsys_Analog", "StartTime": SessionDate + time_offset,
-                                               "Timezone": timezone, "SamplingRateScale": 1/time_scale,
-                                               "RecordingName": SessionMetadata.get("task", "")}}),
-                }, do_compression=True)
-                with open(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysAnalog.mat"), "rb") as file:
-                    requester.UploadMATFile(ParticipantInfo['Id'], file, {**SessionMetadata,
-                                                                          **{"DataType": "Delsys", "StartTime": SessionDate + time_offset,
-                                                                            "Timezone": timezone, "SamplingRateScale": 1/time_scale}})
+                time_offset, time_scale = getShift_PeakBased(LabJack_Barcode, Delsys_Barcode, Timestamp_LJ, Timestamp_Delsys)
+                print(f"Estimated time offset between LabJack and Delsys data: {time_offset:.3f} seconds with Delsys Sampling Rate scaled by {time_scale:.6f}")
+
+                """ Visual Checking
+                Timestamp_Delsys = np.arange(len(Delsys_Barcode)) / (Delsys_BarcodeSamplingRate / time_scale) + time_offset
+                fig = plt.figure(figsize=(15, 10))
+                ax = fig.add_subplot(1, 1, 1)
+                ax.plot(Timestamp_LJ, LabJack_Barcode, label="LabJack Barcode", color="b", alpha=0.5)
+                ax.plot(Timestamp_Delsys, Delsys_Barcode, label="Delsys Barcode", color="r", alpha=0.5)
+                ax.set_xlabel("Time (s)")
+                ax.set_ylabel("Amplitude")
+                ax.set_title("Analog Waveform Comparison")
+                ax.set_xlim(27.4,27.6)
+                fig.show()
+                """
+
+        if not LJData.empty:
+            sio.savemat(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_LabJack.mat"), {
+                "Channels": ChannelNames,
+                "Fs": np.ones((len(ChannelNames), 1)) * LabJack_SamplingRate,
+                "Data": LJData.values.T,
+                "DataType": "CustomizedStreamingData",
+                "Metadata": json.dumps({**SessionMetadata,
+                                        **{"DataType": "LabJack", "StartTime": SessionDate, "Timezone": timezone,
+                                        "RecordingName": SessionMetadata.get("task", "")}}),
+            }, do_compression=True)
+            with open(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_LabJack.mat"), "rb") as file:
+                requester.UploadMATFile(ParticipantInfo['Id'], file, {**SessionMetadata,
+                                                                    **{"DataType": "LabJack", "StartTime": SessionDate,
+                                                                        "Timezone": timezone}})
+
+        if len(DSData.keys()) > 0:
+            # Delsys Save
+            Delsys_ChannelNames = []
+            Delsys_Fs = []
+            for uid in DSData["ChannelNames"]:
+                Delsys_ChannelNames.append(
+                    f"Sensor {int(DSData['ChannelInfos'][uid]['SensorId']):02d} - {DSData['ChannelInfos'][uid].get('Name', 'Unknown')}")
+                Delsys_Fs.append(DSData["ChannelInfos"][uid].get("SamplingRate", 0) / time_scale)
+
+            unique_fs = np.unique(Delsys_Fs)
+            for fs in unique_fs:
+                indices = [i for i, f in enumerate(Delsys_Fs) if f == fs]
+                if np.abs(fs - 74) < 2:
+                    sio.savemat(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysImpedance.mat"), {
+                        "Channels": [Delsys_ChannelNames[i] for i in indices],
+                        "Fs": np.ones((len(indices), 1)) * fs,
+                        "Data": np.array([DSData["Data"][DSData["ChannelNames"][i]] for i in indices]),
+                        "DataType": "CustomizedStreamingData",
+                        "Metadata": json.dumps({**SessionMetadata,
+                                                **{"DataType": "Delsys_Impedance", "StartTime": SessionDate + time_offset,
+                                                "Timezone": timezone, "SamplingRateScale": 1/time_scale,
+                                                "RecordingName": SessionMetadata.get("task", "")}}),
+                    }, do_compression=True)
+                    with open(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysImpedance.mat"), "rb") as file:
+                        requester.UploadMATFile(ParticipantInfo['Id'], file, {**SessionMetadata,
+                                                                            **{"DataType": "Delsys", "StartTime": SessionDate + time_offset,
+                                                                                "Timezone": timezone, "SamplingRateScale": 1/time_scale}})
+
+                elif np.abs(fs - 148) < 2:
+                    sio.savemat(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysIMU.mat"), {
+                        "Channels": [Delsys_ChannelNames[i] for i in indices],
+                        "Fs": np.ones((len(indices), 1)) * fs,
+                        "Data": np.array([DSData["Data"][DSData["ChannelNames"][i]] for i in indices]),
+                        "DataType": "CustomizedStreamingData",
+                        "Metadata": json.dumps({**SessionMetadata,
+                                                **{"DataType": "Delsys_IMU", "StartTime": SessionDate + time_offset,
+                                                "Timezone": timezone, "SamplingRateScale": 1/time_scale,
+                                                "RecordingName": SessionMetadata.get("task", "")}}),
+                    }, do_compression=True)
+                    with open(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysIMU.mat"), "rb") as file:
+                        requester.UploadMATFile(ParticipantInfo['Id'], file, {**SessionMetadata,
+                                                                            **{"DataType": "Delsys", "StartTime": SessionDate + time_offset,
+                                                                                "Timezone": timezone, "SamplingRateScale": 1/time_scale}})
+
+                elif np.abs(fs - 1259) < 2:
+                    sio.savemat(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysEMG.mat"), {
+                        "Channels": [Delsys_ChannelNames[i] for i in indices],
+                        "Fs": np.ones((len(indices), 1)) * fs,
+                        "Data": np.array([DSData["Data"][DSData["ChannelNames"][i]] for i in indices]),
+                        "DataType": "CustomizedStreamingData",
+                        "Metadata": json.dumps({**SessionMetadata,
+                                                **{"DataType": "Delsys_EMG", "StartTime": SessionDate + time_offset,
+                                                "Timezone": timezone, "SamplingRateScale": 1/time_scale,
+                                                "RecordingName": SessionMetadata.get("task", "")}}),
+                    }, do_compression=True)
+                    with open(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysEMG.mat"), "rb") as file:
+                        requester.UploadMATFile(ParticipantInfo['Id'], file, {**SessionMetadata,
+                                                                            **{"DataType": "Delsys", "StartTime": SessionDate + time_offset,
+                                                                                "Timezone": timezone, "SamplingRateScale": 1/time_scale}})
+
+                elif np.abs(fs - 2222) < 2:
+                    sio.savemat(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysAnalog.mat"), {
+                        "Channels": [Delsys_ChannelNames[i] for i in indices],
+                        "Fs": np.ones((len(indices), 1)) * fs,
+                        "Data": np.array([DSData["Data"][DSData["ChannelNames"][i]] for i in indices]),
+                        "DataType": "CustomizedStreamingData",
+                        "Metadata": json.dumps({**SessionMetadata,
+                                                **{"DataType": "Delsys_Analog", "StartTime": SessionDate + time_offset,
+                                                "Timezone": timezone, "SamplingRateScale": 1/time_scale,
+                                                "RecordingName": SessionMetadata.get("task", "")}}),
+                    }, do_compression=True)
+                    with open(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysAnalog.mat"), "rb") as file:
+                        requester.UploadMATFile(ParticipantInfo['Id'], file, {**SessionMetadata,
+                                                                            **{"DataType": "Delsys", "StartTime": SessionDate + time_offset,
+                                                                                "Timezone": timezone, "SamplingRateScale": 1/time_scale}})
 
         if on_success:
             on_success(f"Session {session_info} processed and uploaded successfully.")
