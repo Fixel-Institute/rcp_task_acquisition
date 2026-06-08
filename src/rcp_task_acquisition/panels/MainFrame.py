@@ -144,6 +144,8 @@ class MainFrame(wx.Frame):
                                   self.button_pressed,
                                   self.press_count,
                                   self.cam_test)
+        if not self.lj.test_connection():
+            logger.error("LabJack Error. Please physically reconnect.")
         
         self.Bind(wx.EVT_TIMER, self.lj.labjack_event, self.labjack_timer)
         self.labjack_stream_button.Bind(wx.EVT_TOGGLEBUTTON, self.disable_gui)
@@ -410,13 +412,10 @@ class MainFrame(wx.Frame):
             logger.debug("called stop_video")
             self.rest_timer.Stop()
         elif self.video_status.value == 6:
-            
             self.trial_panel.stop_video()
             self.video_status.value = 0
             self.warning.update_error("video")
             self.warning.display()
-            
-            
         elif (self.finish.value == 1 and 
         (self.task != "naturalistic_speech" and self.task != "vowel_space")):
             logger.debug("in intertrial")

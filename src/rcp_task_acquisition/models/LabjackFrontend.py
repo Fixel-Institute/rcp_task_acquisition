@@ -56,6 +56,9 @@ class LabjackFrontend():
         self.serial_bool = False
         self.ser_success = False
 
+    def test_connection(self):
+        return LabJackDataStream.test_connection()
+
     def labjack_stream(self, event):
         labjack_button = self.graph_panel.get_graph_button()
         if labjack_button.GetValue():

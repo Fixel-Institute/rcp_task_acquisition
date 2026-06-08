@@ -6,6 +6,7 @@ import win32api,win32process,win32con
 from labjack import ljm
 from rcp_task_acquisition.utils.constants import SCANS_PER_READ
 from rcp_task_acquisition.utils.logger import get_logger
+
 logger = get_logger("./models/LabjackProcess") 
 
 class LabJackDataStream(Process):
@@ -13,7 +14,6 @@ class LabJackDataStream(Process):
                  create_csv, folder_queue, labjack_list, graph_indices, 
                  button_pressed, inputs, button_list, press_counter,
                  constants, voltage_ranges, stream_started, scan_rate, handshake):
-        self.is_success = True
         self.voltage_range = {}
         for index, val in enumerate(labjack_list):
             if "A" in val:
@@ -70,9 +70,44 @@ class LabJackDataStream(Process):
         self.input_names = input_names
         self.voltage_ranges = voltage_ranges
 
+    def test_connection():
+        is_connected = False
+        try:
+            handle = ljm.openS("ANY", "ANY", "ANY")
+            info = ljm.getHandleInfo(handle)
+            print("Opened a LabJack with Device type: %i, Connection type: %i,\n"
+                "Serial number: %i, IP address: %s, Port: %i,\nMax bytes per MB: %i" %
+                (info[0], info[1], info[2], ljm.numberToIP(info[3]), info[4], info[5]))
+            
+            # Stream Configuration
+            aScanListNames = ["AIN0"]
+            numAddresses = len(aScanListNames)
+            aScanList = ljm.namesToAddresses(numAddresses, aScanListNames)[0]
+            scanRate = 1000
+            scansPerRead = int(scanRate / 10)
+            
+            ljm.eWriteName(handle, "STREAM_TRIGGER_INDEX", 0)
+            ljm.eWriteName(handle, "STREAM_CLOCK_SOURCE", 0)
+            aNames = ["AIN0_RANGE", "STREAM_RESOLUTION_INDEX"]
+            aValues = [10.0, 0]
+
+            numFrames = len(aNames)
+            ljm.eWriteNames(handle, numFrames, aNames, aValues)
+            scanRate = ljm.eStreamStart(handle, scansPerRead, numAddresses, aScanList, scanRate)
+            ret = ljm.eStreamRead(handle)
+            ljm.close(handle)
+            is_connected = True
+        
+        except Exception as e:
+            print(e)
+        
+        if not is_connected:
+            # USB\VID_0CD5&PID_0008\6&223C19BF&0&2
+            return False
+            
+        return True
 
     def run(self):
-
         pid = win32api.GetCurrentProcessId()
         handle = win32api.OpenProcess(win32con.PROCESS_ALL_ACCESS, True, pid)
         win32process.SetPriorityClass(handle, win32process.HIGH_PRIORITY_CLASS)
@@ -84,7 +119,6 @@ class LabJackDataStream(Process):
         debounce = 0
         min_off_samples = int(round(self.attemptedscanRate*0.01)) # minimum button release duration
 
-       
         aScanList = ljm.namesToAddresses(len(self.scan_list), self.scan_list)[0]
         if self.digital_inputs or self.extended_inputs:
             aScanList.append(2580)
@@ -212,10 +246,6 @@ class LabJackDataStream(Process):
         self.numpy_arr[:] = np.nan
         ljm.closeAll()
     
-    
     def is_successful(self):
-        return self.is_success
-
-
-    
+        return True
         

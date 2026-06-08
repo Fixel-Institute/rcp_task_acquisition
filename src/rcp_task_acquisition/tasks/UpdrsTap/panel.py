@@ -23,48 +23,64 @@ class FingerTapPanel(TrialPanel):
         self.trial_text = wx.StaticText(self, label="Trial # 1")
         
         self.hand_text = wx.StaticText(self, label='Choose which hand trial will use:')
+
         self.left_radio = wx.RadioButton(self, label="Left Hand", style= wx.RB_GROUP)
-        
         self.left_radio.Bind(wx.EVT_RADIOBUTTON, self.on_select)
         self.right_radio = wx.RadioButton(self, label="Right Hand")
         self.right_radio.Bind(wx.EVT_RADIOBUTTON, self.on_select)
         
+        self.fast_radio = wx.RadioButton(self, label="Fast", style= wx.RB_GROUP)
+        self.moderate_radio = wx.RadioButton(self, label="Moderate")
+        self.slow_radio = wx.RadioButton(self, label="Slow")
+        
         self.seconds_text = wx.StaticText(self, label= "Time: 10 secs")
-        
         self.continue_button = wx.ToggleButton(self, label="Begin Trial", size=(self.button_width*2, -1))
-    
-        grid_sizer = wx.GridBagSizer(5, 4)
-        
-        grid_sizer.Add(self.trial_text, pos=(0, 0), span=(0,4), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
-        grid_sizer.Add(self.hand_text, pos=(1, 0), span=(0,4), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
-        grid_sizer.Add(self.left_radio, pos=(2, 0), span=(0,2), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
-        grid_sizer.Add(self.right_radio, pos=(2, 2), span=(0,2), flag=wx.ALIGN_LEFT  | wx.ALL, border=self.border)
-        grid_sizer.Add(self.seconds_text, pos=(3, 0), span=(0,2), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
-        grid_sizer.Add(self.continue_button, pos=(4, 0), span=(0,2), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
+
+        grid_sizer = wx.GridBagSizer(6, 6)
+        grid_sizer.Add(self.trial_text, pos=(0, 0), span=(0,3), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
+        grid_sizer.Add(self.hand_text, pos=(1, 0), span=(0,6), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
+        grid_sizer.Add(self.left_radio, pos=(2, 0), span=(0,3), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
+        grid_sizer.Add(self.right_radio, pos=(2, 3), span=(0,3), flag=wx.ALIGN_LEFT  | wx.ALL, border=self.border)
+        grid_sizer.Add(self.fast_radio, pos=(3, 0), span=(0,2), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
+        grid_sizer.Add(self.moderate_radio, pos=(3, 2), span=(0,2), flag=wx.ALIGN_LEFT  | wx.ALL, border=self.border)
+        grid_sizer.Add(self.slow_radio, pos=(3, 4), span=(0,2), flag=wx.ALIGN_LEFT  | wx.ALL, border=self.border)
+        grid_sizer.Add(self.seconds_text, pos=(4, 0), span=(0,3), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
+        grid_sizer.Add(self.continue_button, pos=(5, 0), span=(0,3), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
         return grid_sizer
     
     def run_trial(self, number):
         self.seconds = 10
         self.left_radio.Enable(False)
         self.right_radio.Enable(False)
+        self.fast_radio.Enable(False)
+        self.moderate_radio.Enable(False)
+        self.slow_radio.Enable(False)
         self.hand_text.Enable(False)
         self.start_video_button.Enable(False)
         # self.trial_text.SetLabel(f"Trial # {number}")
     
-        
     def get_result(self):
         self.tap_hand = "left" if self.left_radio.GetValue() else "right"
-        return self.tap_hand
+        if self.fast_radio.GetValue():
+            self.tap_speed = "fast"
+        elif self.moderate_radio.GetValue():
+            self.tap_speed = "moderate"
+        elif self.slow_radio.GetValue():
+            self.tap_speed = "slow"
+        else:
+            self.tap_speed = "unknown"
+        return f"{self.tap_hand},{self.tap_speed}"
         
-    
     def on_select(self, event):
         self.tap_hand = "left" if self.left_radio.GetValue() else "right"
-
     
     def reset(self, trial):
         self.seconds = 10
         self.left_radio.Enable(True)
         self.right_radio.Enable(True)
+        self.fast_radio.Enable(True)
+        self.moderate_radio.Enable(True)
+        self.slow_radio.Enable(True)
         self.hand_text.Enable(True)
         self.seconds_text.SetLabel(f"Time: {self.seconds} secs")
         # self.continue_button.Enable(False)

@@ -213,8 +213,6 @@ class Camera():
         self.stopAq()
         time.sleep(2)
         
-
-        
     def vidPlayer(self, event):
         if self.camaq.value == 2:
             return
@@ -236,9 +234,7 @@ class Camera():
                     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                     laplacian = cv2.Laplacian(gray, cv2.CV_64F)
                     variance = laplacian.var()
-                    
                     self.cam_tests[ndx][0] = variance
-                    
                     normalized_img = gray / 255.0
                     # Calculate RMS contrast (Standard Deviation)
                     rms = np.std(normalized_img)
@@ -251,9 +247,7 @@ class Camera():
                 self.ctrl_panel.plot_hardware(self.contrast_tests, 1)
         self.figure.canvas.draw()
         
-        
     def start_recording(self, event, base_dir, sess_dir, unit_ref, sess_string, count):
-
         totTime = 20 #int(self.secRec.GetValue())+int(self.minRec.GetValue())*60
         spaceneeded = 0
         freespace = shutil.disk_usage(base_dir)[2]
