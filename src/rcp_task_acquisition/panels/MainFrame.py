@@ -691,6 +691,7 @@ class MainFrame(wx.Frame):
         file_count = len(prev_expt_list)+1
         self.session = file_count
         self.sess_string = '%s%03d' % ('session', file_count)
+        self.sess_string += f" ({self.task})"
         self.sess_dir = os.path.join(self.base_dir, self.sess_string)
         if not os.path.exists(self.sess_dir):
             os.makedirs(self.sess_dir)
