@@ -2,8 +2,6 @@ from rcp_task_acquisition.tasks import bases
 from rcp_task_acquisition.utils.logger import get_logger
 logger = get_logger("./tasks/ReachGrasp") 
 
-
-
 class ReachGrasp(bases.StimulusBase):
     def __init__(self, window, frame, finish):
         super().__init__(window, frame)
@@ -33,10 +31,8 @@ class ReachGrasp(bases.StimulusBase):
         self.display.switch_patch()
         self.display.draw_patch()
         self.display.flip()        
-        self.play_tone()
+        #self.play_tone()
 
-        
-        
     def update_data(self, data):
         self.hand = data[0]    
         self.grasp_object = data[1]   

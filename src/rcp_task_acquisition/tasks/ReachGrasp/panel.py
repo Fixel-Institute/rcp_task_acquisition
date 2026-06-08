@@ -27,22 +27,24 @@ class ReachGraspPanel(TrialPanel):
         
         self.object_text = wx.StaticText(self, label='Choose grasp apparatus:')
         self.large_object_radio = wx.RadioButton(self, label="Large", style= wx.RB_GROUP)
-        self.precision_object_radio = wx.RadioButton(self, label="Precision")
+        self.precision_object_radio = wx.RadioButton(self, label="Poke")
+        self.pinch_object_radio = wx.RadioButton(self, label="Pinch")
         
         self.seconds_text = wx.StaticText(self, label= "Time: 0 secs")
         
         self.continue_button = wx.ToggleButton(self, label="Begin Trial", size=(self.button_width*2, -1))
     
-        grid_sizer = wx.GridBagSizer(6, 4)
-        grid_sizer.Add(self.trial_text, pos=(0, 0), span=(0,4), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
-        grid_sizer.Add(self.hand_text, pos=(1, 0), span=(0,4), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
-        grid_sizer.Add(self.left_radio, pos=(2, 0), span=(0,2), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
-        grid_sizer.Add(self.right_radio, pos=(2, 2), span=(0,2), flag=wx.ALIGN_LEFT  | wx.ALL, border=self.border)
-        grid_sizer.Add(self.object_text, pos=(3, 0), span=(0,4), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
+        grid_sizer = wx.GridBagSizer(6, 6)
+        grid_sizer.Add(self.trial_text, pos=(0, 0), span=(0,6), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
+        grid_sizer.Add(self.hand_text, pos=(1, 0), span=(0,6), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
+        grid_sizer.Add(self.left_radio, pos=(2, 0), span=(0,3), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
+        grid_sizer.Add(self.right_radio, pos=(2, 3), span=(0,3), flag=wx.ALIGN_LEFT  | wx.ALL, border=self.border)
+        grid_sizer.Add(self.object_text, pos=(3, 0), span=(0,6), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
         grid_sizer.Add(self.large_object_radio, pos=(4, 0), span=(0,2), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
         grid_sizer.Add(self.precision_object_radio, pos=(4, 2), span=(0,2), flag=wx.ALIGN_LEFT  | wx.ALL, border=self.border)
-        grid_sizer.Add(self.seconds_text, pos=(5, 0), span=(0,4), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
-        grid_sizer.Add(self.continue_button, pos=(6, 0), span=(0,2), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
+        grid_sizer.Add(self.pinch_object_radio, pos=(4, 4), span=(0,2), flag=wx.ALIGN_LEFT  | wx.ALL, border=self.border)
+        grid_sizer.Add(self.seconds_text, pos=(5, 0), span=(0,6), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
+        grid_sizer.Add(self.continue_button, pos=(6, 0), span=(0,3), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
         return grid_sizer
     
     def run_trial(self, number):
@@ -62,7 +64,15 @@ class ReachGraspPanel(TrialPanel):
         
     def get_result(self):
         # self.pace = "Self-Paced" if self.self_radio.GetValue() else "Fast As Possible"
-        self.grasp_object = "Large" if self.large_object_radio.GetValue() else "Precision"
+        if self.large_object_radio.GetValue():
+            self.grasp_object = "Large"
+        elif self.precision_object_radio.GetValue():
+            self.grasp_object = "Poke"
+        elif self.pinch_object_radio.GetValue():
+            self.grasp_object = "Pinch"
+        else:
+            self.grasp_object = "Unknown"
+
         self.reach_hand = "Left" if self.left_radio.GetValue() else "Right"
         return f"{self.reach_hand},{self.grasp_object}" #, self.pace
         
