@@ -4,7 +4,35 @@ cam_config:
   is_unconnected: false
 cameras:
   leftCamTop:
-    serial: '26127411'
+    serial: '25113384'
+    ismaster: false
+    crop:
+    - 50
+    - 540
+    - 0
+    - 540
+    bin: 1
+    gain: 15
+    gamma: 0.8
+    gig_e: true
+    flip: false
+    in_use: true
+  rightCamTop:
+    serial: '25451913'
+    ismaster: false
+    crop:
+    - 50
+    - 540
+    - 0
+    - 540
+    bin: 1
+    gain: 15
+    gamma: 0.8
+    gig_e: true
+    flip: false
+    in_use: true
+  leftCamFace:
+    serial: '25113375'
     ismaster: true
     crop:
     - 20
@@ -15,10 +43,10 @@ cameras:
     gain: 15
     gamma: 0.8
     gig_e: false
-    flip: false
+    flip: true
     in_use: true
-  rightCamTop:
-    serial: '26063923'
+  rightCamFace:
+    serial: '25452249'
     ismaster: false
     crop:
     - 20
@@ -29,41 +57,13 @@ cameras:
     gain: 15
     gamma: 0.8
     gig_e: false
-    flip: false
-    in_use: true
-  leftCamFace:
-    serial: '26127421'
-    ismaster: false
-    crop:
-    - 90
-    - 540
-    - 0
-    - 540
-    bin: 1
-    gain: 15
-    gamma: 0.8
-    gig_e: true
-    flip: false
-    in_use: true
-  rightCamFace:
-    serial: '26127422'
-    ismaster: false
-    crop:
-    - 90
-    - 540
-    - 0
-    - 540
-    bin: 1
-    gain: 15
-    gamma: 0.8
-    gig_e: true
-    flip: false
+    flip: true
     in_use: true
   leftCamTripod:
-    serial: '26125063'
+    serial: '26063921'
     ismaster: false
     crop:
-    - 90
+    - 50
     - 540
     - 0
     - 540
@@ -74,10 +74,10 @@ cameras:
     flip: false
     in_use: true
   rightCamTripod:
-    serial: '25476395'
+    serial: '25452255'
     ismaster: false
     crop:
-    - 90
+    - 50
     - 540
     - 0
     - 540
@@ -88,12 +88,9 @@ cameras:
     flip: false
     in_use: true
 
-
-unitRef: unitME
-RawDataDir: C:\Users\Public\Documents\RawDataLocal
+unitRef: unitUFL
+RawDataDir: D:\RawDataLocal
 VideoDir: C:\Users\Public\Videos\task_videos
-
-
 
 hardware:
   Audio:
@@ -180,3 +177,31 @@ hardware:
     - 0
     - 1
     graph: ''
+delsys:
+  'Delsys Sensor #1':
+    hemisphere: Left
+    position: Shoulder
+  'Delsys Sensor #2':
+    hemisphere: Right
+    position: Shoulder
+  'Delsys Sensor #3':
+    hemisphere: Left
+    position: Forearm
+  'Delsys Sensor #4':
+    hemisphere: Right
+    position: Forearm
+  'Delsys Sensor #5':
+    hemisphere: Left
+    position: Hand
+  'Delsys Sensor #6':
+    hemisphere: Right
+    position: Hand
+  'Delsys Sensor #7':
+    hemisphere: Left
+    position: Foot
+  'Delsys Sensor #8':
+    hemisphere: Right
+    position: Foot
+  'Delsys Sensor #16':
+    hemisphere: Analog Sensor
+    position: Analog

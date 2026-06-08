@@ -10,8 +10,12 @@ from dataclasses import dataclass
 load("coreclr")
 import clr
 
-clr.AddReference("library\\Delsys\\resources\\DelsysAPI")
-clr.AddReference("System.Collections")
+from importlib import resources
+
+# This dynamically finds the path to the 'resources' folder inside library.Aero
+with resources.path("library.Delsys.resources", "DelsysAPI.dll") as dll_path:
+    clr.AddReference(str(dll_path))
+    clr.AddReference("System.Collections")
 
 from Aero import AeroPy
 
