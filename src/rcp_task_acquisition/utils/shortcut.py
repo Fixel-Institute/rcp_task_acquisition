@@ -13,4 +13,4 @@ def create_shortcut():
     main = os.path.join(run_dir, "__main__.py")
     icon_img = os.path.join(main_dir, "library", "rcp_logo_ucsf_uf.ico")
     
-    make_shortcut(main, name='UCSF-UF RCP Task Acquisition', icon=icon_img, terminal=False)
+    make_shortcut(main, name='UCSF-UF RCP Task Acquisition', icon=icon_img, terminal=True)

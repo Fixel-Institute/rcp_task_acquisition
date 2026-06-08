@@ -1,1 +1,3 @@
 recursive-include library/Delsys/resources *.dll
+exclude .env
+exclude .env.*

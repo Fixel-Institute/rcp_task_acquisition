@@ -276,6 +276,8 @@ class multiCam_DLC_Cam(Process):
                                 
                             dropped_frame, total_frames, files_len = identify_dropped_frames(file_path, 
                                                                     self.framerate) #int(user_cfg["cam_config"]['framerate']))
+                            if total_frames == 0:
+                                total_frames = 1
                             percentage_dropped = int(np.ceil((dropped_frame/total_frames)*100))
                             logger.debug(f"{self.camID}: total: {total_frames}, dropped: {dropped_frame}, len: {files_len}")
                             logger.debug(f"{dropped_frame} of camera frames dropped for {self.camID}")

@@ -173,6 +173,7 @@ class StimulusBase():
                 flipHoriz=False, 
                 loop=False
             )
+        video._player.audio_set_volume(150)
         logger.debug(video)
         video.play()
         while video.status != visual.FINISHED:
@@ -214,7 +215,7 @@ class StimulusBase():
     def update_data(self, data):
         pass
     
-    def play_stone(self, frequency=440, duration=1.0, sample_rate=44100):
+    def play_stone(self, frequency=440, duration=1.0, sample_rate=44100, volume=0.2):
         """
         Generates and plays a sine wave tone.
         """
@@ -226,7 +227,7 @@ class StimulusBase():
             tone = np.sin(frequency * t * 2 * np.pi)
     
             # Normalize to 16-bit range
-            audio = (tone * 32767).astype(np.int16)
+            audio = (volume * tone * 32767).astype(np.int16)
             
             p = pyaudio.PyAudio()
             stream = p.open(format=pyaudio.paInt16,
