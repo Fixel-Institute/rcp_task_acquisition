@@ -4,22 +4,22 @@ cam_config:
   is_unconnected: false
 cameras:
   leftCamTop:
-    serial: '26127411'
+    serial: '23531686'
     ismaster: false
     crop:
-    - 40
-    - 640
-    - 30
-    - 480
+    - 90
+    - 540
+    - 0
+    - 540
     exposure: 1000
-    bin: 2
+    bin: 1
     gain: 15
     gamma: 0.8
     framerate_decrease_factor: 2
     flip: false
     in_use: true
   rightCamTop:
-    serial: '26063923'
+    serial: '24044011'
     ismaster: false
     crop:
     - 90
@@ -33,66 +33,62 @@ cameras:
     flip: false
     in_use: true
   leftCamFace:
-    serial: '26127421'
+    serial: '24041797'
     ismaster: true
     crop:
     - 20
     - 320
     - 15
     - 240
-    bin: 1
+    bin: 2
     gain: 15
     gamma: 0.8
     framerate_decrease_factor: 1
     flip: false
     in_use: true
   rightCamFace:
-    serial: '23531686'
+    serial: '24043993'
+    ismaster: false
+    crop:
+    - 20
+    - 320
+    - 15
+    - 240
+    bin: 2
+    gain: 15
+    gamma: 0.8
+    framerate_decrease_factor: 1
+    flip: false
+    in_use: true
+  leftCamTripod:
+    serial: '26125063'
     ismaster: false
     crop:
     - 90
     - 540
     - 0
     - 540
-    bin: 2
-    gain: 15
-    gamma: 0.8
-    framerate_decrease_factor: 2
-    flip: false
-    in_use: true
-    framerate: 240
-  leftCamTripod:
-    serial: '26125063'
-    ismaster: false
-    crop:
-    - 40
-    - 640
-    - 30
-    - 480
     exposure: 1000
-    bin: 2
+    bin: 1
     gain: 15
     gamma: 0.8
     framerate_decrease_factor: 2
     flip: false
-    in_use: true
-    framerate: 240
+    in_use: false
   rightCamTripod:
     serial: '25476395'
     ismaster: false
     crop:
-    - 40
-    - 640
-    - 30
-    - 480
+    - 90
+    - 540
+    - 0
+    - 540
     exposure: 1000
-    bin: 2
+    bin: 1
     gain: 15
     gamma: 0.8
     framerate_decrease_factor: 2
     flip: false
-    in_use: true
-    framerate: 240
     in_use: false
 
 

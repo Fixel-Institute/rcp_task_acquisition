@@ -37,7 +37,7 @@ HEADERS = ["In Use", "Hardware", "Labjack Pin", "Voltage Range"]
 HARDWARE_LIST = ["Photodetector", "Subject Mic", "Experimenter Mic", "PC Audio", 
                  "Grip Force Sensor", "Force Sensor X", "Force Sensor Y", "Force Sensor Z",
                  "Camera Sync TTL", "Grasp Start Pad", "Extra Digital In 1", "Extra Digital In 2", 
-                 "Extra Digital Out", "Return From DS7A", "Trigger to DS7A", "TTL to E-Phys", "Digital Accessory"]
+                 "Slow Barcode", "Return From DS7A", "Trigger to DS7A", "TTL to E-Phys", "Digital Accessory"]
 
 LABJACK_PIN_LIST = ["AIN0", "AIN1", "AIN2", "AIN3", "AIN4", "AIN5", "AIN6", "AIN7", 
                     "FIO0", "FIO1", "FIO2", "FIO3", "FIO4", "FIO5", "FIO6", "FIO7",
