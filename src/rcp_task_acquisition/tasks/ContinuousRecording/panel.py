@@ -4,9 +4,9 @@ import wx
 
 from rcp_task_acquisition.panels.TrialPanel import TrialPanel
 from rcp_task_acquisition.utils.logger import get_logger
-logger = get_logger("./panels/IndefiniteRecordingPanel") 
+logger = get_logger("./panels/ContinuousRecordingPanel") 
 
-class IndefiniteRecordingPanel(TrialPanel):
+class ContinuousRecordingPanel(TrialPanel):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.seconds = 0
@@ -42,7 +42,7 @@ class IndefiniteRecordingPanel(TrialPanel):
         self.trial_number = number
         
     def get_result(self):
-        return f"IndefiniteRecording,{self.trial_number}"
+        return f"ContinuousRecording,{self.trial_number}"
 
     def reset(self, number):
         self.seconds = 0

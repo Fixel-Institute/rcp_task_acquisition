@@ -1,9 +1,9 @@
 from rcp_task_acquisition.tasks import bases
 from rcp_task_acquisition.utils.logger import get_logger
-logger = get_logger("./tasks/IndefiniteRecording") 
+logger = get_logger("./tasks/ContinuousRecording") 
 
 # Sets up display window, fixation cross, text pages and image stimuli
-class IndefiniteRecording(bases.StimulusBase):
+class ContinuousRecording(bases.StimulusBase):
     def __init__(self, window, frame, finish):
         super().__init__(window, frame, None, finish)
         self.trial = 0

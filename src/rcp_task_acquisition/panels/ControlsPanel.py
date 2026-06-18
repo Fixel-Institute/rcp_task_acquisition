@@ -12,7 +12,7 @@ from rcp_task_acquisition.tasks.ReachGrasp.panel import ReachGraspPanel
 from rcp_task_acquisition.tasks.ToneTaps.panel import ToneTapsClosedPanel
 from rcp_task_acquisition.tasks.Sara.panel import SaraPanel
 from rcp_task_acquisition.tasks.VerbGeneration.panel import VerbGenerationPanel
-from rcp_task_acquisition.tasks.IndefiniteRecording.panel import IndefiniteRecordingPanel
+from rcp_task_acquisition.tasks.ContinuousRecording.panel import ContinuousRecordingPanel
 
 
 
@@ -143,7 +143,7 @@ class ControlsPanel(wx.Panel):
         elif task == "verb_generation":
             return VerbGenerationPanel(self)
         elif task == "continuous_recording":
-            return IndefiniteRecordingPanel(self)
+            return ContinuousRecordingPanel(self)
         else:
             basic_panel = TrialPanel(self)
             basic_panel.continue_button.Show()
