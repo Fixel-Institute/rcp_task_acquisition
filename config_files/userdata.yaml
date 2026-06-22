@@ -19,7 +19,7 @@ cameras:
     flip: false
     in_use: true
   rightCamTop:
-    serial: '25113384'
+    serial: '25451913'
     ismaster: false
     crop:
     - 90
@@ -33,7 +33,7 @@ cameras:
     flip: false
     in_use: true
   leftCamFace:
-    serial: '24041797'
+    serial: '25113375'
     ismaster: true
     crop:
     - 20
@@ -46,8 +46,8 @@ cameras:
     framerate_decrease_factor: 1
     flip: false
     in_use: true
-  rightCamTripod:
-    serial: '25452255'
+  rightCamFace:
+    serial: '25452249'
     ismaster: false
     crop:
     - 20
@@ -61,7 +61,7 @@ cameras:
     flip: false
     in_use: true
   leftCamTripod:
-    serial: '26125063'
+    serial: '26063921'
     ismaster: false
     crop:
     - 90
@@ -76,7 +76,7 @@ cameras:
     flip: false
     in_use: false
   rightCamTripod:
-    serial: '25476395'
+    serial: '25452255'
     ismaster: false
     crop:
     - 90
