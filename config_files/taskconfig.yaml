@@ -14,6 +14,7 @@ naturalistic_speech:
   - rightCamFace
   - leftCamTripod
   - rightCamTripod
+  
 n_back:
   settings:
   - Photodetector
@@ -29,6 +30,7 @@ n_back:
   - rightCamTop
   - leftCamFace
   - rightCamFace
+
 motor_task_finger_taps:
   settings:
   - Photodetector
@@ -43,6 +45,7 @@ motor_task_finger_taps:
   - rightCamTop
   - leftCamFace
   - rightCamFace
+
 diadochokinesis:
   settings:
   - Photodetector
@@ -57,6 +60,7 @@ diadochokinesis:
   - rightCamTop
   - leftCamFace
   - rightCamFace
+
 verbal_fluency:
   settings:
   - Photodetector
@@ -71,6 +75,7 @@ verbal_fluency:
   - rightCamTop
   - leftCamFace
   - rightCamFace
+
 vowel_space:
   settings:
   - Photodetector
@@ -85,6 +90,7 @@ vowel_space:
   - rightCamTop
   - leftCamFace
   - rightCamFace
+
 reach_grasp:
   settings:
   - Photodetector
@@ -106,6 +112,7 @@ reach_grasp:
   - rightCamFace
   - leftCamTripod
   - rightCamTripod
+
 tone_taps_closed:
   settings:
   - Photodetector
@@ -121,6 +128,7 @@ tone_taps_closed:
   - rightCamTop
   - leftCamFace
   - rightCamFace
+
 sara:
   settings:
   - Photodetector
@@ -135,6 +143,7 @@ sara:
   - rightCamTop
   - leftCamFace
   - rightCamFace
+
 verb_generation:
   settings:
   - Photodetector
@@ -149,6 +158,7 @@ verb_generation:
   - rightCamTop
   - leftCamFace
   - rightCamFace
+
 calibrate_top:
   settings:
   - Photodetector
@@ -159,6 +169,7 @@ calibrate_top:
   - rightCamTop
   - leftCamFace
   - rightCamFace
+
 calibrate_face:
   settings:
   - Photodetector
@@ -167,6 +178,7 @@ calibrate_face:
   - TTL to E-Phys
   - leftCamFace
   - rightCamFace
+
 calibrate_tripod:
   settings:
   - Photodetector
@@ -180,19 +192,19 @@ calibrate_tripod:
 
 continuous_recording:
   settings:
-  - Audio
-  - Cameras
-  - Button
-  - Photodiode
-  - Grasp Button
-  - Microphone 1
-  - Microphone 2
+  - Photodetector
+  - Subject Mic
+  - Experimenter Mic
+  - PC Audio
+  - Grip Force Sensor
   - Force Sensor X
   - Force Sensor Y
   - Force Sensor Z
-  - Barcode
-  - Slow Barcode
-  - TENS
+  - Camera Sync TTL
+  - Grasp Start Pad
+  - Return From DS7A
+  - Trigger to DS7A
+  - TTL to E-Phys
   - leftCamTop
   - rightCamTop
   - leftCamFace
