@@ -6,7 +6,7 @@ import numpy as np
 
 class ExperimenterMonitor(wx.Frame):
     def __init__(self, parent):
-        super(ExperimenterMonitor, self).__init__(parent, title="See What They See", size=(800, 600))
+        super(ExperimenterMonitor, self).__init__(parent, title="See What They See", size=(1057, 600))
         self.panel = ExperimenterMonitorPanel(self)
         self.allow_close = False
         self.Bind(wx.EVT_CLOSE, self.on_close)

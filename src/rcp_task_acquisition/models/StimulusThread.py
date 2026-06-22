@@ -9,7 +9,7 @@ import rcp_task_acquisition.utils.file_utils as files
 from rcp_task_acquisition.tasks.UpdrsTap.BasicTaps import BasicTaps
 from rcp_task_acquisition.utils.displays import Window
 from rcp_task_acquisition.tasks.NaturalisticSpeech.NaturalisticSpeech import NaturalisticSpeech
-from rcp_task_acquisition.tasks.IndefiniteRecording.IndefiniteRecording import IndefiniteRecording
+from rcp_task_acquisition.tasks.ContinuousRecording.ContinuousRecording import ContinuousRecording
 from rcp_task_acquisition.tasks.Diadochokinesis.Diadochokinesis import Diadochokinesis
 from rcp_task_acquisition.tasks.VerbalFluency.VerbalFluency import VerbalFluency
 from rcp_task_acquisition.tasks.VowelSpace.VowelSpace import VowelSpace
@@ -19,6 +19,7 @@ from rcp_task_acquisition.tasks.ToneTaps.ToneTaps import ToneTapsClosed
 from rcp_task_acquisition.tasks.Sara.Sara import Sara
 from rcp_task_acquisition.tasks.HardwareTest import HardwareTest
 from rcp_task_acquisition.tasks.VerbGeneration.VerbGeneration import VerbGeneration
+from rcp_task_acquisition.tasks.OculoStim.OculoStim import OculoStim
 from rcp_task_acquisition.tasks.bases import StimulusBase
 from rcp_task_acquisition.utils.logger import get_logger
 logger = get_logger("./models/StimulusThread") 
@@ -166,6 +167,12 @@ class StimulusThread(Process):
         
         elif self.task == "verb_generation":
             self.stimulus = VerbGeneration(self.window, self.frame, self.finish)
+
+        elif self.task == "continuous_recording":
+            self.stimulus = ContinuousRecording(self.window, self.frame, self.finish)
+        
+        elif self.task == "oculostim_task":
+            self.stimulus = OculoStim(self.window, self.frame, self.finish)
 
         else:
             self.stimulus = StimulusBase(self.window, self.frame, None, self.finish)

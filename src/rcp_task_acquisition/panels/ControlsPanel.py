@@ -13,8 +13,7 @@ from rcp_task_acquisition.tasks.ToneTaps.panel import ToneTapsClosedPanel
 from rcp_task_acquisition.tasks.Sara.panel import SaraPanel
 from rcp_task_acquisition.tasks.VerbGeneration.panel import VerbGenerationPanel
 from rcp_task_acquisition.tasks.ContinuousRecording.panel import ContinuousRecordingPanel
-
-
+from rcp_task_acquisition.tasks.OculoStim.panel import OculoStimPanel
 
 class ControlsPanel(wx.Panel):
     def __init__(self,parent, ctrl_panel, task="task"):
@@ -144,6 +143,8 @@ class ControlsPanel(wx.Panel):
             return VerbGenerationPanel(self)
         elif task == "continuous_recording":
             return ContinuousRecordingPanel(self)
+        elif task == "oculostim_task":
+            return OculoStimPanel(self)
         else:
             basic_panel = TrialPanel(self)
             basic_panel.continue_button.Show()

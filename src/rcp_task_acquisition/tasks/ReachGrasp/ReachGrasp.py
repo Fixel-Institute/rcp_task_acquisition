@@ -36,7 +36,6 @@ class ReachGrasp(bases.StimulusBase):
     def update_data(self, data):
         self.hand = data[0]    
         self.grasp_object = data[1]   
-                 
         
     def saveMetadata(self, name, sessionFolder):
         data = {"trial_count": self.trial_count, 

@@ -918,7 +918,7 @@ class MainFrame(wx.Frame):
             if self.task == "vowel_space":
                 self.trial_panel.next_button.Bind(wx.EVT_BUTTON, self.next_trial)
 
-        if self.delsys_preview:
+        if self.delsys_preview and self.delsys.is_connected():
             self.delsys_preview.Show()
         
         if self.experimenter_view:
