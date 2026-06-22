@@ -38,7 +38,7 @@ class Diadochokinesis(bases.StimulusBase):
             self.display.flip()
             if self.finish.value == 2:
                 break
-            
+        
         self.display.switch_patch()
         self.display.draw_patch()
         self.display.flip()

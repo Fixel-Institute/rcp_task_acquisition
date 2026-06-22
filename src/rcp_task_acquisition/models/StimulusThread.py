@@ -4,7 +4,7 @@ from enum import Enum
 from queue import Empty
 import json
 from multiprocessing import Process
-
+import ast
 import rcp_task_acquisition.utils.file_utils as files
 from rcp_task_acquisition.tasks.UpdrsTap.BasicTaps import BasicTaps
 from rcp_task_acquisition.utils.displays import Window
@@ -118,7 +118,11 @@ class StimulusThread(Process):
                     msgq_data = self.msgq.get()
                     logger.debug(f"stim: {msgq_data}")
                     try:
-                        trial_data = msgq_data.split(',')
+                        logger.debug(f"stimthread datadata: {msgq_data[0]}")
+                        if msgq_data[0] == "(":
+                            trial_data = ast.literal_eval(msgq_data)
+                        else: 
+                            trial_data = msgq_data
                     except:
                         trial_data = msgq_data
                     # trial_data = trial_data.replace("(", "")

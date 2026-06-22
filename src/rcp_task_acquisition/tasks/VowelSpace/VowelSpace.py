@@ -48,7 +48,9 @@ class VowelSpace(bases.StimulusBase):
     
     
     def update_data(self, is_repeated):
-        is_repeated = is_repeated[0] == "True"
+        logger.debug(f"is_repeated: {is_repeated}")
+        is_repeated = is_repeated == "True"
+        logger.debug(f'is_repeated: {is_repeated} formatted')
         if is_repeated:
             # self.repeat_num+=1
             logger.debug("in is_repeated")

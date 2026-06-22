@@ -205,6 +205,8 @@ class LaunchPanel():
         self.protocol_button.Enable(is_enabled)
         self.protocol_choice.Enable(is_enabled)
         self.protocol_text.Enable(is_enabled)
+        self.participant_add.Enable(is_enabled)
+        self.participant_remove.Enable(is_enabled)
         self.hardware_button.SetValue(False)
         self.hardware_button.SetLabel("Update Hardware")
         self.panel.Update()

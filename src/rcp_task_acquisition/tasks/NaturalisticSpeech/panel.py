@@ -99,7 +99,7 @@ class NaturalisticSpeechPanel(TrialPanel):
         
     def get_result(self):
         image_path = self.image_names[self.selection] #os.path.join(c.IMG_DIR, self.image_names[self.selection])
-        return f"{image_path},{self.trial_number}"
+        return image_path,self.trial_number
 
     
     def reset(self, number):

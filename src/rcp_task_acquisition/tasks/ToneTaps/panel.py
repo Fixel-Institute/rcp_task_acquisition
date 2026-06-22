@@ -29,7 +29,7 @@ class ToneTapsClosedPanel(TrialPanel):
         self.left_radio.Bind(wx.EVT_RADIOBUTTON, self.on_select)
         self.right_radio = wx.RadioButton(self, label="Right Hand")
         self.right_radio.Bind(wx.EVT_RADIOBUTTON, self.on_select)
-        
+        self.right_radio.SetValue(True)
         self.seconds_text = wx.StaticText(self, label= "Time: 0 secs")
         
         self.continue_button = wx.ToggleButton(self, label="Begin Trial", size=(self.button_width*2, -1))
@@ -56,6 +56,7 @@ class ToneTapsClosedPanel(TrialPanel):
         self.trial_text.SetLabel(f"Trial # {number}")
         
     def get_result(self):
+        self.tap_hand = "left" if self.left_radio.GetValue() else "right"
         return self.tap_hand
         
 

@@ -153,6 +153,7 @@ class StimulusBase():
         pass
     
     def play_instructional_video(self, trial_name):
+        logger.debug(f"Trial name: {trial_name}")
         if trial_name == "":
             file = self.instructions_dict
         else:
@@ -215,7 +216,7 @@ class StimulusBase():
     def update_data(self, data):
         pass
     
-    def play_stone(self, frequency=440, duration=1.0, sample_rate=44100, volume=0.2):
+    def play_stone(self, frequency=440, duration=1.0, sample_rate=44100, volume=0.1):
         """
         Generates and plays a sine wave tone.
         """

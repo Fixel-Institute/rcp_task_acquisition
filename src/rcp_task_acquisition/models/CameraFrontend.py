@@ -55,6 +55,7 @@ class Camera():
 
     def setup(self, config, is_unconnected):
         self.cam_cfg = config
+        self.cam_crop = Crop()
         # self.frmDims = [0,
         #                 int(CAM_MAX_HEIGHT/DOWNSAMPLE_VAL/2),
         #                 0,
@@ -62,7 +63,7 @@ class Camera():
         
         # self.size = self.frmDims[1]*self.frmDims[3]*3
         # self.shape = [self.frmDims[1], self.frmDims[3],3] 
-        
+        self.reset_variables()
         if is_unconnected:
             for s in self.cam_cfg:
                 self.unconnected.append(str(self.cam_cfg[s]['serial']))
@@ -172,7 +173,6 @@ class Camera():
             self.dispSize.append(self.h[ndx]*self.w[ndx]*3)
             self.y2.append(self.y1[ndx]+self.h[ndx])
             self.x2.append(self.x1[ndx]+self.w[ndx])
-            
             frame = self.frameBuff[ndx][0:self.dispSize[ndx]].reshape([self.h[ndx], self.w[ndx],3])
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             for f in range(3):
@@ -247,7 +247,9 @@ class Camera():
                 self.ctrl_panel.plot_hardware(self.contrast_tests, 1)
         self.figure.canvas.draw()
         
-    def start_recording(self, event, base_dir, sess_dir, unit_ref, sess_string, count):
+        
+    def start_recording(self, event, base_dir, sess_dir, path_base, count):
+
         totTime = 20 #int(self.secRec.GetValue())+int(self.minRec.GetValue())*60
         spaceneeded = 0
         freespace = shutil.disk_usage(base_dir)[2]
@@ -262,10 +264,11 @@ class Camera():
         for ndx, s in enumerate(self.camStrList):
             camID = str(self.cam_cfg[s]['serial'])
             self.camq[camID].put('recordPrep')
-            date_string = datetime.datetime.utcnow().strftime("%Y%m%d")
-            name_base = f"{date_string}_{unit_ref}_{sess_string}_{s}_trial{count}" #% (date_string, self.user_cfg['unitRef'], self.sess_string, self.cam_cfg[s]['nickname'])
-            path_base = os.path.join(sess_dir,name_base)
-            self.camq[camID].put(path_base)
+            # date_string = datetime.datetime.utcnow().strftime("%Y%m%d")
+            name_base = "%s_%s_trial%03d" % (path_base, s, count)
+            # name_base = f"{date_string}_{unit_ref}_{sess_string}_{s}_trial{count}" #% (date_string, self.user_cfg['unitRef'], self.sess_string, self.cam_cfg[s]['nickname'])
+            new_base = os.path.join(sess_dir,name_base)
+            self.camq[camID].put(new_base)
             self.camq_p2read[camID].get()
 
         self.camaq.value = 1
@@ -435,7 +438,6 @@ class Camera():
             actual_rate = self.camq_p2read[camID].get()
             framerate = self.camq_p2read[camID].get()
             self.rate.append(actual_rate)
-            logger.debug(f"RATES: {self.rate}")
             # if math.ceil(actual_rate) != framerate:
 
                 # warning_str += f"\n {camID} has a framerate of {round(actual_rate,3)}, expected {framerate}"
@@ -465,6 +467,7 @@ class Camera():
     def reset_variables(self):
         self.labjack_scan_rate = None
         self.camStrList = list()
+        self.cam_settings = []
         self.slist = list()
         self.master_list = list()
         self.unconnected = list()

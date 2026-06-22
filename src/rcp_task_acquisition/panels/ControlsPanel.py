@@ -12,6 +12,7 @@ from rcp_task_acquisition.tasks.ReachGrasp.panel import ReachGraspPanel
 from rcp_task_acquisition.tasks.ToneTaps.panel import ToneTapsClosedPanel
 from rcp_task_acquisition.tasks.Sara.panel import SaraPanel
 from rcp_task_acquisition.tasks.VerbGeneration.panel import VerbGenerationPanel
+from rcp_task_acquisition.tasks.Calibration.panel import Calibration
 from rcp_task_acquisition.tasks.ContinuousRecording.panel import ContinuousRecordingPanel
 from rcp_task_acquisition.tasks.OculoStim.panel import OculoStimPanel
 
@@ -145,6 +146,8 @@ class ControlsPanel(wx.Panel):
             return ContinuousRecordingPanel(self)
         elif task == "oculostim_task":
             return OculoStimPanel(self)
+        elif "calibrate" in task:
+            return Calibration(self)
         else:
             basic_panel = TrialPanel(self)
             basic_panel.continue_button.Show()

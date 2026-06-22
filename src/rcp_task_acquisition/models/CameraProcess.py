@@ -59,11 +59,11 @@ class multiCam_DLC_Cam(Process):
         # camCt = len(self.camStrList)
         
         
-        gig_e = user_cfg[camStr]['gig_e']
-        if gig_e:
-            self.framerate = round(int(config['cam_config']['framerate'])/int(config['cam_config']['framerate_decrease_factor']))
-        else:
-            self.framerate =int(config['cam_config']['framerate'])
+        framerate_decrease = user_cfg[camStr]['framerate_decrease_factor']
+        # if gig_e:
+        self.framerate = round(int(config['cam_config']['framerate'])/int(framerate_decrease))
+        # else:
+        # self.framerate =int(config['cam_config']['framerate'])
         current_exposure_time = 1000 #= int(user_cfg[camStr]['exposure'])
         
         aqW = int(user_cfg[camStr]['crop'][1]*self.dwnsmplfac)
@@ -72,7 +72,7 @@ class multiCam_DLC_Cam(Process):
         
         # frame_results = np.zeros([int(self.frmdim[1]*self.dwnsmplfac),int(self.frmdim[3]*self.dwnsmplfac),3],'ubyte')
         # frame_results = np.zeros([aqH,aqW,3],'ubyte')
-        frameSml = np.zeros([int(aqH/self.dwnsmplfac),int(aqW/self.dwnsmplfac),3],'ubyte')
+        frameSml = np.zeros([int(aqH/self.dwnsmplfac/user_cfg[camStr]["bin"]),int(aqW/self.dwnsmplfac/user_cfg[camStr]["bin"]),3],'ubyte')
         
         method = 'none'
         system = PySpin.System.GetInstance()
@@ -98,6 +98,12 @@ class multiCam_DLC_Cam(Process):
                         logger.debug(f'{camStr} m here')
                         self.camq_p2read.put('done')
                         logger.debug(f'{camStr} initialized as primary')
+                        logger.debug(f"cam buffer: {cam.TLStream.StreamOutputBufferCount()}")
+                        while cam.TLStream.StreamOutputBufferCount() > 0 :
+                            logger.debug("getting buffer image")
+                            _image = cam.GetNextImage(int(100))
+                            _image.Release()
+
                     if msg == 'InitS':
                         logger.debug(f"{camStr} s here")
                         cam.Init()
@@ -105,6 +111,12 @@ class multiCam_DLC_Cam(Process):
                         logger.debug(f'{camStr} s here')
                         self.camq_p2read.put('done')
                         logger.debug(f'{camStr} initialized as secondary')
+                        logger.debug(f"cam buffer: {cam.TLStream.StreamOutputBufferCount()}")
+                        while cam.TLStream.StreamOutputBufferCount() > 0 :
+                            logger.debug("getting buffer image")
+                            _image = cam.GetNextImage(int(100))
+                            _image.Release()
+
                     if msg == 'InitC':
                         cam.Init()
                         cam.LineSelector.SetValue(PySpin.LineSelector_Line2)
@@ -116,6 +128,12 @@ class multiCam_DLC_Cam(Process):
                         cam.TriggerOverlap.SetValue(PySpin.TriggerOverlap_Off)
                         cam.TriggerMode.SetValue(PySpin.TriggerMode_On)
                         isunconnected = True
+                        logger.debug(f"cam buffer: {cam.TLStream.StreamOutputBufferCount()}")
+                        while cam.TLStream.StreamOutputBufferCount() > 0 :
+                            logger.debug("getting buffer image")
+                            _image = cam.GetNextImage(int(100))
+                            _image.Release()
+
                         self.camq_p2read.put('done')
                     elif msg == 'Release':
                         cam.DeInit()
@@ -188,7 +206,6 @@ class multiCam_DLC_Cam(Process):
                         # self.camq_p2read.put('done')
                     elif msg == 'Start':
                         cam.BeginAcquisition()
-                        
                         if ismaster or isunconnected:
                             self.frm.value = 0
                             self.camq.get()
@@ -398,11 +415,13 @@ class multiCam_DLC_Cam(Process):
                         if method == 'crop':
                                 
                             roi = self.frmdim
-                            
+                            logger.debug(f"roi: {self.frmdim}")
                             record_frame_rate = self.framerate #int(user_cfg['cam_config']['framerate'])
                             # Set width
                             node_width = PySpin.CIntegerPtr(nodemap.GetNode('Width'))
                             width_max = node_width.GetMax()
+                            
+                            logger.debug(f"node_width:{width_max}")
                             width_to_set = np.floor(width_max/roi[3]*user_cfg[camStr]['crop'][1]/4)*4
                             if PySpin.IsAvailable(node_width) and PySpin.IsWritable(node_width):
                                 node_width.SetValue(int(width_to_set))
@@ -416,7 +435,7 @@ class multiCam_DLC_Cam(Process):
                                 node_height.SetValue(int(height_to_set))
                             else:
                                 logger.warn('Height not available...')
-    
+                            logger.debug(f"node height: {height_max}")
                             # Apply offset X
                             node_offset_x = PySpin.CIntegerPtr(nodemap.GetNode('OffsetX'))
                             offset_x = np.floor(width_max/roi[3]*user_cfg[camStr]['crop'][0]/4)*4
@@ -490,6 +509,7 @@ class multiCam_DLC_Cam(Process):
                         logger.info(f"cam.AcquisitionFrameRate.GetValue(): {camStr}: {str(record_frame_rate)}")
                         # self.camq_p2read.put(max_exposure)
                         self.camq_p2read.put(record_frame_rate)
+                        logger.debug(f"Spin cam vals: height = {node_height.GetValue()}, width = {node_width.GetValue()}")
                         self.camq_p2read.put(node_width.GetValue())
                         self.camq_p2read.put(node_height.GetValue())
                     

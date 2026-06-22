@@ -11,7 +11,7 @@ class FingerTapPanel(TrialPanel):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.tap_hand = "left"
-        
+        self.type = None
         vertical_sizer = wx.BoxSizer(wx.VERTICAL)
         vertical_sizer.Add(self._setup_fingertap(), 0, wx.ALIGN_LEFT | wx.ALL, self.border)
         vertical_sizer.Add(self.setup_instruction_playback(), 0, wx.ALIGN_LEFT | wx.ALL, self.border)
@@ -22,30 +22,31 @@ class FingerTapPanel(TrialPanel):
     def _setup_fingertap(self):
         self.trial_text = wx.StaticText(self, label="Trial # 1")
         
+        self.type_text = wx.StaticText(self, label="Select Speed:")
+        self.task_type_list = ["Slow and methodical", "Faster", "Fast as possible"]
+        self.task_type = wx.Choice(self, id=wx.ID_ANY, choices=self.task_type_list)
+        self.task_type.SetSelection(0)
         self.hand_text = wx.StaticText(self, label='Choose which hand trial will use:')
 
         self.left_radio = wx.RadioButton(self, label="Left Hand", style= wx.RB_GROUP)
         self.left_radio.Bind(wx.EVT_RADIOBUTTON, self.on_select)
         self.right_radio = wx.RadioButton(self, label="Right Hand")
         self.right_radio.Bind(wx.EVT_RADIOBUTTON, self.on_select)
-        
-        self.fast_radio = wx.RadioButton(self, label="Fast", style= wx.RB_GROUP)
-        self.moderate_radio = wx.RadioButton(self, label="Moderate")
-        self.slow_radio = wx.RadioButton(self, label="Slow")
-        
+        self.right_radio.SetValue(True)
         self.seconds_text = wx.StaticText(self, label= "Time: 10 secs")
         self.continue_button = wx.ToggleButton(self, label="Begin Trial", size=(self.button_width*2, -1))
-
-        grid_sizer = wx.GridBagSizer(6, 6)
-        grid_sizer.Add(self.trial_text, pos=(0, 0), span=(0,3), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
-        grid_sizer.Add(self.hand_text, pos=(1, 0), span=(0,6), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
-        grid_sizer.Add(self.left_radio, pos=(2, 0), span=(0,3), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
-        grid_sizer.Add(self.right_radio, pos=(2, 3), span=(0,3), flag=wx.ALIGN_LEFT  | wx.ALL, border=self.border)
-        grid_sizer.Add(self.fast_radio, pos=(3, 0), span=(0,2), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
-        grid_sizer.Add(self.moderate_radio, pos=(3, 2), span=(0,2), flag=wx.ALIGN_LEFT  | wx.ALL, border=self.border)
-        grid_sizer.Add(self.slow_radio, pos=(3, 4), span=(0,2), flag=wx.ALIGN_LEFT  | wx.ALL, border=self.border)
-        grid_sizer.Add(self.seconds_text, pos=(4, 0), span=(0,3), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
-        grid_sizer.Add(self.continue_button, pos=(5, 0), span=(0,3), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
+    
+        grid_sizer = wx.GridBagSizer(5, 4)
+        
+        grid_sizer.Add(self.trial_text, pos=(0, 0), span=(0,4), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
+        
+        grid_sizer.Add(self.hand_text, pos=(1, 0), span=(0,4), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
+        grid_sizer.Add(self.left_radio, pos=(2, 0), span=(0,2), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
+        grid_sizer.Add(self.right_radio, pos=(2, 2), span=(0,2), flag=wx.ALIGN_LEFT  | wx.ALL, border=self.border)
+        grid_sizer.Add(self.type_text, pos=(3, 0), span=(0, 1), flag=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL | wx.ALL, border=self.border)
+        grid_sizer.Add(self.task_type, pos=(3, 1), span=(0, 3), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
+        grid_sizer.Add(self.seconds_text, pos=(4, 0), span=(0,2), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
+        grid_sizer.Add(self.continue_button, pos=(5, 0), span=(0,2), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
         return grid_sizer
     
     def run_trial(self, number):
@@ -61,16 +62,14 @@ class FingerTapPanel(TrialPanel):
     
     def get_result(self):
         self.tap_hand = "left" if self.left_radio.GetValue() else "right"
-        if self.fast_radio.GetValue():
-            self.tap_speed = "fast"
-        elif self.moderate_radio.GetValue():
-            self.tap_speed = "moderate"
-        elif self.slow_radio.GetValue():
-            self.tap_speed = "slow"
-        else:
-            self.tap_speed = "unknown"
-        return f"{self.tap_hand},{self.tap_speed}"
+        type_index = self.task_type.GetSelection()
+        task_type = None
+        if type_index != -1:
+            task_type= self.task_type_list[type_index]
         
+        return self.tap_hand, task_type
+        
+    
     def on_select(self, event):
         self.tap_hand = "left" if self.left_radio.GetValue() else "right"
     

@@ -17,7 +17,6 @@ def identify_dropped_frames(timestamp_file, frame_rate):
     # Load timestamps from the file
     # frame_id_list = pd.read_csv(timestamp_file)['frame_id'].values
     timestamps_ns = pd.read_csv(timestamp_file)['timestamp'].values[1:]  # Extract timestamp column
-    print(f"DROPED FRAMES FRAMERATE: {frame_rate}, {timestamp_file}")
     expected_interval = 1e9 / frame_rate
     
     current_frame = len(timestamps_ns)

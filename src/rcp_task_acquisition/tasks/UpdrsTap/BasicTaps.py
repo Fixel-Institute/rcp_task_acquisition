@@ -13,12 +13,14 @@ class BasicTaps(bases.StimulusBase):
         # self.finish = is_finished
         self.trial_count = 0
         self.hand= None
+        self.type = None
         self.hand_used = {}
         self.instructions_dict = BASIC_TAPS_PATH
         
     def present(self):
         self.trial_count+=1
-        self.hand_used[f"trial_{self.trial_count}"] = self.hand
+        self.hand_used[f"trial_{self.trial_count}"] = {"hand": self.hand,
+                                                       "speed": self.type}
         self.display.switch_patch()
         
         self.display.flip()
@@ -37,8 +39,9 @@ class BasicTaps(bases.StimulusBase):
         self.play_tone() 
         
        
-    def update_data(self, hand):
-        self.hand = hand
+    def update_data(self, hand_tuple):
+        self.hand = hand_tuple[0]
+        self.type = hand_tuple[1]
         
         
     def saveMetadata(self, name, sessionFolder):

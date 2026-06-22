@@ -19,7 +19,7 @@ def get_logger(name: str = "cart") -> logging.Logger:
         logging.Logger: Configured logger instance
     """
     # log_dir = Path(RAW_DATA_DIR+ "/logs") #Path("/home/rcp/task-acquisition/logs")
-    date_string = datetime.datetime.utcnow().strftime("%Y%m%d")
+    date_string = datetime.datetime.now().strftime("%Y%m%d")
     log_str = os.path.join(RAW_DATA_DIR, date_string)
     log_dir = Path(log_str)
     # Ensure the log directory exists

@@ -88,6 +88,7 @@ class VerbalFluencyPanel(TrialPanel):
 
 
     def update_values(self):
+        logger.debug("printing update_values")
         self.continue_button.SetValue(False)
         self.start_video_button.Enable(True)
         self.seconds_text.SetLabel("Time: 60 secs")
@@ -108,6 +109,7 @@ class VerbalFluencyPanel(TrialPanel):
             self.seconds_text.SetLabel(" ")
             self.continue_button.Enable(False)
             self.start_video_button.Enable(False)
+            return
         self.trial_num +=1
         self.actual_list.append(self.value)
         self.video_title.SetLabel(f"Trial: {self.value}")
@@ -150,7 +152,8 @@ class VerbalFluencyPanel(TrialPanel):
 
         
     def get_trials(self):
-        return f"{'.'.join(self.phonemic_list)},{self.semantic},{self.value}"
+        logger.debug(f'get_trials: {".".join(self.phonemic_list)}, {self.semantic}, {self.value}')
+        return '.'.join(self.phonemic_list), self.semantic, self.value
     
     
     def start_new_trial(self):

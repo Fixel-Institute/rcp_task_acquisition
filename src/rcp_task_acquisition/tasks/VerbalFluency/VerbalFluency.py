@@ -34,7 +34,7 @@ class VerbalFluency(bases.StimulusBase):
             self.display.flip()
             if self.finish.value == 2:
                 break
-            
+        self.finish.value = 1
         self.display.switch_patch()
         self.display.draw_patch()
         self.display.flip()
@@ -42,6 +42,10 @@ class VerbalFluency(bases.StimulusBase):
 
 
     def update_data(self, choices):
+        logger.debug(f"choices: {choices}")
+        if isinstance(choices, str):
+            self.trial = choices
+            return
         if len(choices) == 1:
             if choices[0] == 'None':
                 return

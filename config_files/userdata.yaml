@@ -7,32 +7,33 @@ cameras:
     serial: '25113384'
     ismaster: false
     crop:
-    - 50
+    - 90
     - 540
     - 0
     - 540
+    exposure: 1000
     bin: 1
     gain: 15
     gamma: 0.8
-    gig_e: true
+    framerate_decrease_factor: 2
     flip: false
     in_use: true
   rightCamTop:
-    serial: '25451913'
+    serial: '25113384'
     ismaster: false
     crop:
-    - 50
+    - 90
     - 540
     - 0
     - 540
     bin: 1
     gain: 15
     gamma: 0.8
-    gig_e: true
+    framerate_decrease_factor: 2
     flip: false
     in_use: true
   leftCamFace:
-    serial: '25113375'
+    serial: '24041797'
     ismaster: true
     crop:
     - 20
@@ -42,11 +43,11 @@ cameras:
     bin: 2
     gain: 15
     gamma: 0.8
-    gig_e: false
-    flip: true
+    framerate_decrease_factor: 1
+    flip: false
     in_use: true
-  rightCamFace:
-    serial: '25452249'
+  rightCamTripod:
+    serial: '25452255'
     ismaster: false
     crop:
     - 20
@@ -56,81 +57,72 @@ cameras:
     bin: 2
     gain: 15
     gamma: 0.8
-    gig_e: false
-    flip: true
+    framerate_decrease_factor: 1
+    flip: false
     in_use: true
   leftCamTripod:
-    serial: '26063921'
+    serial: '26125063'
     ismaster: false
     crop:
-    - 50
+    - 90
     - 540
     - 0
     - 540
+    exposure: 1000
     bin: 1
     gain: 15
     gamma: 0.8
-    gig_e: true
+    framerate_decrease_factor: 2
     flip: false
-    in_use: true
+    in_use: false
   rightCamTripod:
-    serial: '25452255'
+    serial: '25476395'
     ismaster: false
     crop:
-    - 50
+    - 90
     - 540
     - 0
     - 540
+    exposure: 1000
     bin: 1
     gain: 15
     gamma: 0.8
-    gig_e: true
+    framerate_decrease_factor: 2
     flip: false
-    in_use: true
+    in_use: false
+
 
 unitRef: unitUFL
 RawDataDir: D:\RawDataLocal
 VideoDir: C:\Users\Public\Videos\task_videos
 
 hardware:
-  Audio:
-    labjack_input: AIN3
-    voltage_range:
-    - -0.075
-    - 0.075
-    graph: ''
-  Cameras:
-    labjack_input: FIO0
-    voltage_range:
-    - 0
-    - 1
-    graph: ''
-  Button:
-    labjack_input: EIO0
-    voltage_range:
-    - 0
-    - 1
-    graph: ''
-  Photodiode:
+  Photodetector:
     labjack_input: AIN0
     voltage_range:
     - -0.015
     - 0.015
     graph: ''
-  Grasp Button:
-    labjack_input: FIO1
-    voltage_range:
-    - 0
-    - 1
-    graph: ''
-  Microphone 1:
+  Subject Mic:
     labjack_input: AIN1
     voltage_range:
     - -0.6
     - 0.6
     graph: ''
-  Microphone 2:
+  Experimenter Mic:
     labjack_input: AIN2
+    voltage_range:
+    - -0.6
+    - 0.6
+    graph: ''
+  PC Audio:
+    labjack_input: AIN3
+    voltage_range:
+    - -0.075
+    - 0.075
+    graph: ''
+  Grip Force Sensor:
+    labjack_input: AIN4
     voltage_range:
     - -0.6
     - 0.6
@@ -153,19 +145,25 @@ hardware:
     - -0.6
     - 0.6
     graph: ''
-  Barcode:
-    labjack_input: FIO7
+  Camera Sync TTL:
+    labjack_input: FIO0
     voltage_range:
     - 0
     - 1
     graph: ''
-  TENS:
-    labjack_input: FIO6
+  Grasp Start Pad:
+    labjack_input: FIO1
     voltage_range:
     - 0
     - 1
     graph: ''
-  TENS-out:
+  Extra Digital In 1:
+    labjack_input: FIO2
+    voltage_range:
+    - 0
+    - 1
+    graph: ''
+  Extra Digital In 2:
     labjack_input: FIO3
     voltage_range:
     - 0
@@ -177,6 +175,31 @@ hardware:
     - 0
     - 1
     graph: ''
+  Return From DS7A:
+    labjack_input: FIO5
+    voltage_range:
+    - 0
+    - 1
+    graph: ''
+  Trigger to DS7A:
+    labjack_input: FIO6
+    voltage_range:
+    - 0
+    - 1
+    graph: ''
+  TTL to E-Phys:
+    labjack_input: FIO7
+    voltage_range:
+    - 0
+    - 1
+    graph: ''
+  Digital Accessory:
+    labjack_input: EIO0
+    voltage_range:
+    - 0
+    - 1
+    graph: ''
+
 delsys:
   'Delsys Sensor #1':
     hemisphere: Left

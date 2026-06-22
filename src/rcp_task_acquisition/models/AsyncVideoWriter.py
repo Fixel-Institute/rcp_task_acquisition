@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import cv2
 import os
+from pathlib import Path
 
 from rcp_task_acquisition.utils.logger import get_logger
 from threading import Thread, Event
@@ -148,7 +149,10 @@ class AsyncFFmpegGPUWriter:
     def _worker(self):
         proc = None
         f = None
-
+        ffmpeg_dir: str = f"{(Path(__file__).parent.parent.parent.parent / 'library' / 'ffmpeg' / 'bin')};"
+        custom_env = os.environ.copy()
+        custom_env["PATH"] = str(ffmpeg_dir) + custom_env.get("PATH", "")
+        logger.debug(custom_env["PATH"])
         cmd = [
             "ffmpeg", "-y",
             "-f", "rawvideo",
@@ -177,7 +181,9 @@ class AsyncFFmpegGPUWriter:
                 stdin=subprocess.PIPE,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.PIPE,
-                bufsize=0
+                bufsize=0,
+                env=custom_env,
+                shell=True
             )
 
             f = open(self.timestamp_file, "w")

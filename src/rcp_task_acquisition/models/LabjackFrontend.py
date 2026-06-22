@@ -31,7 +31,7 @@ class LabjackFrontend():
             if "F" in item:
                 self.digital_list.append(int(item[-1]))
                 logger.debug(f"hardware: {self.hardware[index]}")
-                if "Button" in self.hardware[index]:
+                if "Accessory" in self.hardware[index]:
                     self.button_list.append(int(item[-1])) 
             else:
                 self.analog_list.append(item)
@@ -94,11 +94,11 @@ class LabjackFrontend():
             if "F" in item:
                 self.digital_list.append(int(item[-1]))
                 logger.debug(f"hardware: {self.all_hardware[1][index]}")
-                if "Button" in self.all_hardware[0][index]:
+                if "Accessory" in self.all_hardware[0][index]:
                     self.button_list.append((int(item[-1]), "f")) 
             elif "E" in item:
                 self.digital_list.append(int(item[-1])+8)
-                if "Button" in self.all_hardware[0][index]:
+                if "Accessory" in self.all_hardware[0][index]:
                     self.button_list.append((int(item[-1])+8, "e")) 
             # elif "E" in item:
             #     self.extended_list.append(int(item[-1]))

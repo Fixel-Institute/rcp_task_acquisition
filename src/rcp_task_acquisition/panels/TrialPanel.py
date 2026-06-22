@@ -109,10 +109,9 @@ class TrialPanel(wx.Panel):
     def stop_video(self):
         self.start_video_button.SetLabel("Start Video")
         self.start_video_button.SetValue(False)
-        if self.pause_video_button.GetValue():
-            self.pause_video_button.SetValue(False)
-            self.pause_video_button.Enable(False)
-            self.pause_video_button.SetLabel("Pause Video")
+        self.pause_video_button.SetValue(False)
+        self.pause_video_button.Enable(False)
+        self.pause_video_button.SetLabel("Pause Video")
     
     def pause_video(self):
         self.pause_video_button.SetLabel("Resume Video")

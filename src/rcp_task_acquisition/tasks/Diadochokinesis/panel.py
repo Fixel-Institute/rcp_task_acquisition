@@ -121,6 +121,9 @@ class DdkPanel(TrialPanel):
             self.seconds-=1
             if self.seconds >= 0:
                 self.seconds_text.SetLabel(f"Time: {self.seconds} secs")
+        else:
+            self.seconds+=1
+            self.seconds_text.SetLabel(f"Time: {self.seconds} secs")
 
 
     def get_buttons(self):

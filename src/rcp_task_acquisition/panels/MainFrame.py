@@ -14,6 +14,7 @@ import numpy as np
 import ctypes
 import shutil
 import json
+from pathlib import Path
 
 import rcp_task_acquisition.utils.file_utils as file_utils
 from rcp_task_acquisition.utils.file_utils import read_config
@@ -248,8 +249,8 @@ class MainFrame(wx.Frame):
             self.labjack_stream_button.Enable(False)
             self.labjack_stream_button.SetLabel("Stop Labjack")
             self.date_string = datetime.datetime.utcnow().strftime("%Y%m%d")
-            lj_path = os.path.join(self.sess_dir, f"{self.date_string}_{self.user_cfg['unitRef']}_{self.sess_string}_labjack.txt")
-            msg = f"P{self.date_string}_{self.user_cfg['unitRef']}_{self.sess_string}x"
+            lj_path = os.path.join(self.sess_dir, self.path_base+"_labjack.txt")
+            msg = f"P{self.path_base}x"
             self.lj.add_csv(lj_path, self.serial_device, msg)
             self.startingSession = True
             self.task_button.SetLabel("End Task")
@@ -324,6 +325,16 @@ class MainFrame(wx.Frame):
             else:
                 self.rest_timer.Start(1000)
             self.finish.value = 0
+            
+            if self.task== "verbal_fluency" and self.trial_panel.first:
+                self.count =0
+                self.trial_button.SetLabel("Start Trial")
+                self.trial_panel.switch_panel()
+                data = str(self.trial_panel.get_trials())
+                self.msgq.put("update_data")
+                self.msgq.put(data)
+                # self.results_list.append(self.trial_panel.get_result())
+                return
             try:
                 self.msgq.put("update_data")
                 data = str(self.trial_panel.get_result())
@@ -340,19 +351,11 @@ class MainFrame(wx.Frame):
             #     if finish:
             #        self.trial_button.Enable(True) 
             #     return
-            if self.task== "verbal_fluency" and self.trial_panel.first:
-                self.count =0
-                self.trial_button.SetLabel("Start Trial")
-                self.trial_panel.switch_panel()
-                data = str(self.trial_panel.get_trials())
-                self.msgq.put("update_data")
-                self.msgq.put(data)
-                self.results_list.append(self.trial_panel.get_result())
-                return
+            
                    
             self.trial_panel.run_trial(self.count)
             self.trial_button.SetLabel("Stop Trial")
-            self.cams.start_recording(event, self.base_dir, self.sess_dir, self.user_cfg['unitRef'], self.sess_string, self.count)
+            self.cams.start_recording(event, self.base_dir, self.sess_dir, self.path_base, self.count)
             self.liveTimer.Start(150)
             self.msgq.put("run_stimulus")
 
@@ -384,7 +387,6 @@ class MainFrame(wx.Frame):
             self.liveTimer.Stop()
     
     def next_trial(self, event):  
-        logger.debug("UPDATING DATA")
         self.msgq.put("update_data")
         
         data = str(self.trial_panel.get_result())
@@ -694,6 +696,9 @@ class MainFrame(wx.Frame):
         self.sess_dir = os.path.join(self.base_dir, self.sess_string)
         if not os.path.exists(self.sess_dir):
             os.makedirs(self.sess_dir)
+        self.date_string = datetime.datetime.utcnow().strftime("%Y%m%d")
+        self.path_base = f"{self.date_string}_{self.user_cfg['unitRef']}_{self.sess_string}"
+        # msg = f"P{self.date_string}_{self.user_cfg['unitRef']}_{self.sess_string}x"
         
   
     def initCams(self, event):
@@ -810,28 +815,64 @@ class MainFrame(wx.Frame):
     
         
     def recordCam(self, event):
-        if self.rec.GetValue():
+        if self.rec.GetValue() or self.task_button.GetValue():
             if self.recording:
                 return
             self.recording = True
-            self.cams.start_recording(event, self.base_dir, self.sess_dir, self.user_cfg['unitRef'], self.sess_string, self.count)
+            
+            if self.calibrate:
+                calibrate_path = Path(RAW_DATA_DIR).parent
+                date_string = datetime.datetime.now().strftime("%Y%m%d")
+                
+                self.base_dir = os.path.join(calibrate_path, "CalibrationData", date_string)
+                if not os.path.exists(self.base_dir):
+                    os.makedirs(self.base_dir)
+                
+                prev_expt_list = [name for name in os.listdir(self.base_dir)]
+                file_count = len(prev_expt_list)+1
+                self.session = file_count
+                self.sess_string = '%s_%03d' % (self.task, file_count)
+                self.sess_dir = os.path.join(self.base_dir, self.sess_string)
+                if not os.path.exists(self.sess_dir):
+                    os.makedirs(self.sess_dir)
+                self.date_string = datetime.datetime.utcnow().strftime("%Y%m%d")
+                self.path_base = f"{self.date_string}_{self.user_cfg['unitRef']}_{self.sess_string}"
+                self.task_button.SetLabel("Stop Recording")
+                self.trial_panel.reset(0)
+                self.trial_panel.show()
+            else:
+                self.create_file()
+            self.cams.start_recording(event, self.base_dir,self.sess_dir, self.path_base, self.count)
             self.set_crop.Enable(False)
             self.minRec.Enable(False)
             self.secRec.Enable(False)
+            self.exposure_button.Enable(False)
             self.update_settings.Enable(False)
             self.rec.SetLabel('Stop')
             self.play.SetLabel('Abort')
+            self.liveTimer.Start(150)
         else:
             if not self.recording:
                 return
             self.recording = False
             self.cams.stop_recording(event)
             self.rec.SetLabel('Record')
-            self.play.SetLabel('Play')
+            self.play.SetLabel('Live')
+            self.liveTimer.Stop()
             self.set_crop.Enable(True)
             self.minRec.Enable(True)
+            self.exposure_button.Enable(True)
             self.secRec.Enable(True)
             self.update_settings.Enable(True)
+            if self.calibrate:
+                self.task_button.SetLabel("Record Cameras")
+                self.trial_panel.hide()
+                if "face" not in self.task:
+                    for file in os.listdir(self.sess_dir):
+                        if "Face" in file:
+                            full_path = os.path.join(self.sess_dir, file)
+                            os.remove(full_path)
+                #remove any files that arent the calibraated files
         
         
     def onClick(self,event):
@@ -890,10 +931,12 @@ class MainFrame(wx.Frame):
                     args[hardware] = self.user_cfg["hardware"][hardware]
                 elif hardware in self.user_cfg["cameras"].keys():
                     self.cam_cfg[hardware] = self.user_cfg["cameras"][hardware]
+        logger.debug(f"args: {args}")
         hardware_tuple = [(arg, args[arg]["labjack_input"], "", args[arg]["voltage_range"]) for arg in args]
         sorted_hardware = sorted(hardware_tuple, key=lambda item: item[1])
         hardware_lists = list(zip(*sorted_hardware))
         self.hardware_list = hardware_lists
+        logger.debug(hardware_lists)
         self.cams.setup(self.cam_cfg, self.user_cfg['cam_config']['is_unconnected'])
         self.init.SetValue(True)
         self.widget_panel.update_task(self.task)
@@ -909,6 +952,18 @@ class MainFrame(wx.Frame):
         self.lj.update_hardware(hardware_lists)
         self.press_count.value = 0 
         self.video_start, self.video_pause = self.trial_panel.get_video_buttons()
+        if "calibrate" in self.task:
+            self.calibrate = True
+            self.task_button.Bind(wx.EVT_TOGGLEBUTTON, self.recordCam)
+            self.task_button.SetLabel("Record Cameras")
+        else:
+            self.calibrate = False
+            self.task_button.Bind(wx.EVT_TOGGLEBUTTON, self.run_task)
+            self.task_button.SetLabel("Start Task")
+        if self.task == "all_hardware":
+            self.task_button.Enable(False)
+        else:
+            self.task_button.Enable(True)
         if self.video_start != None:
             self.video_start.Bind(wx.EVT_TOGGLEBUTTON, self.play_instructions)
             self.video_pause.Bind(wx.EVT_TOGGLEBUTTON, self.pause_instructions)

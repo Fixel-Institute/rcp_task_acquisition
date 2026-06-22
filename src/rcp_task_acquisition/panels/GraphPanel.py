@@ -293,7 +293,7 @@ class GraphPanel(wx.Panel):
 
 
     def remove_hardware(self) -> None:
-        self.axes.legend(self.legend_lines, self.legend_labels, loc="upper left", fontsize=8, labelcolor=(0.9,0.9,0.9),
+        self.axes.legend(self.legend_lines, self.legend_labels, loc="upper left", fontsize=8, labelcolor=(0.1,0.1,0.1),
                          edgecolor=(0.9,0.9,0.9),  facecolor=(0.9, 0.9, 0.9), bbox_to_anchor=(-0.01, -0.01, 1.09, 1.09))
         self.test_focus.set_visible(False)
         for index, line in enumerate(self.test_lines):

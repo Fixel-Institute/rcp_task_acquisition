@@ -3,6 +3,7 @@
 * [Overview](#overview)
 * [Updates and Changes to Original Python Scripts](#Updates-and-Changes-to-Original-Python-Scripts)
 * [Installation instructions](#installation)
+* [Labjack Defaults](#defaults)
 
 ## Overview
 Code for the RCP task cart. More information to come...
@@ -52,6 +53,7 @@ This is the outline for installing this program with the expected hardware confi
 
 ### Installing Windows
 1. Install Windows 11 per University standards. It will be helpful to have some level of admin acess to install programs.
+    - If creating a local account instead of a university account DO NOT connect to wifi during installation. If you accidentally connect, you can press either Shift+Fn+F10 or press Shift+F10 and type `start ms-cxh:localonly`.
 2. Adjust settings
     - Set Main Display:
         1. Go to **Settings -> System -> Display**
@@ -108,3 +110,109 @@ Note- in order to correctly run the program, all hardware must be installed
 3. Select **Save Hardware Settings** and select **Close Hardware Panel**
 4. On first run, a folder will be created (RawLocalData) to store logs and session data. This folder will be in "C:\Users\Public\Documents".
 
+## Defaults
+The code should come with the defaults in labjack already specified, however if you change them and need to set them back this is the default configuration:
+```
+ Photodetector:
+   labjack_input: AIN0
+   voltage_range:
+   - -0.015
+   - 0.015
+   graph: ''
+ Subject Mic:
+   labjack_input: AIN1
+   voltage_range:
+   - -0.6
+   - 0.6
+   graph: ''
+ Experimenter Mic:
+   labjack_input: AIN2
+   voltage_range:
+   - -0.6
+   - 0.6
+   graph: ''
+ PC Audio:
+   labjack_input: AIN3
+   voltage_range:
+   - -0.075
+   - 0.075
+   graph: ''
+ Grip Force Sensor:
+   labjack_input: AIN4
+   voltage_range:
+   - -0.6
+   - 0.6
+   graph: ''
+ Force Sensor X:
+   labjack_input: AIN5
+   voltage_range:
+   - -0.6
+   - 0.6
+   graph: ''
+ Force Sensor Y:
+   labjack_input: AIN6
+   voltage_range:
+   - -0.6
+   - 0.6
+   graph: ''
+ Force Sensor Z:
+   labjack_input: AIN7
+   voltage_range:
+   - -0.6
+   - 0.6
+   graph: ''
+ Camera Sync TTL:
+   labjack_input: FIO0
+   voltage_range:
+   - 0
+   - 1
+   graph: ''
+ Grasp Start Pad:
+   labjack_input: FIO1
+   voltage_range:
+   - 0
+   - 1
+   graph: ''
+ Extra Digital In 1:
+   labjack_input: FIO2
+   voltage_range:
+   - 0
+   - 1
+   graph: ''
+ Extra Digital In 2:
+   labjack_input: FIO3
+   voltage_range:
+   - 0
+   - 1
+   graph: ''
+ Extra Digital Out:
+   labjack_input: FIO4
+   voltage_range:
+   - 0
+   - 1
+   graph: ''
+ Return From DS7A:
+   labjack_input: FIO5
+   voltage_range:
+   - 0
+   - 1
+   graph: ''
+ Trigger to DS7A:
+   labjack_input: FIO6
+   voltage_range:
+   - 0
+   - 1
+   graph: ''
+ TTL to E-Phys:
+   labjack_input: FIO7
+   voltage_range:
+   - 0
+   - 1
+   graph: ''
+ Digital Accessory:
+   labjack_input: EIO0
+   voltage_range:
+   - 0
+   - 1
+   graph: ''
+   ```
