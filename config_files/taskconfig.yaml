@@ -205,6 +205,30 @@ continuous_recording:
   - Return From DS7A
   - Trigger to DS7A
   - TTL to E-Phys
+  - Slow Barcode
+  - leftCamTop
+  - rightCamTop
+  - leftCamFace
+  - rightCamFace
+  - leftCamTripod
+  - rightCamTripod
+
+oculostim_task:
+  settings:
+  - Photodetector
+  - Subject Mic
+  - Experimenter Mic
+  - PC Audio
+  - Grip Force Sensor
+  - Force Sensor X
+  - Force Sensor Y
+  - Force Sensor Z
+  - Camera Sync TTL
+  - Grasp Start Pad
+  - Return From DS7A
+  - Trigger to DS7A
+  - TTL to E-Phys
+  - Slow Barcode
   - leftCamTop
   - rightCamTop
   - leftCamFace

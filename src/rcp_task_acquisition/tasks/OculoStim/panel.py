@@ -70,8 +70,7 @@ class OculoStimPanel(TrialPanel):
             self.selection = "Saccade"
         elif self.pursuit_radio.GetValue():
             self.selection = "Pursuit"
-        print(f"OculoStim,{self.selection},{self.trial_number}")
-        return f"OculoStim,{self.selection},{self.trial_number}"
+        return "OculoStim",self.selection,self.trial_number
 
     def reset(self, number):
         self.seconds = 5

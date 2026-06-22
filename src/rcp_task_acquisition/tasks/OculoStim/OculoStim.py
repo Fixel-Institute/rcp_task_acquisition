@@ -4,9 +4,9 @@ from rcp_task_acquisition.tasks import bases
 from rcp_task_acquisition.utils.logger import get_logger
 logger = get_logger("./tasks/ContinuousRecording") 
 
-from psychopy import visual
+from psychopy import visual, gui
 from rcp_task_acquisition.tasks.OculoStim.oculostim_source import _parse_eccentricities, build_saccade_trials, build_fixation_block_trials, build_pursuit_trials, StimulusPresenter, ExperimentRunner
-
+from rcp_task_acquisition.tasks.OculoStim.oculostim_source import _dlg_saccade, _dlg_fixation, _dlg_pursuit
 def get_saccade_config(v = ["10.0", 20, 1000, 0, 0, 1000, "interleaved"]) -> dict:
     return {
         "eccentricities": _parse_eccentricities(v[0]),
@@ -51,13 +51,21 @@ class OculoStim(bases.StimulusBase):
     
     def present_prep(self):
         cfg = get_default_config()
-        
         if self.trial_type == "Saccade":
             cfg["mode"] = "Saccade Block"
-            self.trial_data = build_saccade_trials(get_saccade_config())
+            config = _dlg_saccade()
+            self.trial_data = build_saccade_trials(config)
+        elif self.trial_type == "Fixation":
+            cfg["mode"] = "Fixation Block"
+            config = _dlg_fixation()
+            self.trial_data = build_fixation_block_trials(config)
+        elif self.trial_type == "Pursuit":
+            cfg["mode"] = "Pursuit Block"
+            config = _dlg_pursuit()
+            self.trial_data = build_pursuit_trials(config)
         
         self.result_data = []
-        self.presenter = StimulusPresenter(self.display, self.patch_flip)
+        self.presenter = StimulusPresenter(self.display)
         self.runner = ExperimentRunner(self.display, self.presenter, None, cfg)
         
     def present(self, test=True):
@@ -88,6 +96,4 @@ class OculoStim(bases.StimulusBase):
         return self.result_data
     
     def update_data(self, trial_data):
-        print(trial_data)
         self.trial_type = trial_data[1]
-        pass

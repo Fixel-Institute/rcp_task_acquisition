@@ -79,7 +79,6 @@ class StimulusThread(Process):
                     self.stimulus.present_prep()
                     results = self.stimulus.saveMetadata(self.stimulusConfig[self.task], None)
                     json_str = json.dumps(results)
-                    print(f"jsonstr: {json_str}")
                     self.resultsq.put(json_str)
 
                     if self.shared.value == -1:
