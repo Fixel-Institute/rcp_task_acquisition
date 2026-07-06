@@ -20,6 +20,7 @@ from rcp_task_acquisition.tasks.Sara.Sara import Sara
 from rcp_task_acquisition.tasks.HardwareTest import HardwareTest
 from rcp_task_acquisition.tasks.VerbGeneration.VerbGeneration import VerbGeneration
 from rcp_task_acquisition.tasks.OculoStim.OculoStim import OculoStim
+from rcp_task_acquisition.tasks.MSITBD2.MSITBD2 import MSITBD2
 from rcp_task_acquisition.tasks.bases import StimulusBase
 from rcp_task_acquisition.utils.logger import get_logger
 logger = get_logger("./models/StimulusThread") 
@@ -100,8 +101,8 @@ class StimulusThread(Process):
 
                     self.finish.value = 1
                 elif msg=="end_stimulus":
-                    
                     self.end_stimulus()
+                    
                 elif "play_instructions" in msg:
                     msg = self.msgq.get()
                     
@@ -177,6 +178,9 @@ class StimulusThread(Process):
         elif self.task == "oculostim_task":
             self.stimulus = OculoStim(self.window, self.frame, self.finish)
 
+        elif self.task == "MSITBD2":
+            self.stimulus = MSITBD2(self.window, self.frame, self.finish)
+
         else:
             self.stimulus = StimulusBase(self.window, self.frame, None, self.finish)
             
@@ -188,7 +192,6 @@ class StimulusThread(Process):
             logger.debug(f"{self.stimulusConfig}, {self.task}, {self.stimulus}")
             results = self.stimulus.saveMetadata(self.stimulusConfig[self.task], None)
             json_str = json.dumps(results)
-            logger.debug(f"jsonstr: {json_str}")
             self.resultsq.put(json_str)
     
     def close_window(self):

@@ -38,6 +38,7 @@ class DelsysController():
         super().__init__()
         self.EMGQueue = deque()
         self.IMUQueue = deque()
+        self.AnalogQueue = deque()
         self.deque_locker = threading.Lock()
         self.Trigno = TrignoBase.TrignoBase(self)
         self.DataHandler = DataManager.DataKernel(self.Trigno)
@@ -85,6 +86,10 @@ class DelsysController():
         if not self.IsScanning:
             self.IsScanning = True
             device_types = self.Trigno.TrigBase.GetLinkDeviceNames(False)
+            self.Trigno.TrigBase.SetAnalogInputConfig(1, True)
+            self.Trigno.TrigBase.SetAnalogInputChannel(1, "Mic", 0)
+            self.Trigno.TrigBase.ApplyAnalogInputSettings()
+
             try:
                 self.Trigno.TrigBase.ScanSensors(False, device_types).Result
             except:
@@ -95,18 +100,27 @@ class DelsysController():
             sensors = self.Trigno.TrigBase.GetSensors()
             for i in range(len(sensors)):
                 sensor = sensors[i]
-                if sensor.InternalName == "Analog Input Adapter":
-                    sensor.SelectSampleMode(sensor.Configuration.SampleModes[23])
-                else:
-                    sensor.SelectSampleMode(sensor.Configuration.SampleModes[60])
+                try:
+                    if sensor.InternalName == "Analog Input Adapter":
+                        sensor.SelectSampleMode(sensor.Configuration.SampleModes[23])
+                    elif sensor.InternalName == "FSR Adapter":
+                        sensor.SelectSampleMode(sensor.Configuration.SampleModes[34])
+                    else:
+                        sensor.SelectSampleMode(sensor.Configuration.SampleModes[60])
+                except Exception as e:
+                    logger.error(f"Error configuring sample mode for sensor {sensor.InternalName}: {e}")
 
-                sensor_status["Sensors"].append({
-                    "Id": sensor.PairNumber,
-                    "Name": sensor.InternalName,
-                    "TrignoChannels": [chan.Name for chan in sensor.TrignoChannels],
-                })
+                try:
+                    sensor_status["Sensors"].append({
+                        "Id": sensor.PairNumber,
+                        "Name": sensor.InternalName,
+                        "TrignoChannels": [chan.Name for chan in sensor.TrignoChannels],
+                    })
+                except Exception as e:
+                    logger.error(f"Error retrieving sensor information for sensor {sensor.InternalName}: {e}")
+                    
             self.SensorList = sensor_status["Sensors"]
-
+            print(self.SensorList)
             if self.update_sensors_config_ui is not None:
                 self.update_sensors_config_ui(sensor_status)
 
@@ -130,6 +144,7 @@ class DelsysController():
         self.ActiveSensors = {}
         sensors = self.Trigno.TrigBase.GetSensors()
         for sensor in sensors:
+            print(sensor.InternalName, sensor.IsSelected)
             if sensor.IsSelected:
                 for channel in sensor.TrignoChannels:
                     guid = channel.Id.ToString()
@@ -142,6 +157,7 @@ class DelsysController():
                     self.DataWriter.write_data(guid + "|SensorId", struct.pack("<I", sensor.PairNumber))
                     self.DataWriter.write_data(guid + "|Name", channel.Name.encode('utf-8'))
                     self.DataWriter.write_data(guid + "|SamplingRate", struct.pack("<d", channel.SampleRate))
+                    print(f"Active Sensor: {channel.Name}, SensorId: {sensor.PairNumber}, SamplingRate: {channel.SampleRate}")
 
         self.PauseFlag = False
         if self.ResetBeforeConfig and self.Trigno.TrigBase.GetPipelineState() == 'Armed':
@@ -184,6 +200,26 @@ class DelsysController():
                 sensor_ids.append(sensor["Id"])
         return sensor_ids
 
+    def get_sensor_type(self, sensor_id):
+        for key in self.ActiveSensors.keys():
+            if self.ActiveSensors[key]["SensorId"] == sensor_id:
+                if "Analog" in self.ActiveSensors[key]["Name"]:
+                    print(f"Sensor {sensor_id} is of type {self.ActiveSensors[key]['Name']}")
+                    return "Analog"
+                
+        return "Trigno"
+    
+    def set_streaming_analog(self, sensor_id):
+        analog_fs = 1111.111
+        analog_count = 0
+        for key in self.ActiveSensors.keys():
+            if self.ActiveSensors[key]["SensorId"] == sensor_id and "Analog" in self.ActiveSensors[key]["Name"]:
+                analog_fs = self.ActiveSensors[key]["SamplingRate"]
+                analog_count += 1
+
+        self.StreamingSensor = sensor_id
+        return analog_fs, analog_count
+
     def set_streaming_sensor(self, sensor_id, imu_type):
         emg_fs = 1250
         imu_fs = 148.148
@@ -203,6 +239,18 @@ class DelsysController():
         return emg_fs, imu_fs
 
     def get_streaming_data(self):
+        if len(self.AnalogQueue) > 0:
+            with self.deque_locker:
+                print("test")
+                analog_data = np.concatenate(self.AnalogQueue, axis=0)
+                self.AnalogQueue.clear()
+                if analog_data.shape[0] >= 10:
+                    analog_data = np.mean(analog_data[-10:], axis=0)  # Take the mean of the last 10 samples
+                else:
+                    analog_data = np.mean(analog_data, axis=0)  # Take the mean of all available samples
+                    
+                return analog_data, np.zeros((0,3))
+            
         if len(self.EMGQueue) > 0 and len(self.IMUQueue) > 0:
             with self.deque_locker:
                 emg_data = np.concatenate(self.EMGQueue, axis=0)
@@ -210,7 +258,7 @@ class DelsysController():
                 imu_data = np.concatenate(self.IMUQueue, axis=0)
                 self.IMUQueue.clear()
                 return emg_data, imu_data
-            
+        
         return np.zeros(0), np.zeros((0,3))
 
     def streaming(self):
@@ -223,6 +271,7 @@ class DelsysController():
                     data_out = self.Trigno.TrigBase.PollDataByString()
                     if len(list(data_out.Keys)) > 0:
                         imu_stack = np.zeros((0,3))
+                        analog_stack = np.zeros((0,4))
                         for key in list(data_out.Keys):
                             data = np.asarray(data_out[key], dtype='double')
                             self.DataWriter.write_data("Delsys_DataPacket|" + key, data.tobytes())
@@ -242,10 +291,25 @@ class DelsysController():
                                                 imu_stack[:,1] = data
                                             elif self.ActiveSensors[key]["Name"].endswith("Z"):
                                                 imu_stack[:,2] = data
+                                        elif self.ActiveSensors[key]["Name"].startswith("Analog"):
+                                            if analog_stack.shape[0] == 0:
+                                                analog_stack = np.zeros((len(data), 4))
+                                            if self.ActiveSensors[key]["Name"].endswith(" 1"):
+                                                analog_stack[:,0] = data
+                                            elif self.ActiveSensors[key]["Name"].endswith(" 2"):
+                                                analog_stack[:,1] = data
+                                            elif self.ActiveSensors[key]["Name"].endswith(" 3"):
+                                                analog_stack[:,2] = data
+                                            elif self.ActiveSensors[key]["Name"].endswith(" 4"):
+                                                analog_stack[:,3] = data
                                         
                         if imu_stack.shape[0] > 0:
                             with self.deque_locker:
                                 self.IMUQueue.append(imu_stack)
+                        
+                        if analog_stack.shape[0] > 0:
+                            with self.deque_locker:
+                                self.AnalogQueue.append(analog_stack)
 
                             #print(self.ActiveSensors[key])
                             #if self.StreamingSensor is not None and self.ActiveSensors[key]["Name"] == "EMG" and self.ActiveSensors[key]["SensorId"] == self.StreamingSensor:
@@ -275,13 +339,13 @@ class DelsysController():
         """Handles the threads for the DataCollector gui"""
         self.EMGQueue = deque()
 
-        self.StreamingThread = threading.Thread(target=self.streaming)
+        self.StreamingThread = threading.Thread(target=self.streaming, daemon=True)
         self.StreamingThread.start()
 
         if start_trigger:
-            self.WaitForStartThread = threading.Thread(target=self.waiting_for_start_trigger)
+            self.WaitForStartThread = threading.Thread(target=self.waiting_for_start_trigger, daemon=True)
             self.WaitForStartThread.start()
 
         if stop_trigger:
-            self.WaitForStopThread = threading.Thread(target=self.waiting_for_stop_trigger)
+            self.WaitForStopThread = threading.Thread(target=self.waiting_for_stop_trigger, daemon=True)
             self.WaitForStopThread.start()

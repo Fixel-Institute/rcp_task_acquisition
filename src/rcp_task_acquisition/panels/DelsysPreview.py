@@ -28,6 +28,7 @@ class DelsysControlPanel(wx.Panel):
     def __init__(self, parent, onSensorChange=None, onIMUChange=None):
         super(DelsysControlPanel, self).__init__(parent)
 
+        self.sensor_type = "Trigno"
         self.onSensorChange = onSensorChange
         self.onIMUChange = onIMUChange
 
@@ -70,7 +71,8 @@ class DelsysPreviewPanel(wx.Panel):
 
         self.delsys = delsys
         self.sensor_id = None
-        self.sensor_type = "Accelerometer"
+        self.imu_type = "Accelerometer"
+        self.sensor_type = "Trigno"
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.canvas = wx.Panel(self)
@@ -121,29 +123,42 @@ class DelsysPreviewPanel(wx.Panel):
         self.imu_x = np.arange(imu_sizer)  / imu_sizer * width
         self.imu_x = np.array(self.imu_x, dtype=int)
 
+    def setup_analog_patch(self, analog_count):
+        self.analog_y = np.zeros((analog_count), dtype=float)
+        self.analog_max = 0.0001
+
     def on_sensor_change(self, sensor_name):
         self.sensor_id = int(sensor_name.replace("Delsys Sensor #",""))
         if self.sensor_id:
             self._timer.Stop()
-            emg_fs, imu_fs = self.delsys.set_streaming_sensor(self.sensor_id, self.sensor_type)
-            self.setup_signals(emg_fs, imu_fs)
-            self._timer.Start(1)
+            sensor_type = self.delsys.get_sensor_type(self.sensor_id)
+            if sensor_type == "Analog":
+                self.sensor_type = "Analog"
+                analog_fs, analog_count = self.delsys.set_streaming_analog(self.sensor_id)
+                self.setup_analog_patch(analog_count)
+                self._timer.Start(1)
+            else:
+                self.sensor_type = "Trigno"
+                emg_fs, imu_fs = self.delsys.set_streaming_sensor(self.sensor_id, self.imu_type)
+                self.setup_signals(emg_fs, imu_fs)
+                self._timer.Start(1)
 
     def on_imu_change(self, sensor_name):
-        self.sensor_type = sensor_name
-        if self.sensor_type:
-            if sensor_name == "Accelerometer":
-                self.imu_scale = 2
-                self.imu_unit = "g"
-            elif sensor_name == "Gyroscope":
-                self.imu_scale = 500
-                self.imu_unit = "degree/s"
+        self.imu_type = sensor_name
+        if self.sensor_type == "Trigno":
+            if self.imu_type:
+                if sensor_name == "Accelerometer":
+                    self.imu_scale = 2
+                    self.imu_unit = "g"
+                elif sensor_name == "Gyroscope":
+                    self.imu_scale = 500
+                    self.imu_unit = "degree/s"
 
-            self._timer.Stop()
-            emg_fs, imu_fs = self.delsys.set_streaming_sensor(self.sensor_id, self.sensor_type)
-            self.setup_signals(emg_fs, imu_fs)
-            self._timer.Start(1)
-
+                self._timer.Stop()
+                emg_fs, imu_fs = self.delsys.set_streaming_sensor(self.sensor_id, self.imu_type)
+                self.setup_signals(emg_fs, imu_fs)
+                self._timer.Start(1)
+                
     def get_emg_data(self):
         sample_count = int(self.emg_fs/30)
         emg_signal = np.random.normal(0, 1, sample_count) * self.emg_scale / 3
@@ -173,90 +188,120 @@ class DelsysPreviewPanel(wx.Panel):
         width, height = self.canvas.GetClientSize()
         if width <= 0 or height <= 0:
             return
-        emg_canvas = [width * 0.05, height * 0.35, width * 0.9, height * 0.35]
-        imu_canvas = [width * 0.05, height * 0.90, width * 0.9, height * 0.50]
+            
         dc = wx.BufferedPaintDC(self.canvas)
         dc.SetBackground(wx.Brush(self.canvas.GetBackgroundColour()))
         dc.Clear()
+        if self.sensor_type == "Analog":
+            radius = np.min((width, height)) * 0.05
+            y_positions = [height * 0.5 for _ in range(len(self.analog_y))] 
+            x_positions = [width * (i + 1) / (len(self.analog_y) + 1) for i in range(len(self.analog_y))]
 
-        # Draw EMG signal
-        dc.SetPen(self._pen_emg)
-        dc.SetClippingRegion(int(emg_canvas[0]), int(emg_canvas[1]), int(emg_canvas[2]), -int(emg_canvas[3]))
-        
-        # Hum, step of 5 maybe too much? idk... Need testing with real data
-        step = 2
-        ys = np.asarray(emg_canvas[1] - (emg_canvas[3] / 2) - (self.emg_y[::step] / self.emg_scale) * (emg_canvas[3] / 2)).astype(int)
-        xs = self.emg_x[::step]
-        points = list(zip(xs, ys))
-        if len(points) > 1:
-            dc.DrawLines(points)
-        dc.DestroyClippingRegion()
+            # Use a transparent pen so the circles don't have a harsh black border
+            dc.SetPen(wx.TRANSPARENT_PEN)
+            
+            # Loop to draw the 4 circles
+            for i in range(len(self.analog_y)):
+                # Set the fill color (brush) to the current shade
+                if self.analog_y[i] < 0:
+                    color = wx.Colour(0, 0, 255, int(255 * min(abs(self.analog_y[i]) / self.analog_max, 1)))
+                else:
+                    color = wx.Colour(255, 0, 0, int(255 * min(abs(self.analog_y[i]) / self.analog_max, 1)))
+                dc.SetBrush(wx.Brush(color))
+                dc.DrawCircle(wx.Point(int(x_positions[i]), int(y_positions[i])), int(radius))
 
-        # Draw IMU signal
-        dc.SetClippingRegion(int(imu_canvas[0]), int(imu_canvas[1]), int(imu_canvas[2]), -int(imu_canvas[3]))
-        ys = np.asarray(imu_canvas[1] - (imu_canvas[3] / 2) + (-self.imu_y / self.imu_scale) * (imu_canvas[3] / 2)).astype(int)
-        xs = self.imu_x
+        elif self.sensor_type == "Trigno":
+            emg_canvas = [width * 0.05, height * 0.35, width * 0.9, height * 0.35]
+            imu_canvas = [width * 0.05, height * 0.90, width * 0.9, height * 0.50]
 
-        # IMU X axis
-        dc.SetPen(self._pen_imu_x)
-        pts_x = list(zip(xs, ys[:, 0]))
-        if len(pts_x) > 1:
-            dc.DrawLines(pts_x)
+            # Draw EMG signal
+            dc.SetPen(self._pen_emg)
+            dc.SetClippingRegion(int(emg_canvas[0]), int(emg_canvas[1]), int(emg_canvas[2]), -int(emg_canvas[3]))
+            
+            # Hum, step of 5 maybe too much? idk... Need testing with real data
+            step = 2
+            ys = np.asarray(emg_canvas[1] - (emg_canvas[3] / 2) - (self.emg_y[::step] / self.emg_scale) * (emg_canvas[3] / 2)).astype(int)
+            xs = self.emg_x[::step]
+            points = list(zip(xs, ys))
+            if len(points) > 1:
+                dc.DrawLines(points)
+            dc.DestroyClippingRegion()
 
-        # IMU Y axis
-        dc.SetPen(self._pen_imu_y)
-        pts_y = list(zip(xs, ys[:, 1]))
-        if len(pts_y) > 1:
-            dc.DrawLines(pts_y)
+            # Draw IMU signal
+            dc.SetClippingRegion(int(imu_canvas[0]), int(imu_canvas[1]), int(imu_canvas[2]), -int(imu_canvas[3]))
+            ys = np.asarray(imu_canvas[1] - (imu_canvas[3] / 2) + (-self.imu_y / self.imu_scale) * (imu_canvas[3] / 2)).astype(int)
+            xs = self.imu_x
 
-        # IMU Z axis
-        dc.SetPen(self._pen_imu_z)
-        pts_z = list(zip(xs, ys[:, 2]))
-        if len(pts_z) > 1:
-            dc.DrawLines(pts_z)
+            # IMU X axis
+            dc.SetPen(self._pen_imu_x)
+            pts_x = list(zip(xs, ys[:, 0]))
+            if len(pts_x) > 1:
+                dc.DrawLines(pts_x)
 
-        dc.DestroyClippingRegion()
+            # IMU Y axis
+            dc.SetPen(self._pen_imu_y)
+            pts_y = list(zip(xs, ys[:, 1]))
+            if len(pts_y) > 1:
+                dc.DrawLines(pts_y)
 
-        # Draw x-axis with tick marks from -2s to 0s
-        dc.SetPen(wx.Pen("#000000", 3))
-        dc.SetClippingRegion(0, 0, width, height)
-        dc.DrawLine(int(imu_canvas[0]), int(imu_canvas[1]), int(imu_canvas[0]+imu_canvas[2]), int(imu_canvas[1]))
-        ticks = np.arange(-self.window_time, 0.0001, 1)
-        for t in ticks:
-            norm = (t + self.window_time) / self.window_time
-            x = int(norm * imu_canvas[2] + imu_canvas[0])
-            dc.DrawLine(x, int(imu_canvas[1]), x, int(imu_canvas[1]) + 6)
-            label = f"{t:.1f}s"
-            dc.DrawText(label, x - 12, int(imu_canvas[1]) + 8)
+            # IMU Z axis
+            dc.SetPen(self._pen_imu_z)
+            pts_z = list(zip(xs, ys[:, 2]))
+            if len(pts_z) > 1:
+                dc.DrawLines(pts_z)
 
-        # Draw y-axis for both EMG and IMU
-        dc.DrawLine(int(imu_canvas[0]), int(imu_canvas[1]), int(imu_canvas[0]), int(imu_canvas[1] - imu_canvas[3]))
-        dc.DrawLine(int(emg_canvas[0]), int(emg_canvas[1]), int(emg_canvas[0]), int(emg_canvas[1] - emg_canvas[3]))
-        
-        # Add labels for EMG and IMU
-        dc.DrawText(f"EMG ({self.emg_scale:.1f} V)", int(emg_canvas[0]) + 5, int(emg_canvas[1]) - int(emg_canvas[3]) + 5)
-        dc.DrawText(f"IMU ({self.imu_scale:.1f} {self.imu_unit})", int(imu_canvas[0]) + 5, int(imu_canvas[1]) - int(imu_canvas[3]) + 5)
+            dc.DestroyClippingRegion()
+
+            # Draw x-axis with tick marks from -2s to 0s
+            dc.SetPen(wx.Pen("#000000", 3))
+            dc.SetClippingRegion(0, 0, width, height)
+            dc.DrawLine(int(imu_canvas[0]), int(imu_canvas[1]), int(imu_canvas[0]+imu_canvas[2]), int(imu_canvas[1]))
+            ticks = np.arange(-self.window_time, 0.0001, 1)
+            for t in ticks:
+                norm = (t + self.window_time) / self.window_time
+                x = int(norm * imu_canvas[2] + imu_canvas[0])
+                dc.DrawLine(x, int(imu_canvas[1]), x, int(imu_canvas[1]) + 6)
+                label = f"{t:.1f}s"
+                dc.DrawText(label, x - 12, int(imu_canvas[1]) + 8)
+
+            # Draw y-axis for both EMG and IMU
+            dc.DrawLine(int(imu_canvas[0]), int(imu_canvas[1]), int(imu_canvas[0]), int(imu_canvas[1] - imu_canvas[3]))
+            dc.DrawLine(int(emg_canvas[0]), int(emg_canvas[1]), int(emg_canvas[0]), int(emg_canvas[1] - emg_canvas[3]))
+            
+            # Add labels for EMG and IMU
+            dc.DrawText(f"EMG ({self.emg_scale:.1f} V)", int(emg_canvas[0]) + 5, int(emg_canvas[1]) - int(emg_canvas[3]) + 5)
+            dc.DrawText(f"IMU ({self.imu_scale:.1f} {self.imu_unit})", int(imu_canvas[0]) + 5, int(imu_canvas[1]) - int(imu_canvas[3]) + 5)
 
         event.Skip()
 
     def on_timer(self, event):
         # Main processing (get data and update buffer)
         # But wait, this actually only works for normal sensor, not the analog sensor... 
-        emg_data, imu_data = self.delsys.get_streaming_data()
-        if len(emg_data) > 0:
-            n = emg_data.shape[0]
-            if n >= self.emg_y.size:
-                self.emg_y = emg_data[-self.emg_y.size:]
-            else:
-                self.emg_y[:-n] = self.emg_y[n:]
-                self.emg_y[-n:] = emg_data
+        if self.sensor_type == "Analog":
+            analog_data, _ = self.delsys.get_streaming_data()
+            if len(analog_data) > 0:
+                self.analog_max = np.max(np.abs(analog_data))
+                self.analog_y = analog_data
+                print(self.analog_y.shape)
+                if self and self.canvas:
+                    self.canvas.Refresh(False)
 
-            n = imu_data.shape[0]
-            if n >= self.imu_y.size:
-                self.imu_y = imu_data[-self.imu_y.size:, :]
-            else:
-                self.imu_y[:-n, :] = self.imu_y[n:, :]
-                self.imu_y[-n:, :] = imu_data
+        elif self.sensor_type == "Trigno":
+            emg_data, imu_data = self.delsys.get_streaming_data()
+            if len(emg_data) > 0:
+                n = emg_data.shape[0]
+                if n >= self.emg_y.size:
+                    self.emg_y = emg_data[-self.emg_y.size:]
+                else:
+                    self.emg_y[:-n] = self.emg_y[n:]
+                    self.emg_y[-n:] = emg_data
 
-            if self and self.canvas:
-                self.canvas.Refresh(False)
+                n = imu_data.shape[0]
+                if n >= self.imu_y.size:
+                    self.imu_y = imu_data[-self.imu_y.size:, :]
+                else:
+                    self.imu_y[:-n, :] = self.imu_y[n:, :]
+                    self.imu_y[-n:, :] = imu_data
+
+                if self and self.canvas:
+                    self.canvas.Refresh(False)

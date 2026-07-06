@@ -258,10 +258,10 @@ class MainFrame(wx.Frame):
             if self.task == "vowel_space":
                 self.msgq.put("vowel_space")
                 try:
-                    trial_info = self.resultsq.get(block=False)
-                except:
+                    trial_info = self.resultsq.get()
+                except Exception as e:
+                    print(e)
                     trial_info = ""
-
                 trial, syllable, finish = trial_info.split(",")
                 trial = int(trial)
                 finish = str(finish) == "True"
@@ -611,18 +611,23 @@ class MainFrame(wx.Frame):
             self.update_settings.Enable(True)
             self.task_button.Enable(True)
             
-            
+    def get_result_timed(self, timeout=5):
+        try:
+            result = self.resultsq.get(timeout=timeout)
+            while not self.resultsq.empty():
+                result = self.resultsq.get(timeout=timeout)
+            return result
+        except Exception as e:
+            print(f"Error getting result from queue: {e}")
+            return "{}"
+
     def add_metadata(self, temp=False):
         toSave = False
         if not temp:
             metadata = MetadataPanel()
             toSave = metadata.show() == wx.ID_OK
 
-        params = None
-        try:
-            params = json.loads(self.resultsq.get(block=False))
-        except:
-            params = "{}"
+        params = json.loads(self.get_result_timed(timeout=(temp and 1 or 5)))
 
         if toSave or temp:
             self.meta,ruamelFile = file_utils.metadata_template()
@@ -881,7 +886,6 @@ class MainFrame(wx.Frame):
             self.cam_crop.drawROI(self.axes)
             self.figure.canvas.draw()
     
-        
     def OnKeyPressed(self, event):
         keyCode = event.GetKeyCode()
         # Save the new ROI parameters

@@ -140,6 +140,8 @@ class LaunchPanel():
         row_sizer.Add(self.exit_button, 0, wx.ALIGN_CENTER_VERTICAL)
         return row_sizer
     
+    
+    
     def update_list(self, event):
         if self.ignore_pop_up:
             self.ignore_pop_up = False

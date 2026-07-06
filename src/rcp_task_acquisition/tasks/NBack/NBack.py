@@ -284,16 +284,16 @@ class N_back(bases.StimulusBase):
         self.button_press = False
         self.finished = is_finished
         self.instructions = None
-        self.letters = {"D": visual.TextStim(self.display, text="D", name="trial", pos=(-100, 0), height=1000),
-                        "F": visual.TextStim(self.display, text="F", name="trial", pos=(-50,  0), height=1000),
-                        "H": visual.TextStim(self.display, text="H", name="trial", pos=(-100, 0), height=1000),
-                        "J": visual.TextStim(self.display, text="J", name="trial", pos=(0,  150), height=1000),
-                        "K": visual.TextStim(self.display, text="K", name="trial", pos=(-50,  0), height=1000),
-                        "L": visual.TextStim(self.display, text="L", name="trial", pos=(-50,  0), height=1000),
-                        "M": visual.TextStim(self.display, text="M", name="trial", pos=(-200, 0), height=1000),
-                        "S": visual.TextStim(self.display, text="S", name="trial", pos=(-50,  0), height=1000),
-                        "T": visual.TextStim(self.display, text="T", name="trial", pos=(-100, 0), height=1000),
-                        "V": visual.TextStim(self.display, text="V", name="trial", pos=(-100, 0), height=1000)}
+        self.letters = {"D": visual.TextStim(self.display, text="D", name="trial", pos=(0, 0), height=800),
+                        "F": visual.TextStim(self.display, text="F", name="trial", pos=(0, 0), height=800),
+                        "H": visual.TextStim(self.display, text="H", name="trial", pos=(0, 0), height=800),
+                        "J": visual.TextStim(self.display, text="J", name="trial", pos=(0, 0), height=800),
+                        "K": visual.TextStim(self.display, text="K", name="trial", pos=(0, 0), height=800),
+                        "L": visual.TextStim(self.display, text="L", name="trial", pos=(0, 0), height=800),
+                        "M": visual.TextStim(self.display, text="M", name="trial", pos=(0, 0), height=800),
+                        "S": visual.TextStim(self.display, text="S", name="trial", pos=(0, 0), height=800),
+                        "T": visual.TextStim(self.display, text="T", name="trial", pos=(0, 0), height=800),
+                        "V": visual.TextStim(self.display, text="V", name="trial", pos=(0, 0), height=800)}
         
         
     #Sets up display window, fixation cross, text pages and image stimuli

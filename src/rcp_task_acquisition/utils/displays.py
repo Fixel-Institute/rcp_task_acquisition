@@ -7,14 +7,15 @@ from rcp_task_acquisition.utils.logger import get_logger
 logger = get_logger("./utils/displays") 
 
 
-_lowStateTexture = np.full([256, 256], -1).astype(np.int8)
-_highStateTexture = np.full([256, 256], 1).astype(np.int8)
+_lowStateTexture = np.full([16, 16], -1).astype(np.int8)
+_highStateTexture = np.full([16, 16], 1).astype(np.int8)
 
 
 class Window(Window):
     """
     """
     # patchCoords=(600, -325, 200),
+    # patchCoords=(-1280, 720, 250),
     def __init__(
         self,
         size=(2560, 1440),

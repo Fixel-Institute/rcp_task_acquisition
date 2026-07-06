@@ -4,9 +4,9 @@ import wx
 
 from rcp_task_acquisition.panels.TrialPanel import TrialPanel
 from rcp_task_acquisition.utils.logger import get_logger
-logger = get_logger("./panels/ContinuousRecordingPanel") 
+logger = get_logger("./panels/MSITBD2Panel") 
 
-class ContinuousRecordingPanel(TrialPanel):
+class MSITBD2Panel(TrialPanel):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.seconds = 0
@@ -19,35 +19,47 @@ class ContinuousRecordingPanel(TrialPanel):
         self.button_width = 76
         self.border = 5
         self.photo = None
-        self.selection = 0
+        self.selection = ""
         self.image_list = []
+
         wx.Panel.__init__(self, parent, -1, size=wx.Size(-1,-1))
 
         vertical_sizer = wx.BoxSizer(wx.VERTICAL)
-        self.seconds_text = wx.StaticText(self, label= "Time: 0 mins, 0 secs")
-        vertical_sizer.Add(self.seconds_text)
-        self._setup_blank_controls()
+        vertical_sizer.Add(self._setup_oculostim_controls(), 0, wx.ALIGN_LEFT | wx.ALL, self.border)
         self.SetSizer(vertical_sizer)
         
         self.rest_timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.on_timer, self.rest_timer)
 
+    def _setup_oculostim_controls(self):
+        self.trial_text = wx.StaticText(self, label="Trial # 1")
+        
+        self.seconds_text = wx.StaticText(self, label= "Time: 0 secs")
+        self.continue_button = wx.ToggleButton(self, label="Begin Trial", size=(self.button_width*2, -1))
+    
+        grid_sizer = wx.GridBagSizer(3, 6)
+        grid_sizer.Add(self.trial_text, pos=(0, 0), span=(0,6), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
+        grid_sizer.Add(self.seconds_text, pos=(1, 0), span=(0,6), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
+        grid_sizer.Add(self.continue_button, pos=(2, 0), span=(0,3), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
+        return grid_sizer
+
     def run_trial(self, number):
         self.seconds = 0
-        self.trial_number = number
+        self.trial_text.SetLabel(f"Trial # {number}")
         self.trial_is_active = True
-
+    
     def update_trial(self, number):
         self.trial_number = number
         
     def get_result(self):
-        return f"ContinuousRecording,{self.trial_number}"
+        return "MSITBD2",self.selection,self.trial_number
 
     def reset(self, number):
-        self.seconds = 0
-        self.trial_number = number
-        self.trial_is_active = False
-        self.seconds_text.SetLabel("Time: 0 mins, 0 secs")
+        self.seconds = 5
+        self.seconds_text.SetLabel(f"Time: 0 secs")
+        self.continue_button.SetValue(False)
+        self.continue_button.SetLabel("Begin Trial")
+        self.trial_text.SetLabel(f"Trial # {number+1}")
     
     def on_timer(self, event):
         self.seconds+=1

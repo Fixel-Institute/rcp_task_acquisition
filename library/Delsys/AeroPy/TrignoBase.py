@@ -116,6 +116,8 @@ class TrignoBase:
                 channel_guid = c["Guid"]
                 channels.append(Channel(channel_name, channel_enabled, channel_type, channel_sample_rate, channel_guid))
             self.sensors.append(Sensor(name=name, pair_number= pair_number, mode= mode, channels= channels))
+            print(f"Sensor {sensorIndex}: {name}, Pair Number: {pair_number}, Mode: {mode}")
+        
         self.print_sensors_found()
 
     def print_sensors_found(self):
