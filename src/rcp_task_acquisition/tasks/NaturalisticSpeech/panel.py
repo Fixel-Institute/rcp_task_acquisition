@@ -113,9 +113,9 @@ class NaturalisticSpeechPanel(TrialPanel):
     
 
     def on_timer(self, event):
-        self.seconds+=1
-        self.display_mins = int(self.seconds/60)
-        self.display_secs = self.seconds%60
+        # self.seconds+=1
+        self.display_mins = int(self.timer.value/60)
+        self.display_secs = self.timer.value%60
         if self.trial_is_active:
             self.seconds_text.SetLabel(f"Time: {self.display_mins} mins, {self.display_secs} secs")
 
@@ -127,8 +127,7 @@ class NaturalisticSpeechPanel(TrialPanel):
         wx_image = wx_image.Scale(250, 150)
         wx_image.ConvertToBitmap()
         
-        # self.selection = self.image_choice.GetSelection()
-        self.shown_image.SetBitmap(wx_image) #self.image_list[self.selection])
+        self.shown_image.SetBitmap(wx_image) 
         self.Layout()
 
 

@@ -93,6 +93,7 @@ class TrialPanel(wx.Panel):
         self.trial_is_active = True
         self.pause_video_button.Enable(False)
         self.start_video_button.Enable(False)
+        
     
     def end_trial(self):
         self.trial_is_active = False
@@ -105,19 +106,27 @@ class TrialPanel(wx.Panel):
     def start_video(self):
         self.start_video_button.SetLabel("Stop Video")
         self.pause_video_button.Enable(True)
+        self.continue_button.Enable(False)
+        self.repeat_trial.Enable(False)
     
     def stop_video(self):
         self.start_video_button.SetLabel("Start Video")
         self.start_video_button.SetValue(False)
         self.pause_video_button.SetValue(False)
         self.pause_video_button.Enable(False)
+        self.continue_button.Enable(True)
+        self.repeat_trial.Enable(True)
         self.pause_video_button.SetLabel("Pause Video")
     
     def pause_video(self):
         self.pause_video_button.SetLabel("Resume Video")
+        self.continue_button.Enable(True)
+        self.repeat_trial.Enable(True)
     
     def resume_video(self):
         self.pause_video_button.SetLabel("Pause Video")
+        self.continue_button.Enable(False)
+        self.repeat_trial.Enable(False)
         
     def run_trial(self, count):
         pass
@@ -137,3 +146,7 @@ class TrialPanel(wx.Panel):
         
     def update_values(self):
         pass
+
+
+    def add_timer(self, timer):
+        self.timer = timer

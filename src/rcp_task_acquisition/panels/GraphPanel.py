@@ -49,6 +49,10 @@ class GraphPanel(wx.Panel):
         self.figure.patch.set_facecolor((0.8, 0.8, 0.8))
         canvas = FigureCanvas(self, -1, self.figure)
         ctrlsizer.Add(canvas, 1, wx.ALL)
+        # lj_panel = self.create_labjack_panel(self)
+        lj_panel = self.add_panels(self)
+        ctrlsizer.Add(lj_panel, 0, wx.ALL)
+        lj_panel.SetMinSize((-1, 550))
         white_color = (0.09, 0.09, 0.09) #(0.9,0.9,0.9)
         # creating own x axis with a line/text so there is more control
         setup_axes = self.figure.add_subplot(1, 1, 1)
@@ -94,10 +98,11 @@ class GraphPanel(wx.Panel):
             count +=1
             
     
-    def create_labjack_panel(self, panel: wx.Panel) -> wx.StaticBoxSizer:      
+    def create_labjack_panel(self, panel: wx.Panel) -> wx.StaticBoxSizer: 
+        # panel = wx.Panel(panel, -1,style=wx.BORDER_NONE)
         labjack_box = wx.StaticBox(panel, label="Labjack Graphing")
         box_sizer = wx.StaticBoxSizer(labjack_box, wx.HORIZONTAL)
-        labjack_sizer = wx.GridBagSizer(5, 5)
+        labjack_sizer = wx.GridBagSizer(3, 2)
         options = self.hardware
     
         options.insert(0, " ")
@@ -106,39 +111,59 @@ class GraphPanel(wx.Panel):
         
         labjack_choice = wx.Choice(panel, id=wx.ID_ANY, choices=options, size=(self.button_width, -1))
         self.labjack_choices.append(labjack_choice)
-        labjack_sizer.Add(labjack_choice, pos=(0,2), span=(0,2), flag=wx.ALL, border=self.white_space)
-        
-        labjack_choice = wx.Choice(panel, id=wx.ID_ANY, choices=options, size=(self.button_width, -1))
-        self.labjack_choices.append(labjack_choice)
         labjack_sizer.Add(labjack_choice, pos=(1,0), span=(0,2), flag=wx.ALL, border=self.white_space)
         
         labjack_choice = wx.Choice(panel, id=wx.ID_ANY, choices=options, size=(self.button_width, -1))
         self.labjack_choices.append(labjack_choice)
-        labjack_sizer.Add(labjack_choice, pos=(1,2), span=(0,2), flag=wx.ALL, border=self.white_space)
+        labjack_sizer.Add(labjack_choice, pos=(2,0), span=(0,2), flag=wx.ALL, border=self.white_space)
+        
+        labjack_choice = wx.Choice(panel, id=wx.ID_ANY, choices=options, size=(self.button_width, -1))
+        self.labjack_choices.append(labjack_choice)
+        labjack_sizer.Add(labjack_choice, pos=(3,0), span=(0,2), flag=wx.ALL, border=self.white_space)
 
-        box_sizer.Add(labjack_sizer, 1, wx.EXPAND | wx.ALL, 5)
+        box_sizer.Add(labjack_sizer, 1, wx.EXPAND | wx.ALL, 3)
+
         return box_sizer
     
+
     
     def create_hardware_test_panel(self, parent: wx.Panel) -> wx.Panel:
         panel = wx.Panel(parent, -1,style=wx.BORDER_NONE)
-        white_space = 5
         button_width = 150
         
         cam_box = wx.StaticBox(panel, label="Camera Tests")
-        cam_sizer = wx.GridBagSizer(1, 4)
+        cam_sizer = wx.GridBagSizer(1,2)
         
         self.contrast_test = wx.ToggleButton(panel, id=wx.ID_ANY, label="Test Contrast", size=(button_width, -1))
         self.focus_test = wx.ToggleButton(panel, id=wx.ID_ANY, label="Test Focus", size=(button_width, -1))
 
-        cam_sizer.Add(self.contrast_test, pos=(0,0), span=(0,2), flag=wx.ALL, border=white_space)
-        cam_sizer.Add(self.focus_test, pos=(0,2), span=(0,2), flag=wx.ALL, border=white_space)
+        cam_sizer.Add(self.contrast_test, pos=(0,0), span=(0,2), flag=wx.ALL, border=self.white_space)
+        cam_sizer.Add(self.focus_test, pos=(1,0), span=(0,2), flag=wx.ALL, border=self.white_space)
         
         box_sizer = wx.StaticBoxSizer(cam_box, wx.HORIZONTAL)
-        box_sizer.Add(cam_sizer, 1, wx.EXPAND | wx.ALL, 5)
+        box_sizer.Add(cam_sizer, 1, wx.EXPAND | wx.ALL, 3)
         panel.SetSizer(box_sizer)
         panel.Fit()
         return panel    
+    
+    
+    def add_panels(self, parent: wx.Panel) -> wx.Panel:
+        panel = wx.Panel(parent, -1,style=wx.BORDER_NONE)
+        box_sizer = wx.BoxSizer(wx.VERTICAL)
+        
+        lj_panel = self.create_labjack_panel(panel)
+        self.hardware_panel = self.create_hardware_test_panel(panel)
+        
+        box_sizer.Add(lj_panel, 0, wx.ALL)
+        box_sizer.Add(self.hardware_panel, 0, wx.RESERVE_SPACE_EVEN_IF_HIDDEN | wx.ALL)
+        self.hardware_panel.Hide()
+        panel.SetSizer(box_sizer)
+        panel.Fit()
+        return panel
+     
+    
+    def get_hardware_handles(self):
+        return self.contrast_test, self.focus_test, self.hardware_panel
     
     
     def plot_constants(self, arr_size: int) -> None:

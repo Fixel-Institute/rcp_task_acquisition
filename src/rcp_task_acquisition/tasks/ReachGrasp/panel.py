@@ -95,5 +95,5 @@ class ReachGraspPanel(TrialPanel):
     def on_timer(self, event):
         if self.trial_is_active:
             self.seconds+=1
-            self.seconds_text.SetLabel(f"Time: {self.seconds} secs")
+            self.seconds_text.SetLabel(f"Time: {self.timer.value} secs")
 

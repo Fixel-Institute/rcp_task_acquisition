@@ -77,6 +77,3 @@ class NbackPanel(TrialPanel):
         self.continue_button.SetValue(False)
         self.continue_button.SetLabel("Start Trial")
     
-
-    def on_timer(self, event):
-        self.seconds+=1

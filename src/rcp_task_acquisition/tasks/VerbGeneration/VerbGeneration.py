@@ -11,9 +11,8 @@ logger = get_logger("./tasks/VerbGeneration")
 
 # Sets up display window, fixation cross, text pages and image stimuli
 class VerbGeneration(bases.StimulusBase):
-    def __init__(self, window, frame, finish):
-        super().__init__(window, frame)
-        self.finished = finish
+    def __init__(self, base_vars):
+        super().__init__(**base_vars)
         self.list_num = None
         self.words_shown = []
         self.trial =0
@@ -28,40 +27,51 @@ class VerbGeneration(bases.StimulusBase):
                 self.lists.append(line[1:])
         logger.debug(self.lists)
         
+        
     def present(self, test=True):
+        self.timer.value = 0
         self.trial+=1
         self.words_shown = []
         self.play_tone()
+        timer_clock = core.Clock()
         for index, stim in enumerate(self.stim_list):
+            self.timer.value = int(timer_clock.getTime())
             self.words_shown.append(self.lists[self.list_num][index])
             stim.draw()
             
             self.display.switch_patch()
             self.display.draw_patch()
             self.display.flip()
-            clock = core.Clock()   
+            self.timer.value = int(timer_clock.getTime())
+            clock = core.Clock() 
+            self.timer.value = int(timer_clock.getTime())
             while clock.getTime() < c.SHOW_TIME:    
                 stim.draw()
                 self.display.draw_patch()
                 self.display.flip()
-                if self.finished.value == 2:
+                self.timer.value = int(timer_clock.getTime())
+                if self.finish.value == 2:
                     self.display.switch_patch()
                     self.display.draw_patch()
                     self.display.flip()
                     self.trial_list[f"trial_{self.trial}"] = self.words_shown
                     return
-    
+                self.timer.value = int(timer_clock.getTime())
+            self.timer.value = int(timer_clock.getTime())
             #turn the patch to off and flip the display to black
             self.display.switch_patch()
             self.display.draw_patch()
             clock = core.Clock()  
+            self.timer.value = int(timer_clock.getTime())
             while clock.getTime() < c.GENERATION_TIME:
                 self.fixation.draw()
                 self.display.flip()
-                if self.finished.value == 2:
+                self.timer.value = int(timer_clock.getTime())
+                if self.finish.value == 2:
                     self.display.flip()
                     self.trial_list[f"trial_{self.trial}"] = self.words_shown
                     return
+                self.timer.value = int(timer_clock.getTime())
         self.trial_list[f"trial_{self.trial}"] = self.words_shown
         self.display.flip()
         

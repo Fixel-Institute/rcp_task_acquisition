@@ -1,5 +1,5 @@
 import os
-from psychopy import visual
+from psychopy import visual, core
 from PIL import Image
 
 from rcp_task_acquisition.tasks.NaturalisticSpeech.constants import IMG_DIR
@@ -11,8 +11,8 @@ logger = get_logger("./tasks/NaturalisticSpeech")
 
 # Sets up display window, fixation cross, text pages and image stimuli
 class NaturalisticSpeech(bases.StimulusBase):
-    def __init__(self, window, frame, finish):
-        super().__init__(window, frame, None, finish)
+    def __init__(self, base_vars):
+        super().__init__(**base_vars)
         self.photo = None
         self.photo_dict = {}
         self.trial =0
@@ -21,6 +21,7 @@ class NaturalisticSpeech(bases.StimulusBase):
         
     def present(self, test=True):
         # Load and draw the photo being presented
+        self.timer.value = 0
         if not self.photo:
             logger.warn("No Photo is selected")
             return
@@ -46,10 +47,12 @@ class NaturalisticSpeech(bases.StimulusBase):
         stim.draw()
         self.display.flip()
         
+        clock = core.Clock()
         while self.finish.value == 0:
             stim.draw()
             self.display.draw_patch()
             self.display.flip()
+            self.timer.value = int(clock.getTime())
         
         #turn the patch to off and flip the display to black
         self.display.switch_patch()

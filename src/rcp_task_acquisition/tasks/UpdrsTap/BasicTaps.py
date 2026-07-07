@@ -8,8 +8,8 @@ logger = get_logger("./tasks/UpdrsTap")
 
 
 class BasicTaps(bases.StimulusBase):
-    def __init__(self, window, frame, is_finished, video_status):
-        super().__init__(window, frame, video_status,  is_finished)
+    def __init__(self, base_vars):
+        super().__init__(**base_vars)
         # self.finish = is_finished
         self.trial_count = 0
         self.hand= None
@@ -21,6 +21,7 @@ class BasicTaps(bases.StimulusBase):
         self.trial_count+=1
         self.hand_used[f"trial_{self.trial_count}"] = {"hand": self.hand,
                                                        "speed": self.type}
+        self.timer.value = 0
         self.display.switch_patch()
         
         self.display.flip()
@@ -32,6 +33,7 @@ class BasicTaps(bases.StimulusBase):
             self.display.flip()
             if self.finish.value == 2:
                 break
+            self.timer.value = int(clock.getTime())
             
         self.display.switch_patch()
         self.display.draw_patch()

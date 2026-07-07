@@ -9,8 +9,8 @@ logger = get_logger("./tasks/VowelSpace")
 
 
 class VowelSpace(bases.StimulusBase):
-    def __init__(self, window, frame, finish, video_status):
-        super().__init__(window, frame, video_status, finish)
+    def __init__(self, base_vars):
+        super().__init__(**base_vars)
         self.generated_trials = None
         self.completed_trials_dict = {}
         self.create_trial_data()

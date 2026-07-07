@@ -65,14 +65,14 @@ class ToneTapsClosedPanel(TrialPanel):
     
     
     def reset(self, number):
-        self.seconds = 0
+        self.seconds = 11
         self.trial_is_active = False
         self.left_radio.Enable(True)
         self.right_radio.Enable(True)
         self.hand_text.Enable(True)
         # self.rest_timer.Start(1000)
         self.seconds_text.SetLabel(f"Time: {self.seconds} secs")
-        self.continue_button.Enable(False)
+        # self.continue_button.Enable(False)
         self.continue_button.SetValue(False)
         self.continue_button.SetLabel("Begin Trial")
         self.trial_text.SetLabel(f"Trial # {number}")
@@ -81,11 +81,13 @@ class ToneTapsClosedPanel(TrialPanel):
     def on_timer(self, event):
         if self.trial_is_active:
             self.seconds+=1
-            self.seconds_text.SetLabel(f"Time: {self.seconds} secs")
+            self.seconds_text.SetLabel(f"Time: {self.timer.value} secs")
         else:
             self.seconds-=1
             if self.seconds >= 0:
                 
                 self.seconds_text.SetLabel(f"Time: {self.seconds} secs")
-            else:
-                self.continue_button.Enable(True)
+            # else:
+                # self.continue_button.Enable(True)
+                
+                

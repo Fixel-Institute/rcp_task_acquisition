@@ -2,7 +2,7 @@
 import wx
 
 from rcp_task_acquisition.panels.TrialPanel import TrialPanel
-from rcp_task_acquisition.tasks.UpdrsTap.constants import BASIC_TAPS_PATH
+from rcp_task_acquisition.tasks.UpdrsTap.constants import BASIC_TAPS_PATH, BASIC_TAPS_TIME
 from rcp_task_acquisition.utils.logger import get_logger
 logger = get_logger("./panel/UpdrsTap")
 
@@ -12,6 +12,7 @@ class FingerTapPanel(TrialPanel):
         super().__init__(parent)
         self.tap_hand = "left"
         self.type = None
+        self.trial_is_active = False
         vertical_sizer = wx.BoxSizer(wx.VERTICAL)
         vertical_sizer.Add(self._setup_fingertap(), 0, wx.ALIGN_LEFT | wx.ALL, self.border)
         vertical_sizer.Add(self.setup_instruction_playback(), 0, wx.ALIGN_LEFT | wx.ALL, self.border)
@@ -50,7 +51,8 @@ class FingerTapPanel(TrialPanel):
         return grid_sizer
     
     def run_trial(self, number):
-        self.seconds = 10
+        # self.seconds = 10
+        self.trial_is_active = True
         self.left_radio.Enable(False)
         self.right_radio.Enable(False)
         self.fast_radio.Enable(False)
@@ -74,7 +76,8 @@ class FingerTapPanel(TrialPanel):
         self.tap_hand = "left" if self.left_radio.GetValue() else "right"
     
     def reset(self, trial):
-        self.seconds = 10
+        self.trial_is_active = False
+        self.seconds = 11
         self.left_radio.Enable(True)
         self.right_radio.Enable(True)
         self.fast_radio.Enable(True)
@@ -93,8 +96,9 @@ class FingerTapPanel(TrialPanel):
         self.trial_text.SetLabel("Trial # 1")
         
     def on_timer(self, event):
-        self.seconds-=1
-        if self.seconds >= 0:
-            self.seconds_text.SetLabel(f"Time: {self.seconds} secs")
-        # else:
-        #     self.continue_button.Enable(True)
+        if self.trial_is_active:
+            self.seconds_text.SetLabel(f"Time: {BASIC_TAPS_TIME - self.timer.value} secs")
+        else:
+            self.seconds-=1
+            if self.seconds >= 0:
+                self.seconds_text.SetLabel(f"Time: {self.seconds} secs")

@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
-import os
 import wx
 
 from rcp_task_acquisition.panels.TrialPanel import TrialPanel
-import rcp_task_acquisition.tasks.NaturalisticSpeech.constants as c
 from rcp_task_acquisition.utils.logger import get_logger
 logger = get_logger("./panels/NaturalisticSpeechPanel") 
 

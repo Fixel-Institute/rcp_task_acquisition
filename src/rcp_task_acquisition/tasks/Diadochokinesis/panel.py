@@ -37,7 +37,7 @@ class DdkPanel(TrialPanel):
     def _setup_ddk(self):
         self.trial_text = wx.StaticText(self, label="Trial # 1")
         self.syllable_text = wx.StaticText(self, label=f"Syllable: {self.syllable}")
-        self.seconds_text = wx.StaticText(self, label= f"Time: {DDK_TRIAL_TIME} secs")
+        self.seconds_text = wx.StaticText(self, label= "Time: 0 secs")
 
         self.continue_button = wx.ToggleButton(self, label="Begin Trial")
         self.next_button = wx.Button(self, label="Next Trial")
@@ -86,8 +86,8 @@ class DdkPanel(TrialPanel):
     
     
     def reset(self, number):
-        self.seconds = 0
-        self.seconds_text.SetLabel(f"Time: {DDK_TRIAL_TIME} secs")
+        self.seconds = -1
+        self.seconds_text.SetLabel("Time: 0 secs")
         self.syllable_text.SetLabel(f"Syllable: {self.syllable}")
         self.next_button.Enable(True)
         self.continue_button.SetLabel("Repeat Trial")
@@ -115,12 +115,10 @@ class DdkPanel(TrialPanel):
         self.start_video_button.Enable(False)
         self.syllable_start_video_button.Enable(False)
       
-        
+    
     def on_timer(self, event):
         if self.trial_is_active:
-            self.seconds-=1
-            if self.seconds >= 0:
-                self.seconds_text.SetLabel(f"Time: {self.seconds} secs")
+            self.seconds_text.SetLabel(f"Time: {DDK_TRIAL_TIME - self.timer.value} secs")
         else:
             self.seconds+=1
             self.seconds_text.SetLabel(f"Time: {self.seconds} secs")
@@ -184,11 +182,12 @@ class DdkPanel(TrialPanel):
         self.other_buttons = []
         self.next_button.Enable(True)
         self.continue_button.Enable(True)
-        self.seconds_text.SetLabel(f"Time: {DDK_TRIAL_TIME} secs")
+        self.seconds_text.SetLabel("Time: 0 secs")
         self.syllable_text.SetLabel(f"Syllable: {self.syllable}")
         self.trial_text.SetLabel(f"Trial # {self.trial_number_}")
         self.syllable_video_title.SetLabel(f"Syllable ({self.syllable}) Instructions:")
         self.start_video_button.Enable(True)
         
+ 
         
         

@@ -2,7 +2,9 @@
 import os
 from psychopy import core
 from pathlib import Path
+from enum import Enum
 import ruamel.yaml
+
 
 BASEDIR = Path(__file__).resolve().parent.parent.parent.parent
 CODE_DIR = Path(__file__).resolve().parent.parent
@@ -70,5 +72,15 @@ BAUDRATE = 9600
 WRITE_TIMEOUT = 0.1
 
 
+
+class VideoStatus(Enum):
+    NOT_PLAYING = 0
+    PLAY = 1
+    PAUSED = 2
+    START_FROM_PAUSE = 3
+    STOP = 4
+    FINISHED = 5
+    ERROR = 6
+    
 
 

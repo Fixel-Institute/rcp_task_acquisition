@@ -6,7 +6,8 @@ from rcp_task_acquisition.panels.TrialPanel import TrialPanel
 from rcp_task_acquisition.tasks.VerbalFluency.constants import (PHONEMIC_LIST, 
                                                                 SEMANTIC_LIST,
                                                                 PHONEMIC_PHRASE, 
-                                                                SEMANTIC_PHRASE)
+                                                                SEMANTIC_PHRASE,
+                                                                TRIAL_TIME)
 from rcp_task_acquisition.utils.logger import get_logger
 logger = get_logger("./panels/VerbalFluencyPanel") 
 
@@ -58,7 +59,7 @@ class VerbalFluencyPanel(TrialPanel):
         grid_sizer.Add(self.semantic_choice, pos=(3, 0), span=(0,4),  flag=wx.ALIGN_CENTER_VERTICAL | wx.ALL, border=self.border)
         grid_sizer.Add(self.seconds_text, pos=(4, 0), span=(0,4),  flag= wx.RESERVE_SPACE_EVEN_IF_HIDDEN | wx.ALIGN_CENTER_VERTICAL | wx.ALL, border=self.border)
         grid_sizer.Add(self.prompt_text, pos=(5, 0), span=(0,5),  flag=wx.RESERVE_SPACE_EVEN_IF_HIDDEN | wx.ALIGN_CENTER_VERTICAL | wx.ALL, border=self.border)
-        grid_sizer.Add(self.continue_button, pos=(7, 0), span=(0, 3),  flag=wx.RESERVE_SPACE_EVEN_IF_HIDDEN | wx.ALIGN_CENTER_VERTICAL | wx.ALL, border=self.border)
+        grid_sizer.Add(self.continue_button, pos=(6, 0), span=(0, 3),  flag=wx.RESERVE_SPACE_EVEN_IF_HIDDEN | wx.ALIGN_CENTER_VERTICAL | wx.ALL, border=self.border)
         return grid_sizer
     
     
@@ -109,6 +110,7 @@ class VerbalFluencyPanel(TrialPanel):
             self.seconds_text.SetLabel(" ")
             self.continue_button.Enable(False)
             self.start_video_button.Enable(False)
+            self.continue_button.Hide()
             return
         self.trial_num +=1
         self.actual_list.append(self.value)
@@ -141,9 +143,7 @@ class VerbalFluencyPanel(TrialPanel):
     
     def on_timer(self, event):
         if self.trial_is_active:
-            self.seconds-=1
-            if self.seconds >= 0:
-                self.seconds_text.SetLabel(f"Time: {self.seconds} secs")
+            self.seconds_text.SetLabel(f"Time: {TRIAL_TIME - self.timer.value} secs")
 
 
     def run_trial(self, count):

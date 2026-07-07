@@ -11,8 +11,8 @@ logger = get_logger("./tasks/Diadochokinesis")
 
 
 class Diadochokinesis(bases.StimulusBase):
-    def __init__(self, window, frame, video_status, is_finished):
-        super().__init__(window, frame, is_finished, video_status)
+    def __init__(self, base_vars):
+        super().__init__(**base_vars)
         self.round = 0
         self.trial_count = 0
         self.syllable = None
@@ -24,6 +24,7 @@ class Diadochokinesis(bases.StimulusBase):
         
         
     def present(self):
+        self.timer.value = 0
         self.trial_count+=1
         self.trial_dict[f"trial_{self.trial_count}"] = self.repeat
         self.play_tone()
@@ -31,14 +32,16 @@ class Diadochokinesis(bases.StimulusBase):
         self.display.draw_patch()
         self.display.flip()
         
+        
         clock = core.Clock() 
         while clock.getTime() < DDK_TRIAL_TIME:
-            
+            self.timer.value = int(clock.getTime())
             self.display.draw_patch()
             self.display.flip()
             if self.finish.value == 2:
                 break
-        
+        self.timer.value = int(clock.getTime())
+        self.timer.value = DDK_TRIAL_TIME
         self.display.switch_patch()
         self.display.draw_patch()
         self.display.flip()

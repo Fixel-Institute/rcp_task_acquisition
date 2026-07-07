@@ -2,6 +2,7 @@
 import wx
 
 from rcp_task_acquisition.panels.TrialPanel import TrialPanel
+from rcp_task_acquisition.panels.ParticipantMonitorPanel import MonitorPanel
 from rcp_task_acquisition.tasks.UpdrsTap.panel import FingerTapPanel
 from rcp_task_acquisition.tasks.NaturalisticSpeech.panel import NaturalisticSpeechPanel
 from rcp_task_acquisition.tasks.Diadochokinesis.panel import DdkPanel
@@ -17,29 +18,25 @@ from rcp_task_acquisition.tasks.ContinuousRecording.panel import ContinuousRecor
 from rcp_task_acquisition.tasks.OculoStim.panel import OculoStimPanel
 
 class ControlsPanel(wx.Panel):
-    def __init__(self,parent, ctrl_panel, task="task"):
-        wx.Panel.__init__(self, parent, -1,style=wx.SUNKEN_BORDER | wx.WANTS_CHARS)
+    def __init__(self,parent, ctrl_panel, psychopy_monitor, monitor_size, task="task"):
+        wx.Panel.__init__(self, parent, -1,style=wx.SUNKEN_BORDER)
         
         vertical_spacer = wx.GridBagSizer(5, 5)
         vertical_position = 0
         button_width = 76
         self.cam_panel = CameraControlPanel(self, button_width)
-        self.task_panel = self.get_task_panel(task) #VowelSpacePanel(self)
+        self.task_panel = self.get_task_panel(task) 
         self.task_panel.Enable(False)
-        self.hardware_test = ctrl_panel.create_hardware_test_panel(self)
-        self.hardware_buttons = (ctrl_panel.contrast_test, ctrl_panel.focus_test)
         vertical_spacer.Add(self._set_up_tasks(task, button_width), pos=(vertical_position, 0), span=(0,5),flag=wx.ALIGN_CENTER_HORIZONTAL | wx.TOP | wx.BOTTOM, border=5)
         vertical_position+=1
+        self.monitor = MonitorPanel(self, psychopy_monitor, monitor_size)
+        vertical_spacer.Add(self.monitor.create_panel(), pos=(vertical_position, 0), span=(0,5),flag=wx.ALIGN_LEFT | wx.ALL, border=0)
+        vertical_position+=1
         vertical_spacer.Add(self.cam_panel, pos=(vertical_position, 0), span=(0,5),flag=wx.ALIGN_LEFT | wx.ALL, border=5)
-        
         vertical_position+=1
-        vertical_spacer.Add(ctrl_panel.create_labjack_panel(self), pos=(vertical_position,0), span=(0,5), flag=wx.ALIGN_LEFT | wx.ALL, border=5)
-        vertical_position+=1
-        vertical_spacer.Add(self.hardware_test, pos=(vertical_position,0), span=(0,5), flag=wx.RESERVE_SPACE_EVEN_IF_HIDDEN | wx.ALIGN_LEFT | wx.ALL, border=5)
         self.SetSizer(vertical_spacer)
         vertical_spacer.Fit(self)
         self.cam_panel.Hide()
-        self.hardware_test.Hide()
         self.Layout()
 
 
@@ -50,6 +47,10 @@ class ControlsPanel(wx.Panel):
     def show_cams(self):
         return self.cam_panel.Show()
 
+
+    def get_monitor(self):
+        return self.monitor
+    
     
     def hide_cams(self):
         return self.cam_panel.Hide()
@@ -98,10 +99,6 @@ class ControlsPanel(wx.Panel):
                 self.cam_panel.exposure_button,self.cam_panel.set_crop,self.cam_panel.crop, self.cam_panel.minRec,self.cam_panel.secRec)
 
 
-    def get_hardware_handles(self): 
-        return (self.hardware_buttons[0], self.hardware_buttons[1], self.hardware_test)
-    
-    
     def get_task_handles(self):
         return (self.camera_toggle, self.hardware_button, self.session_button, self.quit, self.tens_button)
     

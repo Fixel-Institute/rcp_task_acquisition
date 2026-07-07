@@ -361,7 +361,7 @@ class HardwarePanel(wx.Panel):
             is_primary = (wx.RadioButton(self, style=wx.RB_GROUP) 
                           if first_cam else wx.RadioButton(self))
             
-            self.framerate_decrease_options = ["1","2","3","4"]
+            self.framerate_decrease_options = ["1","2"]
             framerate_decrease = wx.Choice(self, id=wx.ID_ANY, choices=self.framerate_decrease_options)
             framerate_decrease.Enable(False)
             # gig_e = wx.CheckBox(self, id=wx.ID_ANY)

@@ -42,6 +42,7 @@ class multiCam_DLC_Cam(Process):
         record = False
         ismaster = False
         isunconnected = False
+        is_decreased = False
         record_frame_rate = None #30
         # exposure_max = 4000
         config = file_utils.read_config('userdata.yaml')
@@ -60,6 +61,8 @@ class multiCam_DLC_Cam(Process):
         
         
         framerate_decrease = user_cfg[camStr]['framerate_decrease_factor']
+        if framerate_decrease != 1:
+            is_decreased = True
         # if gig_e:
         self.framerate = round(int(config['cam_config']['framerate'])/int(framerate_decrease))
         # else:
@@ -77,9 +80,7 @@ class multiCam_DLC_Cam(Process):
         method = 'none'
         system = PySpin.System.GetInstance()
         
-        logger.debug(f"{camStr} {system}")
         cam_list = system.GetCameras()
-        logger.debug(f"{camStr} {cam_list}")
         cam = cam_list.GetBySerial(self.camID)
         processor = PySpin.ImageProcessor()
         processor.SetColorProcessing(PySpin.SPINNAKER_COLOR_PROCESSING_ALGORITHM_HQ_LINEAR)
@@ -92,28 +93,18 @@ class multiCam_DLC_Cam(Process):
                     if msg == 'InitM':
                         ismaster = True
                         
-                        logger.debug(f"{camStr} m here")
                         cam.Init()
                         self.create_primary(cam)
-                        logger.debug(f'{camStr} m here')
                         self.camq_p2read.put('done')
-                        logger.debug(f'{camStr} initialized as primary')
-                        logger.debug(f"cam buffer: {cam.TLStream.StreamOutputBufferCount()}")
                         while cam.TLStream.StreamOutputBufferCount() > 0 :
-                            logger.debug("getting buffer image")
                             _image = cam.GetNextImage(int(100))
                             _image.Release()
 
                     if msg == 'InitS':
-                        logger.debug(f"{camStr} s here")
                         cam.Init()
-                        self.create_secondary(cam)
-                        logger.debug(f'{camStr} s here')
+                        self.create_secondary(cam, is_decreased)
                         self.camq_p2read.put('done')
-                        logger.debug(f'{camStr} initialized as secondary')
-                        logger.debug(f"cam buffer: {cam.TLStream.StreamOutputBufferCount()}")
                         while cam.TLStream.StreamOutputBufferCount() > 0 :
-                            logger.debug("getting buffer image")
                             _image = cam.GetNextImage(int(100))
                             _image.Release()
 
@@ -128,9 +119,7 @@ class multiCam_DLC_Cam(Process):
                         cam.TriggerOverlap.SetValue(PySpin.TriggerOverlap_Off)
                         cam.TriggerMode.SetValue(PySpin.TriggerMode_On)
                         isunconnected = True
-                        logger.debug(f"cam buffer: {cam.TLStream.StreamOutputBufferCount()}")
                         while cam.TLStream.StreamOutputBufferCount() > 0 :
-                            logger.debug("getting buffer image")
                             _image = cam.GetNextImage(int(100))
                             _image.Release()
 
@@ -154,31 +143,14 @@ class multiCam_DLC_Cam(Process):
                         handling_mode_entry = handling_mode.GetEntryByName('OldestFirst')
                         handling_mode.SetIntValue(handling_mode_entry.GetValue())
                         logger.debug(path_base)
-                        # avi = PySpin.SpinVideo()
-                        # option = PySpin.AVIOption()
-                        
-                        # option.frameRate = write_frame_rate
+
                         self.height = aqH
                         self.width = aqW
                         self.fps = round(write_frame_rate,2)
                         
-                        # file_dir, base_name = os.path.split(path_base)
-                        # image_dir = os.path.join(file_dir,base_name+'_images')
-                        # new_dir = Path(image_dir)
-                        # Ensure the log directory exists
-                        # new_dir.mkdir(parents=True, exist_ok=True)
-                        
                         self.video_file = path_base + ".mp4"
                         file_path = f"{path_base}_timestamps.txt"
-                        
-                        # self.async_writer = AsyncVideoWriter(
-                        #     video_file=self.video_file,
-                        #     timestamp_file=file_path,
-                        #     fps=self.fps,
-                        #     width=self.width,
-                        #     height=self.height,
-                        #     max_queue=256
-                        # )
+
                         
                         self.async_writer = AsyncFFmpegGPUWriter(
                             video_file=self.video_file,
@@ -194,16 +166,6 @@ class multiCam_DLC_Cam(Process):
                         record = True
                         self.camq_p2read.put('done')
                         
-                        # # avi.Open(path_base, option)
-                        # self.video_file = path_base+".mp4"
-                        # self.prepare_writers()
-                        # file_path = f'{path_base}_timestamps.txt'
-                        # f = open(file_path, 'w')
-                        # start_time = 0
-                        # capture_duration = 0
-                        # record = True
-                        # f.write("frame_id,timestamp\n")
-                        # self.camq_p2read.put('done')
                     elif msg == 'Start':
                         cam.BeginAcquisition()
                         if ismaster or isunconnected:
@@ -267,10 +229,7 @@ class multiCam_DLC_Cam(Process):
                                 if self.frmGrab.value == 0:
                                     frame_results = image_result.GetNDArray().copy()
                                     if np.shape(frame_results)[2] == 3:
-                                        # frameA = np.zeros([int(len(frame_results)/4), int(len(frame_results[0])/4), 3])
                                         frameSml[:, :, :] = frame_results[::self.dwnsmplfac, ::self.dwnsmplfac, :]
-                                        # frame[:,:,:] = frameSml #frame_results
-                                        # logger.debug(f"val ={aqH}, {aqW}, {frameSml.shape}")
                                         self.array4feed[0:int(aqH*aqW*3/self.dwnsmplfac/self.dwnsmplfac)] = frameSml.flatten()
                                     self.frmGrab.value = 1
                             image_result.Release()
@@ -280,9 +239,6 @@ class multiCam_DLC_Cam(Process):
                         self.camq.get()
                         percentage_dropped = 0
                         if record:
-                            # avi.Close()
-                            # f.close()
-                            # self.video_writer.release()
                             self.async_writer.close()
 
                             if self.async_writer.dropped_by_writer:
@@ -291,13 +247,12 @@ class multiCam_DLC_Cam(Process):
                                     f"frames because the queue filled"
                                 )
                                 
-                            dropped_frame, total_frames, files_len = identify_dropped_frames(file_path, 
-                                                                    self.framerate) #int(user_cfg["cam_config"]['framerate']))
-                            if total_frames == 0:
-                                total_frames = 1
+                            (dropped_frame, 
+                            total_frames, 
+                            files_len) = identify_dropped_frames(file_path, self.framerate)
                             percentage_dropped = int(np.ceil((dropped_frame/total_frames)*100))
                             logger.debug(f"{self.camID}: total: {total_frames}, dropped: {dropped_frame}, len: {files_len}")
-                            logger.debug(f"{dropped_frame} of camera frames dropped for {self.camID}")
+                            # logger.debug(f"{dropped_frame} of camera frames dropped for {self.camID}")
                             logger.debug(f"{percentage_dropped}% of camera frames dropped for {self.camID}")
 
                             self.camq_p2read.put(percentage_dropped)
@@ -468,11 +423,15 @@ class multiCam_DLC_Cam(Process):
                         # Ensure desired frame rate does not exceed the maximum
                         max_frmrate = cam.AcquisitionFrameRate.GetMax()
                         frmrate_time_to_set = min(max_frmrate, record_frame_rate)
-                        cam.AcquisitionFrameRate.SetValue(frmrate_time_to_set)
+                        # cam.AcquisitionFrameRate.SetValue(frmrate_time_to_set)
+                        if not ismaster:
+                            cam.AcquisitionFrameRateEnable.SetValue(False)
+                        else:
+                            cam.AcquisitionFrameRate.SetValue(frmrate_time_to_set)
                         exposure_time_to_set = cam.ExposureTime.GetValue()
                         logger.info(f"max fr: {max_frmrate}, record: {record_frame_rate}, self.framerate: {self.framerate}")
                         logger.info(f"exposure: {exposure_time_to_set}")
-                        record_frame_rate = cam.AcquisitionFrameRate.GetValue()
+                        # record_frame_rate = cam.AcquisitionFrameRate.GetValue()
                         
                         
                         cam.AcquisitionFrameRateEnable.SetValue(False)
@@ -486,6 +445,7 @@ class multiCam_DLC_Cam(Process):
                             continue
                         # # Ensure desired exposure time does not exceed the maximum
                         max_exposure = cam.ExposureTime.GetMax()
+                        logger.debug(f"{camStr} max exposure: {max_exposure}")
                         exposure_time_request = max_exposure #int(user_cfg[camStr]['exposure'])
                         exposure_time_to_set = floor(1/record_frame_rate*1000*1000)
                         if exposure_time_request <= exposure_time_to_set:
@@ -500,16 +460,12 @@ class multiCam_DLC_Cam(Process):
                         cam.Gamma.SetValue(user_cfg[camStr]['gamma'])
                         # Ensure desired frame rate does not exceed the maximum
                         max_frmrate = cam.AcquisitionFrameRate.GetMax()
-                        cam.AcquisitionFrameRate.SetValue(frmrate_time_to_set)
+                        if not ismaster:
+                            cam.AcquisitionFrameRateEnable.SetValue(False)
+                        else:
+                            cam.AcquisitionFrameRate.SetValue(frmrate_time_to_set)
                         exposure_time_to_set = cam.ExposureTime.GetValue()
-                        record_frame_rate = cam.AcquisitionFrameRate.GetValue()
                         
-                        
-                        logger.debug(f"max exposure: {max_exposure}")
-                        # self.camq_p2read.put(exposure_time_to_set)
-                        logger.info(f"cam.AcquisitionFrameRate.GetValue(): {camStr}: {str(record_frame_rate)}")
-                        # self.camq_p2read.put(max_exposure)
-                        self.camq_p2read.put(record_frame_rate)
                         logger.debug(f"Spin cam vals: height = {node_height.GetValue()}, width = {node_width.GetValue()}")
                         self.camq_p2read.put(node_width.GetValue())
                         self.camq_p2read.put(node_height.GetValue())
@@ -524,7 +480,6 @@ class multiCam_DLC_Cam(Process):
                         current_exposure_time = min(current_exposure_time,max_exposure)
                         # current_exposure_time = 1.1*max_exposure
                         cam.ExposureTime.SetValue(current_exposure_time)
-                        logger.info(f"Auto-exposure result {camStr}: {current_exposure_time}")
                         logger.debug(f"exposure: {cam.ExposureTime.GetValue()}")
                         self.camq_p2read.put(cam.ExposureTime.GetValue())
 
@@ -535,13 +490,16 @@ class multiCam_DLC_Cam(Process):
                         cam.BalanceWhiteAuto.SetValue(PySpin.BalanceWhiteAuto_Off)
                         cam.Gain.SetValue(user_cfg[camStr]['gain'])
                         cam.Gamma.SetValue(user_cfg[camStr]['gamma'])
-                        cam.AcquisitionFrameRate.SetValue(frmrate_time_to_set)
-                        record_frame_rate = cam.AcquisitionFrameRate.GetValue()
-                        logger.debug(f"fps: {record_frame_rate}")
+                        if not ismaster:
+                            cam.AcquisitionFrameRateEnable.SetValue(False)
+                        else:
+                            cam.AcquisitionFrameRate.SetValue(frmrate_time_to_set)
+                        if ismaster:
+                            record_frame_rate = cam.AcquisitionFrameRate.GetValue()
+                            self.camq_p2read.put(record_frame_rate)
+                        logger.info(f"Frame rate {camStr}: {self.framerate}")
                         
-                        self.camq_p2read.put(record_frame_rate)
-                        self.camq_p2read.put(self.framerate)
-                        logger.info(f"Auto-exposure frame rate {camStr}: {record_frame_rate}")
+                        
 
                 except PySpin.SpinnakerException:
                     exc_type, exc_obj, tb = sys.exc_info()
@@ -564,7 +522,6 @@ class multiCam_DLC_Cam(Process):
         
     
     def create_primary(self, cam):
-        # logger.debug(f'{camStr} m here')
         cam.CounterSelector.SetValue(PySpin.CounterSelector_Counter0)
         cam.CounterEventSource.SetValue(PySpin.CounterEventSource_ExposureStart)
         cam.CounterEventActivation.SetValue(PySpin.CounterEventActivation_RisingEdge)
@@ -580,11 +537,14 @@ class multiCam_DLC_Cam(Process):
         cam.TriggerOverlap.SetValue(PySpin.TriggerOverlap_Off)
         cam.TriggerMode.SetValue(PySpin.TriggerMode_On)
     
-    def create_secondary(self, cam):
-        # logger.debug(f'{camStr} s here')
+    def create_secondary(self, cam, is_decreased):
+        cam.AcquisitionFrameRateEnable.SetValue(False)
         cam.TriggerSource.SetValue(PySpin.TriggerSource_Line3)
         cam.TriggerOverlap.SetValue(PySpin.TriggerOverlap_ReadOut)
-        cam.TriggerActivation.SetValue(PySpin.TriggerActivation_AnyEdge)
+        if is_decreased:
+            cam.TriggerActivation.SetValue(PySpin.TriggerActivation_RisingEdge)
+        else:
+            cam.TriggerActivation.SetValue(PySpin.TriggerActivation_AnyEdge)
         cam.TriggerMode.SetValue(PySpin.TriggerMode_On)
     
     def prepare_writers(self):

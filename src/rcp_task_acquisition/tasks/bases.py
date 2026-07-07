@@ -2,20 +2,21 @@ import os
 import pathlib as pl
 import numpy as np
 import pandas as pd
-from psychopy import visual
+from psychopy import visual, core
 from psychopy.visual.vlcmoviestim import VlcMovieStim
 import pyaudio
-from rcp_task_acquisition.utils.constants import VIDEO_DIR, DURATION, FREQUENCY, SAMPLING_RATE
+from rcp_task_acquisition.utils.constants import (VIDEO_DIR, 
+                                                  DURATION, 
+                                                  FREQUENCY, 
+                                                  SAMPLING_RATE,
+                                                  VideoStatus)
 from rcp_task_acquisition.utils.logger import get_logger
 logger = get_logger("./tasks/bases.py") 
 
 
 
 class StimulusBase():
-    """
-    """
-
-    def __init__(self, display, frame,  video_status=None, finish=None,):
+    def __init__(self, display, frame, timer, video_lock, video_status=None, finish=None):
         self.display = display
         self.frame = frame
         self.prev_flip_time = None
@@ -26,27 +27,29 @@ class StimulusBase():
         self.instructions_dict = {}
         self.current_trial = None
         self.video_status = video_status
+        self.timer = timer
         self.start_test = False
         self.finish = finish
         self.trial = 0
-        return
+        self.video_lock = video_lock
+        
 
     def present_prep(self):
         pass
 
     def present(self):
-        
+        self.timer.value = 0
         self.trial+=1
         self.play_tone()
         #switch the photodiode patch to be "On" while the photo is being shown
         self.display.switch_patch()
         self.display.draw_patch()
         self.display.flip()
-
+        clock = core.Clock()
         while True:
             if self.finish.value == 2:
                 break
-        
+            self.timer.value = int(clock.getTime())
         #turn the patch to off and flip the display to black
         self.display.switch_patch()
         self.display.draw_patch()
@@ -54,7 +57,7 @@ class StimulusBase():
         
         pass
         
-        
+    
     def prepareMetadataStream(self, sessionFolder, filename, header):
         """
         """
@@ -113,8 +116,8 @@ class StimulusBase():
                                                                                      self.flip_interval_arr, 
                                                                                      units,
                                                                                      returnFirstTimestamp)
-
         return timestamp
+    
     
     def create_csv(self, name, sessionFolder, metadata, start_frame, columns=None):
         sessionFolderPath = pl.Path(sessionFolder)
@@ -160,8 +163,7 @@ class StimulusBase():
             file = self.instructions_dict[trial_name]
         path =  os.path.join(VIDEO_DIR, str(file))
         if not os.path.exists(path):
-            # raise RuntimeError(f"Video File could not be found: {path}")
-            self.video_status.value = 6 
+            self.video_status.value = VideoStatus.ERROR.value
             return
         
         logger.debug(path)
@@ -169,34 +171,35 @@ class StimulusBase():
                 self.display, 
                 path,
                 size=self.display.size,
-                pos=[0, 0],     # Position the center of the video
+                pos=[0, 0],
                 flipVert=False, 
                 flipHoriz=False, 
                 loop=False
             )
-        video._player.audio_set_volume(150)
-        logger.debug(video)
+        
         video.play()
         while video.status != visual.FINISHED:
-            if self.video_status.value == 2:
+            if self.video_status.value == VideoStatus.PAUSED.value:
                 video.pause()
-                self.video_status.value = 0
-            elif self.video_status.value == 3:
+            elif self.video_status.value == VideoStatus.START_FROM_PAUSE.value:
                 video.play()
-                self.video_status.value = 1
-            elif self.video_status.value == 4:
-                break                
+                self.video_status.value = VideoStatus.PLAY.value
+            elif self.video_status.value == VideoStatus.STOP.value:
+                self.video_status.value = VideoStatus.FINISHED.value
+                video.stop()
+                self.display.idle(time_list = [])
+                self.video_lock.set()
+                self.video_lock.clear()
+                return
             else:
                 # Draw the current frame of the video
                 video.draw()
-                # Flip the window to show the new frame
                 self.display.flip()
-
-        video.stop()
         
-        self.video_status.value = 5
+        self.video_status.value = VideoStatus.FINISHED.value
+        video.stop()
         self.display.idle(time_list = [])
-        # self.display.clearStimuli()
+        
 
 
     def trial_bookends(self):

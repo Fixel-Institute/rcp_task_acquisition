@@ -93,8 +93,8 @@ class VerbGenerationPanel(TrialPanel):
         
     def on_timer(self, event):
         self.seconds+=1
-        self.display_mins = int(self.seconds/60)
-        self.display_secs = self.seconds%60
+        self.display_mins = int(self.timer.value/60)
+        self.display_secs = self.timer.value%60
         if self.trial_is_active:
             self.seconds_text.SetLabel(f"Time: {self.display_mins} mins, {self.display_secs} secs")
 

@@ -128,7 +128,7 @@ class SaraPanel(TrialPanel):
         if self.trial_is_active:
             self.seconds+=1
             if self.seconds >= 0:
-                self.seconds_text.SetLabel(f"Time: {self.seconds} secs")
+                self.seconds_text.SetLabel(f"Time: {self.timer.value} secs")
 
 
     def edit_score(self, event):

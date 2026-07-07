@@ -129,7 +129,6 @@ class AsyncFFmpegGPUWriter:
         self.dropped_by_writer = 0
         self.error = None
         self.ready = threading.Event()
-        logger.debug(f"FPS: {self.fps}")
         self.thread = threading.Thread(target=self._worker, daemon=False)
         self.thread.start()
         self.ready.wait()
@@ -152,7 +151,6 @@ class AsyncFFmpegGPUWriter:
         ffmpeg_dir: str = f"{(Path(__file__).parent.parent.parent.parent / 'library' / 'ffmpeg' / 'bin')};"
         custom_env = os.environ.copy()
         custom_env["PATH"] = str(ffmpeg_dir) + custom_env.get("PATH", "")
-        logger.debug(custom_env["PATH"])
         cmd = [
             "ffmpeg", "-y",
             "-f", "rawvideo",

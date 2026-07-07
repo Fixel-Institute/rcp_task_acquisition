@@ -9,8 +9,8 @@ logger = get_logger("./tasks/VerbalFluency")
 
 
 class VerbalFluency(bases.StimulusBase):
-    def __init__(self, window, frame, finished, video_status):
-        super().__init__(window, frame, video_status, finished)
+    def __init__(self, base_vars):
+        super().__init__(**base_vars)
         self.trial_num = 0 
         self.trial_type = None
         self.trial_name = None
@@ -20,6 +20,7 @@ class VerbalFluency(bases.StimulusBase):
         
         
     def present(self):
+        self.timer.value = 0
         self.trial_num+=1
         self.trial_dict[f"trial_{self.trial_num}"] = self.trial
         
@@ -30,11 +31,12 @@ class VerbalFluency(bases.StimulusBase):
         
         clock = core.Clock()   
         while clock.getTime() < TRIAL_TIME:
+            self.timer.value = int(clock.getTime())
             self.display.draw_patch()
             self.display.flip()
             if self.finish.value == 2:
                 break
-        self.finish.value = 1
+        self.timer.value = int(clock.getTime())
         self.display.switch_patch()
         self.display.draw_patch()
         self.display.flip()

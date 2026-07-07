@@ -274,15 +274,14 @@ def pull_stimuli_2back(trial_num: int) -> Tuple[List[Path], List[Answer]]:
 
 
 class N_back(bases.StimulusBase):
-    def __init__(self, window, frame, button, is_finished):
+    def __init__(self, base_vars, button):
         self.parameters = {}
-        super().__init__(window, frame)
+        super().__init__(**base_vars)
         self.button = button
         self.trial = 0
         self.is_real = None
         self.type = None
         self.button_press = False
-        self.finished = is_finished
         self.instructions = None
         self.letters = {"D": visual.TextStim(self.display, text="D", name="trial", pos=(0, 0), height=800),
                         "F": visual.TextStim(self.display, text="F", name="trial", pos=(0, 0), height=800),
@@ -413,7 +412,7 @@ class N_back(bases.StimulusBase):
         for index, _ in enumerate(text):
             
             while not self.button.value:
-                if self.finished.value == 2:
+                if self.finish.value == 2:
                     break
                 text[index].draw()
                 self.display.flip()
@@ -421,7 +420,7 @@ class N_back(bases.StimulusBase):
                 time.sleep(0.05)
             while self.button.value:
                 time.sleep(0.05)
-            if self.finished.value == 2:
+            if self.finish.value == 2:
                 self.display.flip()
                 self.is_real=None
                 self.button_press = False
@@ -433,7 +432,7 @@ class N_back(bases.StimulusBase):
 
         for index, trial_set in enumerate(self.trial_list):
             for t_index, trial in enumerate(trial_set):
-                if self.finished.value == 2:
+                if self.finish.value == 2:
                     self.display.flip()
                     self.is_real=None
                     self.button_press = False

@@ -2,7 +2,7 @@
 import time
 import pyaudio
 import numpy as np
-from psychopy import visual
+from psychopy import visual, core
 
 from rcp_task_acquisition.tasks import bases
 from  rcp_task_acquisition.utils.constants import GLOBAL_CLOCK
@@ -29,8 +29,8 @@ PARAMS = {
 
 
 class ToneTapsClosed(bases.StimulusBase):
-    def __init__(self, window, frame, press_count, finish, video_status):
-        super().__init__(window, frame, video_status, finish)
+    def __init__(self, base_vars, press_count):
+        super().__init__(**base_vars)
         self.hand_list = []
         self.hand = None
         self.trial_count = 0
@@ -45,7 +45,7 @@ class ToneTapsClosed(bases.StimulusBase):
         texts.append(visual.TextStim(self.display, text="Keep tapping at the same rate.", name="End_Screen", height=50))
         texts.append(visual.TextStim(self.display, text="Thank you! Done", name="End_Screen", height=50))
 
-
+        self.timer.value = 0
         self.display.switch_patch()
         self.display.draw_patch()
         self.display.flip()
@@ -59,6 +59,7 @@ class ToneTapsClosed(bases.StimulusBase):
         #start phase
         gToneTime = GLOBAL_CLOCK.getTime()
         playTime = PARAMS["tone_delay"]
+        clock = core.Clock()
         while self.press_count.value <= PARAMS["tone_number_per_trial"]-1:
             if GLOBAL_CLOCK.getTime() - gToneTime > playTime :
 
@@ -68,6 +69,7 @@ class ToneTapsClosed(bases.StimulusBase):
 
                 nPlayed+=1
                 playTime += PARAMS["inter_tone_interval"]
+                self.timer.value = int(clock.getTime())
             if self.finish.value == 2:
                 break
         if self.press_count.value <= PARAMS["tone_number_per_trial"]:
@@ -80,8 +82,10 @@ class ToneTapsClosed(bases.StimulusBase):
                     nPlayed+=1
                     playTime += PARAMS["inter_tone_interval"]
                     break
+                    self.timer.value = int(clock.getTime())
         if self.finish.value != 2: 
             texts[1].draw()
+            self.timer.value = int(clock.getTime())
             self.display.draw_patch()
             self.display.flip()
         
@@ -89,6 +93,7 @@ class ToneTapsClosed(bases.StimulusBase):
         while (GLOBAL_CLOCK.getTime() - gToneTime) < (PARAMS["total_time_before_cutoff"]):
             if self.finish.value == 2:
                 break
+            self.timer.value = int(clock.getTime())
             time.sleep(0.005)
             if self.press_count.value >= 31 + PARAMS["tone_number_per_trial"]:
                 break

@@ -101,10 +101,6 @@ class VowelSpacePanel(TrialPanel):
         self.continue_button.SetLabel("Stop Trial")
         self.next_button.Enable(False)
         
-    def on_timer(self, event):
-        self.seconds+=1
-        
-        
     def update_trial(self, trial, syllable):
         '''
         Updating with the current syllable

@@ -1,18 +1,20 @@
+from psychopy import core
+
 from rcp_task_acquisition.tasks import bases
 from rcp_task_acquisition.utils.logger import get_logger
 logger = get_logger("./tasks/ReachGrasp") 
 
 class ReachGrasp(bases.StimulusBase):
-    def __init__(self, window, frame, finish):
-        super().__init__(window, frame)
+    def __init__(self, base_vars):
+        super().__init__(**base_vars)
         self.trial_count = 0
         self.hand = None
         self.grasp_object = None
-        self.finish = finish
         self.hand_dict = {}
         self.grasp_dict = {}
         
-    def present(self):        
+    def present(self):       
+        self.timer.value = 0
         self.trial_count+=1
         self.trial
         self.hand_dict[f"trial_{self.trial_count}"] = self.hand
@@ -24,9 +26,11 @@ class ReachGrasp(bases.StimulusBase):
         self.display.draw_patch()
         self.display.flip()
 
+        clock = core.Clock()
         while self.finish.value == 0:
             self.display.draw_patch()
             self.display.flip()        
+            self.timer.value = int(clock.getTime())
 
         self.display.switch_patch()
         self.display.draw_patch()
