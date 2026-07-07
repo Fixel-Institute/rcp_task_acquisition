@@ -496,6 +496,7 @@ class multiCam_DLC_Cam(Process):
 
                         cam.AcquisitionFrameRateEnable.SetValue(True)
                         cam.Gain.SetValue(user_cfg[camStr]['gain'])
+                        cam.GammaEnable.SetValue(True)
                         cam.Gamma.SetValue(user_cfg[camStr]['gamma'])
                         # Ensure desired frame rate does not exceed the maximum
                         max_frmrate = cam.AcquisitionFrameRate.GetMax()

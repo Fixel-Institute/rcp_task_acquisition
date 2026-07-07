@@ -377,7 +377,7 @@ class StimulusPresenter:
 
     FIX_SIZE  = 100    # fixation cross half-length (pixel)
     FIX_WIDTH = 3      # line width (px)
-    DOT_RAD   = 100    # target dot radius (pixel)
+    DOT_RAD   = 10    # target dot radius (pixel)
     SYNC_PX   = 40     # photodiode sync square side (px)
 
     def __init__(self, win, sync=None):
@@ -936,7 +936,7 @@ def _dlg_saccade():
         return None
     v = d.data
     return {
-        "eccentricities": _parse_eccentricities(v[0]),
+        "eccentricities": [float(value)*30 for value in _parse_eccentricities(v[0])],
         "n_trials":       int(v[1]),
         "fix_dur_ms":     int(v[2]),
         "fix_jitter_ms":  int(v[3]),
@@ -948,8 +948,8 @@ def _dlg_saccade():
 
 def _dlg_pursuit():
     d = gui.Dlg(title="Pursuit Block")
-    d.addField("Amplitude ± (deg):",           12.0)
-    d.addField("Speed (deg/s):",               10.0)
+    d.addField("Amplitude ± (pix):",           360.0)
+    d.addField("Speed (pix/s):",               300.0)
     d.addField("# Trials:",                    10)
     d.addField("Fixation duration (ms):",      1000)
     d.addField("Fix. jitter ± (ms):",          0)
@@ -985,7 +985,7 @@ def _dlg_fixation():
         return None
     v = d.data
     return {
-        "eccentricities": _parse_eccentricities(v[0]),
+        "eccentricities": [float(value)*30 for value in _parse_eccentricities(v[0])],
         "n_trials":       int(v[1]),
         "fix_dur_ms":     int(v[2]),
         "fix_jitter_ms":  int(v[3]),
