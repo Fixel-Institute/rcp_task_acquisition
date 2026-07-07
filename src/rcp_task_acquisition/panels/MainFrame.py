@@ -278,6 +278,8 @@ class MainFrame(wx.Frame):
             if self.delsys.is_connected():
                 self.delsys.start(filename=os.path.join(self.sess_dir, f"{self.date_string}_{self.user_cfg['unitRef']}_{self.sess_string}_delsys.mdat"))
 
+            #self.thread.stimulus.get_session(self.session)
+
             self.add_metadata(temp=True)
 
         else:

@@ -215,6 +215,9 @@ class StimulusBase():
 
     def update_data(self, data):
         pass
+
+    def get_session(self, path):
+        self.session_path = path
     
     def play_stone(self, frequency=440, duration=1.0, sample_rate=44100, volume=0.1):
         """
