@@ -457,7 +457,7 @@ class N_back(bases.StimulusBase):
                     self.button_press = False
 
             if index < len(self.trial_list)-1:
-                if self.finished.value == 2:
+                if self.finish.value == 2:
                     self.display.flip()
                     self.is_real=None
                     self.button_press = False

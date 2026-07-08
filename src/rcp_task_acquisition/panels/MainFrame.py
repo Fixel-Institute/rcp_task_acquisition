@@ -23,7 +23,6 @@ from rcp_task_acquisition.models.LabjackFrontend import LabjackFrontend
 from rcp_task_acquisition.models.Crop import Crop
 from rcp_task_acquisition.panels.GraphPanel import GraphPanel
 from rcp_task_acquisition.panels.DelsysPreview import DelsysPreview
-from rcp_task_acquisition.panels.ExperimenterMonitor import ExperimenterMonitor
 from rcp_task_acquisition.models.Warnings import Warning
 from rcp_task_acquisition.panels.MetadataPanel import MetadataPanel
 from rcp_task_acquisition.utils.constants import RAW_DATA_DIR, PLOT_LENGTH, VideoStatus
@@ -107,9 +106,6 @@ class MainFrame(wx.Frame):
         # Add Delsys Graph Frame
         self.delsys_preview = DelsysPreview(delsys, self)
 
-        # Add Experimenter View
-        self.experimenter_view = ExperimenterMonitor(None)
-    
         # Add Buttons to the WidgetPanel and bind them to their respective functions.
         (self.init,self.reset,self.update_settings,self.play,self.rec,
         self.exposure_button,self.set_crop,self.crop, self.minRec,self.secRec) = self.widget_panel.get_cam_handles()
@@ -791,7 +787,6 @@ class MainFrame(wx.Frame):
         self.ctrl_panel.Destroy()
         self.statusbar.SetStatusText("")
         self.Destroy()
-        self.experimenter_view.destroy()
 
     
     def Hide(self, event):
@@ -803,9 +798,6 @@ class MainFrame(wx.Frame):
         if self.delsys.is_connected():
             self.delsys.stop()
 
-        if self.experimenter_view:
-            self.experimenter_view.Hide()
-        
         self.rest_timer.Stop()
         self.video_status.value = VideoStatus.STOP.value
         if self.recording:
@@ -998,9 +990,6 @@ class MainFrame(wx.Frame):
         if self.delsys_preview and self.delsys.is_connected():
             self.delsys_preview.Show()
         
-        if self.experimenter_view:
-            self.experimenter_view.Show()
-
         self.participant_monitor.update_screen()
         self.trial_panel.add_timer(self.stimulus_timer)
         super().Show()

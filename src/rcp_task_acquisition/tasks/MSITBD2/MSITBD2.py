@@ -15,8 +15,8 @@ resource_path = Path(__file__).parent.__str__() + "/STIMULI"
 
 # Sets up display window, fixation cross, text pages and image stimuli
 class MSITBD2(bases.StimulusBase):
-    def __init__(self, window, frame, finish):
-        super().__init__(window, frame, None, finish)
+    def __init__(self, base_vars):
+        super().__init__(**base_vars)
         self.trial = 0
         self.screen_width = 2200 #not technically screen width but we dont want to cover the photodiode
         self.screen_height = 1440
@@ -94,91 +94,90 @@ class MSITBD2(bases.StimulusBase):
             if to_start:
                 break
 
-        while self.finish.value == 0:
-            for index in range(len(self.trial_data)):
-                stim = self.trial_data[index]["Stim"]
+        for index in range(len(self.trial_data)):
+            stim = self.trial_data[index]["Stim"]
+            stim.draw()
+            self.display.switch_patch()
+            self.display.draw_patch()
+            self.display.flip()
+
+            print(f"Trial {index+1}: {self.trial_data[index]['Image']}")
+
+            time.sleep(0.3)
+
+            stim = self.trial_data[index]["KeyStim"]
+            self.display.switch_patch()
+
+            self.kb.clearEvents()
+            start_time = time.time()
+            now = time.time()
+            while now - start_time < 1.7:
                 stim.draw()
-                self.display.switch_patch()
                 self.display.draw_patch()
                 self.display.flip()
 
-                print(f"Trial {index+1}: {self.trial_data[index]['Image']}")
+                keys = self.kb.getKeys()
+                key_get = False
+                for key in keys:
+                    if key.name == "left":
+                        self.result_data.append({
+                            "Trial": self.trial_data[index]["Trial"],
+                            "Image": self.trial_data[index]["Image"],
+                            "Response": "Left",
+                            "RT": time.time() - start_time
+                        })
+                        print(f"Trial {index+1}: {self.trial_data[index]['Image']} - Response: Left, RT: {time.time() - start_time}")
+                        key_get = True
+                    elif key.name == "right":
+                        self.result_data.append({
+                            "Trial": self.trial_data[index]["Trial"],
+                            "Image": self.trial_data[index]["Image"],
+                            "Response": "Right",
+                            "RT": time.time() - start_time
+                        })
+                        print(f"Trial {index+1}: {self.trial_data[index]['Image']} - Response: Right, RT: {time.time() - start_time}")
+                        key_get = True
+                    elif key.name == "down":
+                        self.result_data.append({
+                            "Trial": self.trial_data[index]["Trial"],
+                            "Image": self.trial_data[index]["Image"],
+                            "Response": "Down",
+                            "RT": time.time() - start_time
+                        })
+                        print(f"Trial {index+1}: {self.trial_data[index]['Image']} - Response: Down, RT: {time.time() - start_time}")
+                        key_get = True
 
-                time.sleep(0.3)
-
-                stim = self.trial_data[index]["KeyStim"]
-                self.display.switch_patch()
-
-                self.kb.clearEvents()
-                start_time = time.time()
-                now = time.time()
-                while now - start_time < 1.7:
-                    stim.draw()
-                    self.display.draw_patch()
-                    self.display.flip()
-
-                    keys = self.kb.getKeys()
-                    key_get = False
-                    for key in keys:
-                        if key.name == "left":
-                            self.result_data.append({
-                                "Trial": self.trial_data[index]["Trial"],
-                                "Image": self.trial_data[index]["Image"],
-                                "Response": "Left",
-                                "RT": time.time() - start_time
-                            })
-                            print(f"Trial {index+1}: {self.trial_data[index]['Image']} - Response: Left, RT: {time.time() - start_time}")
-                            key_get = True
-                        elif key.name == "right":
-                            self.result_data.append({
-                                "Trial": self.trial_data[index]["Trial"],
-                                "Image": self.trial_data[index]["Image"],
-                                "Response": "Right",
-                                "RT": time.time() - start_time
-                            })
-                            print(f"Trial {index+1}: {self.trial_data[index]['Image']} - Response: Right, RT: {time.time() - start_time}")
-                            key_get = True
-                        elif key.name == "down":
-                            self.result_data.append({
-                                "Trial": self.trial_data[index]["Trial"],
-                                "Image": self.trial_data[index]["Image"],
-                                "Response": "Down",
-                                "RT": time.time() - start_time
-                            })
-                            print(f"Trial {index+1}: {self.trial_data[index]['Image']} - Response: Down, RT: {time.time() - start_time}")
-                            key_get = True
-
-                    if key_get:
-                        break
-                    
-                    now = time.time()
-                
-                if len(self.result_data) < index + 1:
-                    self.result_data.append({
-                        "Trial": self.trial_data[index]["Trial"],
-                        "Image": self.trial_data[index]["Image"],
-                        "Response": "No Response",
-                        "RT": -1
-                    })
-                    print(f"Trial {index+1}: {self.trial_data[index]['Image']} - Response: No Response, RT: {time.time() - start_time}")
-
-                stim = self.trial_data[0]["Stim"]
-                stim.draw()
-                self.display.switch_patch()
-                self.display.draw_patch()
-                self.display.flip() 
-
-                wait = max(0, self.trial_data[index]["Jitter"]/1000 - 1)   # jitter time minus the 1 second, don't know why, not even the MATLAB code knows why
-                time.sleep(wait/2)
-
-                stim.draw()
-                self.display.switch_patch()
-                self.display.draw_patch()
-                self.display.flip()
-                time.sleep(wait/2)
-
-                if self.finish.value != 0:
+                if key_get:
                     break
+                
+                now = time.time()
+            
+            if len(self.result_data) < index + 1:
+                self.result_data.append({
+                    "Trial": self.trial_data[index]["Trial"],
+                    "Image": self.trial_data[index]["Image"],
+                    "Response": "No Response",
+                    "RT": -1
+                })
+                print(f"Trial {index+1}: {self.trial_data[index]['Image']} - Response: No Response, RT: {time.time() - start_time}")
+
+            stim = self.trial_data[0]["Stim"]
+            stim.draw()
+            self.display.switch_patch()
+            self.display.draw_patch()
+            self.display.flip() 
+
+            wait = max(0, self.trial_data[index]["Jitter"]/1000 - 1)   # jitter time minus the 1 second, don't know why, not even the MATLAB code knows why
+            time.sleep(wait/2)
+
+            stim.draw()
+            self.display.switch_patch()
+            self.display.draw_patch()
+            self.display.flip()
+            time.sleep(wait/2)
+
+            if self.finish.value != 0:
+                break
 
         #turn the patch to off and flip the display to black
         self.display.switch_patch()

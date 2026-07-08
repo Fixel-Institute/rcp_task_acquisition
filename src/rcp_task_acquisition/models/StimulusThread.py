@@ -193,13 +193,13 @@ class StimulusThread(Process):
             self.stimulus = VerbGeneration(base_vars)
 
         elif self.task == "continuous_recording":
-            self.stimulus = ContinuousRecording(self.window, self.frame, self.finish)
+            self.stimulus = ContinuousRecording(base_vars)
         
         elif self.task == "oculostim_task":
-            self.stimulus = OculoStim(self.window, self.frame, self.finish)
+            self.stimulus = OculoStim(base_vars)
 
         elif self.task == "MSITBD2":
-            self.stimulus = MSITBD2(self.window, self.frame, self.finish)
+            self.stimulus = MSITBD2(base_vars)
 
         else:
             self.stimulus = StimulusBase(base_vars)

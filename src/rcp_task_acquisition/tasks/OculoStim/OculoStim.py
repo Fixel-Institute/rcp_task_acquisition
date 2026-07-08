@@ -63,8 +63,8 @@ def get_default_config(v = [57.0, 52.7, 1920, 1080, 0, "Saccade Block", "localho
 
 # Sets up display window, fixation cross, text pages and image stimuli
 class OculoStim(bases.StimulusBase):
-    def __init__(self, window, frame, finish):
-        super().__init__(window, frame, None, finish)
+    def __init__(self, base_vars):
+        super().__init__(**base_vars)
         self.trial = 0
         self.screen_width = 2200 #not technically screen width but we dont want to cover the photodiode
         self.screen_height = 1440

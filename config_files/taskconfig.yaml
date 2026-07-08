@@ -8,6 +8,7 @@ naturalistic_speech:
   - Return From DS7A
   - Trigger to DS7A
   - TTL to E-Phys
+  - Slow Barcode
   - leftCamTop
   - rightCamTop
   - leftCamFace
@@ -25,11 +26,14 @@ n_back:
   - Return From DS7A
   - Trigger to DS7A
   - TTL to E-Phys
+  - Slow Barcode
   - Digital Accessory
   - leftCamTop
   - rightCamTop
   - leftCamFace
   - rightCamFace
+  - leftCamTripod
+  - rightCamTripod
 
 motor_task_finger_taps:
   settings:
@@ -41,10 +45,13 @@ motor_task_finger_taps:
   - Return From DS7A
   - Trigger to DS7A
   - TTL to E-Phys
+  - Slow Barcode
   - leftCamTop
   - rightCamTop
   - leftCamFace
   - rightCamFace
+  - leftCamTripod
+  - rightCamTripod
 
 diadochokinesis:
   settings:
@@ -56,10 +63,13 @@ diadochokinesis:
   - Return From DS7A
   - Trigger to DS7A
   - TTL to E-Phys
+  - Slow Barcode
   - leftCamTop
   - rightCamTop
   - leftCamFace
   - rightCamFace
+  - leftCamTripod
+  - rightCamTripod
 
 verbal_fluency:
   settings:
@@ -71,10 +81,13 @@ verbal_fluency:
   - Return From DS7A
   - Trigger to DS7A
   - TTL to E-Phys
+  - Slow Barcode
   - leftCamTop
   - rightCamTop
   - leftCamFace
   - rightCamFace
+  - leftCamTripod
+  - rightCamTripod
 
 vowel_space:
   settings:
@@ -86,111 +99,15 @@ vowel_space:
   - Return From DS7A
   - Trigger to DS7A
   - TTL to E-Phys
+  - Slow Barcode
   - leftCamTop
   - rightCamTop
   - leftCamFace
   - rightCamFace
+  - leftCamTripod
+  - rightCamTripod
 
 reach_grasp:
-  settings:
-  - Photodetector
-  - Subject Mic
-  - Experimenter Mic
-  - PC Audio
-  - Grip Force Sensor
-  - Force Sensor X
-  - Force Sensor Y
-  - Force Sensor Z
-  - Camera Sync TTL
-  - Grasp Start Pad
-  - Return From DS7A
-  - Trigger to DS7A
-  - TTL to E-Phys
-  - leftCamTop
-  - rightCamTop
-  - leftCamFace
-  - rightCamFace
-  - leftCamTripod
-  - rightCamTripod
-
-tone_taps_closed:
-  settings:
-  - Photodetector
-  - Subject Mic
-  - Experimenter Mic
-  - PC Audio
-  - Camera Sync TTL
-  - Return From DS7A
-  - Trigger to DS7A
-  - TTL to E-Phys
-  - Digital Accessory
-  - leftCamTop
-  - rightCamTop
-  - leftCamFace
-  - rightCamFace
-
-sara:
-  settings:
-  - Photodetector
-  - Subject Mic
-  - Experimenter Mic
-  - PC Audio
-  - Camera Sync TTL
-  - Return From DS7A
-  - Trigger to DS7A
-  - TTL to E-Phys
-  - leftCamTop
-  - rightCamTop
-  - leftCamFace
-  - rightCamFace
-
-verb_generation:
-  settings:
-  - Photodetector
-  - Subject Mic
-  - Experimenter Mic
-  - PC Audio
-  - Camera Sync TTL
-  - Return From DS7A
-  - Trigger to DS7A
-  - TTL to E-Phys
-  - leftCamTop
-  - rightCamTop
-  - leftCamFace
-  - rightCamFace
-
-calibrate_top:
-  settings:
-  - Photodetector
-  - Camera Sync TTL
-  - Trigger to DS7A
-  - TTL to E-Phys
-  - leftCamTop
-  - rightCamTop
-  - leftCamFace
-  - rightCamFace
-
-calibrate_face:
-  settings:
-  - Photodetector
-  - Camera Sync TTL
-  - Trigger to DS7A
-  - TTL to E-Phys
-  - leftCamFace
-  - rightCamFace
-
-calibrate_tripod:
-  settings:
-  - Photodetector
-  - Camera Sync TTL
-  - Trigger to DS7A
-  - TTL to E-Phys
-  - leftCamTripod
-  - rightCamTripod
-  - leftCamFace
-  - rightCamFace
-
-continuous_recording:
   settings:
   - Photodetector
   - Subject Mic
@@ -213,7 +130,142 @@ continuous_recording:
   - leftCamTripod
   - rightCamTripod
 
+tone_taps_closed:
+  settings:
+  - Photodetector
+  - Subject Mic
+  - Experimenter Mic
+  - PC Audio
+  - Camera Sync TTL
+  - Return From DS7A
+  - Trigger to DS7A
+  - TTL to E-Phys
+  - Slow Barcode
+  - Digital Accessory
+  - leftCamTop
+  - rightCamTop
+  - leftCamFace
+  - rightCamFace
+  - leftCamTripod
+  - rightCamTripod
+
+sara:
+  settings:
+  - Photodetector
+  - Subject Mic
+  - Experimenter Mic
+  - PC Audio
+  - Camera Sync TTL
+  - Return From DS7A
+  - Trigger to DS7A
+  - TTL to E-Phys
+  - Slow Barcode
+  - leftCamTop
+  - rightCamTop
+  - leftCamFace
+  - rightCamFace
+  - leftCamTripod
+  - rightCamTripod
+
+verb_generation:
+  settings:
+  - Photodetector
+  - Subject Mic
+  - Experimenter Mic
+  - PC Audio
+  - Camera Sync TTL
+  - Return From DS7A
+  - Trigger to DS7A
+  - TTL to E-Phys
+  - Slow Barcode
+  - leftCamTop
+  - rightCamTop
+  - leftCamFace
+  - rightCamFace
+  - leftCamTripod
+  - rightCamTripod
+
+calibrate_top:
+  settings:
+  - Photodetector
+  - Camera Sync TTL
+  - Trigger to DS7A
+  - TTL to E-Phys
+  - Slow Barcode
+  - leftCamTop
+  - rightCamTop
+  - leftCamFace
+  - rightCamFace
+
+calibrate_face:
+  settings:
+  - Photodetector
+  - Camera Sync TTL
+  - Trigger to DS7A
+  - TTL to E-Phys
+  - Slow Barcode
+  - leftCamFace
+  - rightCamFace
+
+calibrate_tripod:
+  settings:
+  - Photodetector
+  - Camera Sync TTL
+  - Trigger to DS7A
+  - TTL to E-Phys
+  - Slow Barcode
+  - leftCamTripod
+  - rightCamTripod
+  - leftCamFace
+  - rightCamFace
+
 oculostim_task:
+  settings:
+  - Photodetector
+  - Subject Mic
+  - Experimenter Mic
+  - PC Audio
+  - Grip Force Sensor
+  - Force Sensor X
+  - Force Sensor Y
+  - Force Sensor Z
+  - Camera Sync TTL
+  - Grasp Start Pad
+  - Return From DS7A
+  - Trigger to DS7A
+  - TTL to E-Phys
+  - Slow Barcode
+  - leftCamTop
+  - rightCamTop
+  - leftCamFace
+  - rightCamFace
+  - leftCamTripod
+  - rightCamTripod
+  
+MSITBD2:
+  settings:
+  - Photodetector
+  - Subject Mic
+  - Experimenter Mic
+  - PC Audio
+  - Grip Force Sensor
+  - Force Sensor X
+  - Force Sensor Y
+  - Force Sensor Z
+  - Camera Sync TTL
+  - Grasp Start Pad
+  - Return From DS7A
+  - Trigger to DS7A
+  - TTL to E-Phys
+  - Slow Barcode
+  - leftCamTop
+  - rightCamTop
+  - leftCamFace
+  - rightCamFace
+  - leftCamTripod
+  - rightCamTripod
+
+continuous_recording:
   settings:
   - Photodetector
   - Subject Mic
