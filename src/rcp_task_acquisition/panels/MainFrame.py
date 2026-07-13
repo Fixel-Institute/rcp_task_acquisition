@@ -644,7 +644,7 @@ class MainFrame(wx.Frame):
             self.meta,ruamelFile = file_utils.metadata_template()
             date_string = datetime.datetime.utcnow().strftime("%Y%m%d")
             cameras = {}
-            self.meta["version"] = str(__version__)
+            self.meta["version"] = str(__version__) + "_UFUCSFMod"
             self.meta["actual_scan_rate"]=self.labjack_scan_rate
         
             for ndx, s in enumerate(self.cams.cam_dict):
