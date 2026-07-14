@@ -118,7 +118,7 @@ class OculoStim(bases.StimulusBase):
         internal_data = []
         if self.trial_type == "Calibration":
             print("Running gaze calibration...")
-            cal_model = run_gaze_calibration(self.display)
+            cal_model = run_gaze_calibration(self.display, draw_sync=self.display.draw_patch, flip_sync=self.display.switch_patch)
             if cal_model:
                 try:
                     ts = datetime.now().strftime("%Y%m%d_%H%M%S")

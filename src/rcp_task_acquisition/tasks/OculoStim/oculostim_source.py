@@ -367,7 +367,8 @@ _CAL_SETTLE_S = 1.2
 _CAL_COLLECT_S = 0.8
 
 
-def run_gaze_calibration(win):
+
+def run_gaze_calibration(win, draw_sync=None, flip_sync=None):
     mon = win.monitor
     w_cm = mon.getWidth()
     dist = mon.getDistance()
@@ -415,11 +416,13 @@ def run_gaze_calibration(win):
         settle_end = core.getTime() + _CAL_SETTLE_S
         collect_end = settle_end + _CAL_COLLECT_S
         lx_s, ly_s, rx_s, ry_s = [], [], [], []
+        flip_sync()
+        draw_sync()
 
         while core.getTime() < collect_end:
             if event.getKeys(["escape"]):
                 return None
-
+            
             win.color = 0.0
             for gl in grid_lines:
                 gl.draw()
@@ -429,6 +432,7 @@ def run_gaze_calibration(win):
             dot.draw()
             progress.text = f"Point {idx + 1} / {n_pts}"
             progress.draw()
+            draw_sync()
             win.flip()
 
         cal_points.append({
