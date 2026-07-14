@@ -62,7 +62,6 @@ class StimulusThread(Process):
         self.task = task
         self.video_lock = event_lock
         
-        
     def run(self):
         self.window = Window(
                     screen=self.screenConfig,
@@ -218,17 +217,11 @@ class StimulusThread(Process):
         self.alive = False
         self.window.close()
         # self.p.join()
-        
-    
     def get_params(self):
         return self.params
-
     
     def setup_videos(self, video_filename_dict):
         pass
-        
-        
-        
 
     def play_video(self, trial=None):
         if self.stimulus != None:

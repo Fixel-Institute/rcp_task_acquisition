@@ -38,6 +38,7 @@ class OculoStimPanel(TrialPanel):
         self.saccade_radio = wx.RadioButton(self, label="Saccade", style= wx.RB_GROUP)
         self.pursuit_radio = wx.RadioButton(self, label="Smooth Pursuit")
         self.fixation_radio = wx.RadioButton(self, label="Fixation")
+        self.calibration_radio = wx.RadioButton(self, label="Run Gaze Calibration")
         
         self.seconds_text = wx.StaticText(self, label= "Time: 0 secs")
         self.continue_button = wx.ToggleButton(self, label="Begin Trial", size=(self.button_width*2, -1))
@@ -48,8 +49,9 @@ class OculoStimPanel(TrialPanel):
         grid_sizer.Add(self.saccade_radio, pos=(2, 0), span=(0,2), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
         grid_sizer.Add(self.pursuit_radio, pos=(2, 2), span=(0,2), flag=wx.ALIGN_LEFT  | wx.ALL, border=self.border)
         grid_sizer.Add(self.fixation_radio, pos=(2, 4), span=(0,2), flag=wx.ALIGN_LEFT  | wx.ALL, border=self.border)
-        grid_sizer.Add(self.seconds_text, pos=(3, 0), span=(0,6), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
-        grid_sizer.Add(self.continue_button, pos=(4, 0), span=(0,3), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
+        grid_sizer.Add(self.calibration_radio, pos=(3, 4), span=(0,2), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
+        grid_sizer.Add(self.seconds_text, pos=(4, 0), span=(0,6), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
+        grid_sizer.Add(self.continue_button, pos=(5, 0), span=(0,3), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
         return grid_sizer
 
     def run_trial(self, number):
@@ -70,6 +72,8 @@ class OculoStimPanel(TrialPanel):
             self.selection = "Saccade"
         elif self.pursuit_radio.GetValue():
             self.selection = "Pursuit"
+        elif self.calibration_radio.GetValue():
+            self.selection = "Calibration"
         return "OculoStim",self.selection,self.trial_number
 
     def reset(self, number):

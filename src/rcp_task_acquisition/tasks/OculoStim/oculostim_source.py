@@ -367,7 +367,7 @@ _CAL_SETTLE_S = 1.2
 _CAL_COLLECT_S = 0.8
 
 
-def run_gaze_calibration(win, oi):
+def run_gaze_calibration(win):
     mon = win.monitor
     w_cm = mon.getWidth()
     dist = mon.getDistance()
@@ -431,61 +431,17 @@ def run_gaze_calibration(win, oi):
             progress.draw()
             win.flip()
 
-            if core.getTime() >= settle_end:
-                d = oi.get_data()
-                if d:
-                    try:
-                        left = d.get("Left") or d.get("left") or d.get("LeftEye") or d.get("leftEye") or {}
-                        right = d.get("Right") or d.get("right") or d.get("RightEye") or d.get("rightEye") or {}
-
-                        def get_xy(eye):
-                            pupil = eye.get("Pupil") or {}
-                            center = pupil.get("Center") or {}
-                            x = eye.get("X", eye.get("x", center.get("X", center.get("x"))))
-                            y = eye.get("Y", eye.get("y", center.get("Y", center.get("y"))))
-                            return x, y
-
-                        lxv, lyv = get_xy(left)
-                        rxv, ryv = get_xy(right)
-                        if None not in (lxv, lyv, rxv, ryv):
-                            lx_s.append(float(lxv))
-                            ly_s.append(float(lyv))
-                            rx_s.append(float(rxv))
-                            ry_s.append(float(ryv))
-                    except Exception:
-                        pass
-
-        if len(lx_s) < 3:
-            win.color = 0.0
-            msg_txt.text = "No gaze data received.\nCheck OpenIris connection."
-            msg_txt.draw()
-            win.flip()
-            core.wait(2.5)
-            return None
-
         cal_points.append({
             "tx": tx, "ty": ty,
-            "lx": sum(lx_s) / len(lx_s),
-            "ly": sum(ly_s) / len(ly_s),
-            "rx": sum(rx_s) / len(rx_s),
-            "ry": sum(ry_s) / len(ry_s),
         })
 
-    model = CalibrationModel()
-    ok = model.fit(cal_points)
-
     win.color = 0.0
-    if ok:
-        msg_txt.text = (f"Calibration complete!\n{model.n_points} points\n"
-                        f"RMSE L: {model.rmse_left:.2f} deg   R: {model.rmse_right:.2f} deg")
-    else:
-        msg_txt.text = "Calibration failed.\nInsufficient or collinear data."
-        model = None
-
+    msg_txt.text = (f"Calibration complete!")
+    
     msg_txt.draw()
     win.flip()
     core.wait(2.5)
-    return model
+    return cal_points
 
 
 # -----------------------------------------------------------------------------
