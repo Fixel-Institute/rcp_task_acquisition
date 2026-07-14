@@ -104,7 +104,7 @@ class OculoStim(bases.StimulusBase):
             cfg["mode"] = "Calibration"
             self.trial_data = []
 
-        self.result_data = []
+        self.result_data.append({"trial_type": self.trial_type, "trial_data": self.trial_data})
         self.presenter = StimulusPresenter(self.display)
         self.runner = ExperimentRunner(self.display, self.presenter, None, cfg)
         
@@ -115,6 +115,7 @@ class OculoStim(bases.StimulusBase):
         self.display.draw_patch()
         self.display.flip()
 
+        internal_data = []
         if self.trial_type == "Calibration":
             print("Running gaze calibration...")
             cal_model = run_gaze_calibration(self.display)
@@ -142,8 +143,10 @@ class OculoStim(bases.StimulusBase):
                 i += 1
                 if record is None:
                     break
-                self.result_data.append(record)
+                internal_data.append(record)
 
+        self.result_data.append({"result_data": internal_data})
+        
         #turn the patch to off and flip the display to black
         self.display.switch_patch()
         self.display.draw_patch()
