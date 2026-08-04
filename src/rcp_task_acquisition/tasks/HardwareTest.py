@@ -5,9 +5,8 @@ from rcp_task_acquisition.tasks import bases
 
 
 class HardwareTest(bases.StimulusBase):
-    def __init__(self, window, is_finished, frame, video_status):
-        super().__init__(window, frame, video_status)
-        self.finish = is_finished
+    def __init__(self, base_vars):
+        super().__init__(**base_vars)
         self.flash_time = 5
         
         

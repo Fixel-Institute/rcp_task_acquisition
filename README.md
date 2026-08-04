@@ -41,7 +41,7 @@ This is the outline for installing this program with the expected hardware confi
         - Always accept any license during installation when prompted
         - Use all default settings unless stated here
     - NVIDIA Graphics Driver (580.88-quadro-rtx-desktop-notebook-win10-win11-64bit-international-dch-whql.exe)
-    - Spinnaker SDK (SpinnakerSDK_FULL_4.0.189_x64.exe)
+    - Spinnaker SDK (SpinnakerSDK_FULL_4.3.189_x64.exe)
         - Deselect **Agree to allow analytics..** and select **next**
         - Select **Application Development** and select **next**
         - When finished the **Adapter Config Utility** menu may pop up. You can close this without modifying for right now, this is for GigE cameras

@@ -125,7 +125,13 @@ class StimulusThread(Process):
                     self.setup_videos(msg)
                     # self.setup_videos(video_filename_dict)
                 elif Msg.HARDWARE_TEST.value in msg:
-                    HardwareTest(self.window, self.finish, self.frame, self.video_status).present()
+                    base_vars = {"display": self.window,
+                                 "frame": self.frame,
+                                 "timer": self.timer, 
+                                 "video_lock": self.video_lock,
+                                 "video_status": self.video_status,
+                                 "finish": self.finish}
+                    HardwareTest(base_vars).present()
                 elif Msg.UPDATE_DATA.value in msg:
                     msgq_data = self.msgq.get()
                     logger.debug(f"stim: {msgq_data}")
