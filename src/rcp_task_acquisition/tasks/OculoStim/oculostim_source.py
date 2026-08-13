@@ -341,8 +341,9 @@ class StimulusPresenter:
             self._sync_sq.draw()
 
     def draw_status(self):
-        if self._status.text:
-            self._status.draw()
+        pass
+        #if self._status.text:
+            #self._status.draw()
 
     def show_message(self, text):
         self.win.color = 0.0
@@ -380,7 +381,7 @@ def run_gaze_calibration(win, draw_sync=None, flip_sync=None):
     targets = [(hw * (2 * fx - 1), -hh * (2 * fy - 1)) for fx, fy in _CAL_FRACS]
 
     ring = visual.Circle(win, radius=0.6, fillColor=None, lineColor="white", lineWidth=2, units="deg")
-    dot = visual.Circle(win, radius=0.18, fillColor="white", lineColor=None, units="deg")
+    dot = visual.Circle(win, radius=0.18, fillColor="black", lineColor=None, units="deg")
 
     grid_lines = []
     for fx in (0.15, 0.50, 0.85):
@@ -424,14 +425,16 @@ def run_gaze_calibration(win, draw_sync=None, flip_sync=None):
                 return None
             
             win.color = 0.0
-            for gl in grid_lines:
-                gl.draw()
+
+            # don't need grid lines - zk 07.14.26
+            #for gl in grid_lines:
+                #gl.draw()
             ring.pos = (tx, ty)
             dot.pos = (tx, ty)
             ring.draw()
             dot.draw()
-            progress.text = f"Point {idx + 1} / {n_pts}"
-            progress.draw()
+            #progress.text = f"Point {idx + 1} / {n_pts}"
+            #progress.draw()
             draw_sync()
             win.flip()
 
@@ -520,7 +523,7 @@ class ExperimentRunner:
                 flip_sync()
                 draw_sync()
                 first_fix_frame = False
-            stim.draw_status()
+            #stim.draw_status()
             win.flip()
             keys = event.getKeys(["escape", "space"])
             if "escape" in keys:
@@ -535,7 +538,7 @@ class ExperimentRunner:
             clock.reset()
             while clock.getTime() < gap_dur:
                 win.color = 0.0
-                stim.draw_status()
+                #stim.draw_status()
                 win.flip()
                 if "escape" in event.getKeys(["escape"]):
                     self._aborted = True
@@ -550,7 +553,7 @@ class ExperimentRunner:
             stim.draw_fixation()
             flip_sync()
             draw_sync()
-            stim.draw_status()
+            #stim.draw_status()
             win.flip()
             self._stamp(f"AfterStimON trial={n:03d}")
             actual_onset = clock.getTime()
@@ -558,7 +561,7 @@ class ExperimentRunner:
                 win.color = 0.0
                 stim.draw_fixation()
                 draw_sync()
-                stim.draw_status()
+                #stim.draw_status()
                 win.flip()
                 if "escape" in event.getKeys(["escape"]):
                     self._aborted = True
@@ -581,7 +584,7 @@ class ExperimentRunner:
             stim.draw_dot(tx, ty)
             flip_sync()
             draw_sync()
-            stim.draw_status()
+            #stim.draw_status()
             win.flip()
             self._stamp(f"AfterStimON trial={n:03d}")
             actual_onset = clock.getTime()
@@ -589,7 +592,7 @@ class ExperimentRunner:
                 win.color = 0.0
                 stim.draw_dot(tx, ty)
                 draw_sync()
-                stim.draw_status()
+                #stim.draw_status()
                 win.flip()
                 keys = event.getKeys(["escape", "space"])
                 if "escape" in keys:
@@ -622,7 +625,7 @@ class ExperimentRunner:
             stim.draw_dot(tx, ty)
             flip_sync()
             draw_sync()
-            stim.draw_status()
+            #stim.draw_status()
             win.flip()
             self._stamp(f"AfterStimON trial={n:03d}")
             actual_onset = clock.getTime()
@@ -630,7 +633,7 @@ class ExperimentRunner:
                 win.color = 0.0
                 stim.draw_dot(tx, ty)
                 draw_sync()
-                stim.draw_status()
+                #stim.draw_status()
                 win.flip()
                 if "escape" in event.getKeys(["escape"]):
                     self._aborted = True
@@ -707,7 +710,7 @@ class ExperimentRunner:
                     win.color = 0.0
                     stim.draw_fixation()
                     draw_sync()
-                    stim.draw_status()
+                    #stim.draw_status()
                     win.flip()
 
                     if "escape" in event.getKeys(["escape"]):
@@ -739,7 +742,7 @@ class ExperimentRunner:
                     stim.draw_dot(x, 0)
                     flip_sync()
                     draw_sync()
-                    stim.draw_status()
+                    #stim.draw_status()
                     win.flip()
 
                     keys = event.getKeys(["escape", "space"])
@@ -804,7 +807,7 @@ class ExperimentRunner:
             if first_fix_frame:
                 stim.draw_sync()
                 first_fix_frame = False
-            stim.draw_status()
+            #stim.draw_status()
             win.flip()
             keys = event.getKeys(["escape", "space"])
             if "escape" in keys:
@@ -819,7 +822,7 @@ class ExperimentRunner:
             clock.reset()
             while clock.getTime() < gap_dur:
                 win.color = 0.0
-                stim.draw_status()
+                #stim.draw_status()
                 win.flip()
                 if "escape" in event.getKeys(["escape"]):
                     self._aborted = True
@@ -833,7 +836,7 @@ class ExperimentRunner:
             win.color = 0.0
             stim.draw_fixation()
             stim.draw_sync()
-            stim.draw_status()
+            #stim.draw_status()
             win.flip()
             self._stamp(f"AfterStimON trial={n:03d}")
             actual_onset = clock.getTime()
@@ -841,7 +844,7 @@ class ExperimentRunner:
                 win.color = 0.0
                 stim.draw_fixation()
                 stim.draw_sync()
-                stim.draw_status()
+                #stim.draw_status()
                 win.flip()
                 if "escape" in event.getKeys(["escape"]):
                     self._aborted = True
@@ -863,7 +866,7 @@ class ExperimentRunner:
             win.color = 0.0
             stim.draw_dot(tx, ty)
             stim.draw_sync()
-            stim.draw_status()
+            #stim.draw_status()
             win.flip()
             self._stamp(f"AfterStimON trial={n:03d}")
             actual_onset = clock.getTime()
@@ -871,7 +874,7 @@ class ExperimentRunner:
                 win.color = 0.0
                 stim.draw_dot(tx, ty)
                 stim.draw_sync()
-                stim.draw_status()
+                #stim.draw_status()
                 win.flip()
                 keys = event.getKeys(["escape", "space"])
                 if "escape" in keys:
@@ -903,7 +906,7 @@ class ExperimentRunner:
             win.color = 0.0
             stim.draw_dot(tx, ty)
             stim.draw_sync()
-            stim.draw_status()
+            #stim.draw_status()
             win.flip()
             self._stamp(f"AfterStimON trial={n:03d}")
             actual_onset = clock.getTime()
@@ -911,7 +914,7 @@ class ExperimentRunner:
                 win.color = 0.0
                 stim.draw_dot(tx, ty)
                 stim.draw_sync()
-                stim.draw_status()
+                #stim.draw_status()
                 win.flip()
                 if "escape" in event.getKeys(["escape"]):
                     self._aborted = True
@@ -985,7 +988,7 @@ class ExperimentRunner:
                     win.color = 0.0
                     stim.draw_fixation()
                     stim.draw_sync()
-                    stim.draw_status()
+                    #stim.draw_status()
                     win.flip()
 
                     if "escape" in event.getKeys(["escape"]):
@@ -1014,7 +1017,7 @@ class ExperimentRunner:
                     win.color = 0.0
                     stim.draw_dot(x, 0)
                     stim.draw_sync()
-                    stim.draw_status()
+                    #stim.draw_status()
                     win.flip()
 
                     keys = event.getKeys(["escape", "space"])
@@ -1143,7 +1146,7 @@ def _dlg_pursuit():
     d.addField("Pursuit stimulus:", choices=[ "horizontal sinusoid", "diagonal ramp"])
     d.addField("Ramp direction:", choices=["alternating", "left-to-right", "right-to-left"])
     d.addField("Start eccentricity (deg):", 10.0)
-    d.addField("Amplitude +/- (deg):", 12.0)
+    d.addField("Amplitude +/- (deg):", 10.0)
     d.addField("Speed (deg/s)  [ramp: constant velocity; sine: peak velocity]:", 10.0)
     d.addField("# Trials:", 8)
     d.addField("Fixation duration (ms):", 1000)
@@ -1170,7 +1173,7 @@ def _dlg_fixation():
     d = gui.Dlg(title="Fixation Block")
     d.addField("Horizontal eccentricity (deg):", 20.0)
     d.addField("Vertical eccentricity (deg):", 15.0)
-    d.addField("# Trials:", 20)
+    d.addField("# Trials:", 8)
     d.addField("Central fixation duration (ms):", 1000)
     d.addField("Fix. jitter +/- (ms):", 0)
     d.addField("Eccentric fixation duration (ms):", 1000)

@@ -45,7 +45,7 @@ def get_fixation_config(v = ["10.0", "5.0", 20, 1000, 0, 1000, "random"]) -> dic
         "order": v[6],
     }
 
-def get_default_config(v = [100.0, 59.0, 2560, 1440, 0, "Saccade Block", "localhost", 9000, True, True, True, False, False, "oculostim", str(Path.home())]) -> dict:
+def get_default_config(v = [50.0, 59.0, 2560, 1440, 0, "Saccade Block", "localhost", 9000, True, True, True, False, False, "oculostim", str(Path.home())]) -> dict:
     return {
         "screen_dist": float(v[0]),
         "screen_w_cm": float(v[1]),
