@@ -56,19 +56,28 @@ def choose_folder(start_dir=None):
 # -----------------------------------------------------------------------------
 
 class OpenIrisPythonClient:
-    def __init__(self, host="127.0.0.1", port=9000):
-        self.host = host
-        self.port = port
-        self.sock = OpenIrisClient(host, port)
+    def __init__(self, host="127.0.0.1", port=9003):
+        self.SERVER_IP = host           # Replace with target server IP address
+        self.SERVER_PORT = port         # Replace with target server port number
+        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-    def start(self):
-        self.sock.StartRecording()
+    def send_command(self, command):
+        self.client_socket.sendto(command.encode(), (self.SERVER_IP, self.SERVER_PORT))
 
-    def stop(self):
-        self.sock.StopRecording()
+    def set_recording_path(self, path):
+        self.send_command(f"SETDATAFOLDER|{path}")
 
-    def change_dir(self, path):
-        self.sock.ChangeSetting("DataFolder", path)
+    def start_tracking(self):
+        self.send_command("STARTTRACKING")
+
+    def start_recording(self):
+        self.send_command("STARTRECORDING")
+
+    def stop_recording(self):
+        self.send_command("STOPRECORDING")
+
+    def stop_tracking(self):
+        self.send_command("STOPTRACKING")
 
 # -----------------------------------------------------------------------------
 # GAZE CALIBRATION MODEL

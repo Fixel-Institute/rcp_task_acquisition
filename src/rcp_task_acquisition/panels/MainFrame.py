@@ -240,8 +240,8 @@ class MainFrame(wx.Frame):
             self.start_time_utc = str(f'{datetime.datetime.utcnow().strftime("%Y%m%d%H%M%S")}Z') 
             self.count = 0
             self.finish.value = 0
-            self.msgq.put("init_stimulus")
             self.create_file()
+            self.msgq.put(f"init_stimulus|{self.sess_dir}")
             is_success = self.lj.start_labjack()
             if not is_success:
                 self.task_button.SetValue(False)

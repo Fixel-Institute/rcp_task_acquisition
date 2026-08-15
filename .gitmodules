@@ -1,0 +1,3 @@
+[submodule "library/OpenIris"]
+	path = library/OpenIris
+	url = https://github.com/Fixel-Institute/OpenIris

@@ -71,19 +71,22 @@ class OculoStim(bases.StimulusBase):
         self.trial = 0
         self.screen_width = 2200 #not technically screen width but we dont want to cover the photodiode
         self.screen_height = 1440
+        self.session_path = base_vars.get("session_path", "D:\\RawDataLocal")
+        print(f"Session path initialized to: {self.session_path}")
 
         self.trial_type = "Saccade"
         self.trial_data = []
         self.result_data = []
 
+        self.openiris = OpenIrisPythonClient()
+        self.openiris.set_recording_path(self.session_path)
+
     def present_prep(self):
+        self.openiris.start_tracking()
+        self.openiris.start_recording()
+
         cfg = get_default_config()
 
-        """ Disabling OpenIRIS connection
-        self.oi = OpenIrisPythonClient(cfg["oi_host"], cfg["oi_port"])
-        if self.session_path != "":
-            self.oi.change_dir(self.session_path)
-        """
         mon = monitors.Monitor("oculostim", width=cfg["screen_w_cm"], distance=cfg["screen_dist"])
         mon.setSizePix((2560, 1440))
         self.display.monitor = mon
@@ -122,9 +125,9 @@ class OculoStim(bases.StimulusBase):
             if cal_model:
                 try:
                     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    cal_path = f"D:\\RawDataLocal\\oculostim_calibration_{ts}.json"
+                    cal_path = f"oculostim_calibration_{ts}.json"
                     print(f"Saving calibration data to {cal_path}...")
-                    with open(cal_path, "w") as f:
+                    with open(f"{self.session_path}\\{cal_path}", "w") as f:
                         json.dump(cal_model, f, indent=2)
                 except Exception as e:
                     print(f"Failed to save calibration data: {e}")
@@ -152,6 +155,9 @@ class OculoStim(bases.StimulusBase):
         self.display.draw_patch()
         self.display.flip()
         self.play_tone()
+        
+        self.openiris.stop_recording()
+        self.openiris.stop_tracking()
         
     def saveMetadata(self, name, sessionFolder):
         return self.result_data

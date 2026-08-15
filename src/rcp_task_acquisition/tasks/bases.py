@@ -16,7 +16,7 @@ logger = get_logger("./tasks/bases.py")
 
 
 class StimulusBase():
-    def __init__(self, display, frame, timer, video_lock, video_status=None, finish=None):
+    def __init__(self, display, frame, timer, video_lock, video_status=None, finish=None, session_path=""):
         self.display = display
         self.frame = frame
         self.prev_flip_time = None
@@ -32,6 +32,7 @@ class StimulusBase():
         self.finish = finish
         self.trial = 0
         self.video_lock = video_lock
+        self.session_path = session_path
         
 
     def present_prep(self):

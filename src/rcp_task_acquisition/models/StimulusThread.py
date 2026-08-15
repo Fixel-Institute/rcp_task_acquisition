@@ -51,6 +51,7 @@ class StimulusThread(Process):
         self.finish = finish
         self.frame = frame
         self.button = button
+        self.sess_path = ""
         self.stimulusConfig = files.get_stimulus_config("taskconfig.yaml")
         self.totalStimFrames = 0
         self.stimulus = None
@@ -75,8 +76,12 @@ class StimulusThread(Process):
             except Empty:
                 continue
             try:
-                if msg == Msg.INITIALIZE.value:
+                if msg.startswith(Msg.INITIALIZE.value):
                     self.params = {}
+                    if len(msg.split("|")) > 1:
+                        self.sess_path = msg.split("|")[1]
+                    else:
+                        self.sess_path = ""
                     self.init_stimuli()
                 elif msg == Msg.UPDATE_TASK.value:
                     msg= self.msgq.get()
@@ -158,13 +163,13 @@ class StimulusThread(Process):
                 self.window.idle(time_list = [])
                 self.end_stimulus()
                 
-                
     def init_stimuli(self):
         base_vars = {"display": self.window,
                      "frame": self.frame,
                      "timer": self.timer, 
                      "video_lock": self.video_lock,
                      "video_status": self.video_status,
+                     "session_path": self.sess_path,
                      "finish": self.finish}
         logger.debug(f"base vars: {base_vars}")
         if self.task == 'n_back':
