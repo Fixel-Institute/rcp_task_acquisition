@@ -185,42 +185,6 @@ def uploadRCPSession(session_path, session_info, on_success=None, on_error=None)
 
         time_scale = 1
         time_offset = 0
-        if not LJData.empty and len(DSData.keys()) > 0:
-            Delsys_Barcode = np.zeros(0)
-            LabJack_Barcode = np.zeros(0)
-            for key in ChannelNames:
-                if key.startswith("Slow Barcode"):
-                    col_name = key.split("(")[-1].rstrip(")")
-                    LabJack_Barcode = LJData[col_name].values
-                    break
-
-            for key in DSData["ChannelNames"]:
-                if DSData["ChannelInfos"][key]["Name"] == "Analog 2":
-                    Delsys_Barcode = DSData["Data"][key]
-                    Delsys_BarcodeSamplingRate = DSData["ChannelInfos"][key]["SamplingRate"]
-                    break
-
-            if LabJack_Barcode.size > 0 and Delsys_Barcode.size > 1000:
-                Delsys_Barcode = Delsys_Barcode[500:]
-                Timestamp_Delsys = np.arange(len(Delsys_Barcode)) / Delsys_BarcodeSamplingRate
-                Timestamp_LJ = np.arange(len(LabJack_Barcode)) / LabJack_SamplingRate
-
-                time_offset, time_scale = getShift_PeakBased(LabJack_Barcode, Delsys_Barcode, Timestamp_LJ, Timestamp_Delsys)
-                print(f"Estimated time offset between LabJack and Delsys data: {time_offset:.3f} seconds with Delsys Sampling Rate scaled by {time_scale:.6f}")
-
-                """ Visual Checking
-                Timestamp_Delsys = np.arange(len(Delsys_Barcode)) / (Delsys_BarcodeSamplingRate / time_scale) + time_offset
-                fig = plt.figure(figsize=(15, 10))
-                ax = fig.add_subplot(1, 1, 1)
-                ax.plot(Timestamp_LJ, LabJack_Barcode, label="LabJack Barcode", color="b", alpha=0.5)
-                ax.plot(Timestamp_Delsys, Delsys_Barcode, label="Delsys Barcode", color="r", alpha=0.5)
-                ax.set_xlabel("Time (s)")
-                ax.set_ylabel("Amplitude")
-                ax.set_title("Analog Waveform Comparison")
-                ax.set_xlim(27.4,27.6)
-                fig.show()
-                """
-
         if not LJData.empty:
             sio.savemat(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_LabJack.mat"), {
                 "Channels": ChannelNames,
@@ -280,6 +244,22 @@ def uploadRCPSession(session_path, session_info, on_success=None, on_error=None)
                                                                             **{"DataType": "Delsys", "StartTime": SessionDate + time_offset,
                                                                                 "Timezone": timezone, "SamplingRateScale": 1/time_scale}})
 
+                elif np.abs(fs - 370) < 2:
+                    sio.savemat(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysFSR.mat"), {
+                        "Channels": [Delsys_ChannelNames[i] for i in indices],
+                        "Fs": np.ones((len(indices), 1)) * fs,
+                        "Data": np.array([DSData["Data"][DSData["ChannelNames"][i]] for i in indices]),
+                        "DataType": "CustomizedStreamingData",
+                        "Metadata": json.dumps({**SessionMetadata,
+                                                **{"DataType": "Delsys_FSR", "StartTime": SessionDate + time_offset,
+                                                "Timezone": timezone, "SamplingRateScale": 1/time_scale,
+                                                "RecordingName": SessionMetadata.get("task", "")}}),
+                    }, do_compression=True)
+                    with open(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysFSR.mat"), "rb") as file:
+                        requester.UploadMATFile(ParticipantInfo['Id'], file, {**SessionMetadata,
+                                                                            **{"DataType": "Delsys", "StartTime": SessionDate + time_offset,
+                                                                                "Timezone": timezone, "SamplingRateScale": 1/time_scale}})
+
                 elif np.abs(fs - 1259) < 2:
                     sio.savemat(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysEMG.mat"), {
                         "Channels": [Delsys_ChannelNames[i] for i in indices],
@@ -311,7 +291,7 @@ def uploadRCPSession(session_path, session_info, on_success=None, on_error=None)
                         requester.UploadMATFile(ParticipantInfo['Id'], file, {**SessionMetadata,
                                                                             **{"DataType": "Delsys", "StartTime": SessionDate + time_offset,
                                                                                 "Timezone": timezone, "SamplingRateScale": 1/time_scale}})
-
+                            
         if on_success:
             on_success(f"Session {session_info} processed and uploaded successfully.")
 
