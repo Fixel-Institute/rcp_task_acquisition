@@ -272,19 +272,20 @@ class MainFrame(wx.Frame):
             self.trial_panel.start_new_trial()
             self.trial_panel.show()
 
-            if self.task == "continuous_recording":
-                self.trial_button.SetValue(True)
-                self.trial_event(event)
-
             # Start Delsys
             if self.delsys.is_connected():
                 self.delsys.start(filename=os.path.join(self.sess_dir, f"{self.date_string}_{self.user_cfg['unitRef']}_{self.sess_string}_delsys.mdat"))
 
+            if self.task == "continuous_recording":
+                self.trial_button.SetValue(True)
+                self.trial_event(event)
+
+            self.serial_device.write("B")
             self.add_metadata(temp=True)
 
         else:
             self.task_active = False
-            self.serial_device.write("A")
+            self.serial_device.write("C")
             time.sleep(3)
             if self.trial_button.GetValue():
                 self.trial_button.SetValue(False)
@@ -364,7 +365,6 @@ class MainFrame(wx.Frame):
             self.add_metadata(temp=True)
 
         else:
-            
             logger.debug("stopping episode")
             self.finish.value = 2
             

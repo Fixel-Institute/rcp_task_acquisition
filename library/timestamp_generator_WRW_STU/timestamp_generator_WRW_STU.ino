@@ -3,6 +3,7 @@
 // ssss = 0000–3599 (seconds since start)
 
 #include <TXOnlySerial.h>
+#include <String.h>
 
 const int outSerPin = 9;
 const int outTTLA = 10;
@@ -158,6 +159,18 @@ void readInteger(){
   msgInt = atoi(rxStr);
 }
 
+void sendDS7APulse(int index) {
+  for (int i = 0; i < 5; i++) {
+    digitalWrite(outTTLA, HIGH);
+    delay(5);
+    digitalWrite(outTTLA, LOW);
+    delay(100);
+    if (i == index) {
+      delay(500);  // Add a longer delay after index delay
+    }
+  }
+}
+
 // -------------------------------------------------------------------
 // Commands from the PC
 // -------------------------------------------------------------------
@@ -172,6 +185,13 @@ void handleSerialCommands() {
         digitalWrite(outTTLA, LOW);
         delay(11.5);
       }
+    }
+    else if (c == 'B') {
+      delay(1000);
+      sendDS7APulse(2);
+    }
+    else if (c == 'C') {
+      sendDS7APulse(3);
     }
     // else if (c == 'B') {
     //   digitalWrite(outTTLB, HIGH);
@@ -204,6 +224,10 @@ void handleSerialCommands() {
       // Serial.println("Stop");
       sendingTimestamps = false;
       outSerial.print('X\n');
+    }
+    else if (c == 'H') {
+      // If message is Hello, send back RCP
+      outSerial.print("RCP\n");
     }
   }
 }

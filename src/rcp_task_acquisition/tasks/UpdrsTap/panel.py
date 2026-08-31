@@ -55,9 +55,6 @@ class FingerTapPanel(TrialPanel):
         self.trial_is_active = True
         self.left_radio.Enable(False)
         self.right_radio.Enable(False)
-        self.fast_radio.Enable(False)
-        self.moderate_radio.Enable(False)
-        self.slow_radio.Enable(False)
         self.hand_text.Enable(False)
         self.start_video_button.Enable(False)
         # self.trial_text.SetLabel(f"Trial # {number}")
@@ -80,9 +77,6 @@ class FingerTapPanel(TrialPanel):
         self.seconds = 11
         self.left_radio.Enable(True)
         self.right_radio.Enable(True)
-        self.fast_radio.Enable(True)
-        self.moderate_radio.Enable(True)
-        self.slow_radio.Enable(True)
         self.hand_text.Enable(True)
         self.seconds_text.SetLabel(f"Time: {self.seconds} secs")
         # self.continue_button.Enable(False)
