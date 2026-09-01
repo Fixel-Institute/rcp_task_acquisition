@@ -179,6 +179,9 @@ class MSITBD2(bases.StimulusBase):
             if self.finish.value != 0:
                 break
 
+        while self.finish.value == 0:
+            pass
+
         #turn the patch to off and flip the display to black
         self.display.switch_patch()
         self.display.draw_patch()
