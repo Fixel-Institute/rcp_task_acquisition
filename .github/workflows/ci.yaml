@@ -1,0 +1,24 @@
+name: Build
+on:
+  pull_request:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+#    permissions:
+#      contents: write
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: '0'
+    - name: Prepare build
+      run: |
+        pip install build
+    - name: Build wheel
+      run: |
+        rm -rf dist
+        python -m build -w -o dist .
+    - name: Result
+      run: |
+        ls -lth ./dist
+        unzip -l ./dist/*.whl
+  
