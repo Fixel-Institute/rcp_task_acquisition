@@ -1,21 +1,23 @@
-# -*- coding: utf-8 -*-
-import cv2
 import os
-from pathlib import Path
-
-from rcp_task_acquisition.utils.logger import get_logger
-from threading import Thread, Event
-from queue import Queue, Full, Empty
 import subprocess
 import threading
-logger = get_logger("./models/AsyncVideoWriter") 
+from pathlib import Path
+from queue import Empty, Full, Queue
+from threading import Event, Thread
+
+import cv2
+
+from rcp_task_acquisition.utils.logger import get_logger
+
+logger = get_logger("./models/AsyncVideoWriter")
 
 
 class AsyncVideoWriter:
     STOP = object()
-    
-    def __init__(self, video_file, timestamp_file, fps, width, height,
-                 max_queue=512, fourcc='mp4v'):
+
+    def __init__(
+        self, video_file, timestamp_file, fps, width, height, max_queue=512, fourcc="mp4v"
+    ):
         self.video_file = video_file
         self.timestamp_file = timestamp_file
         self.fps = fps
@@ -29,16 +31,12 @@ class AsyncVideoWriter:
         self.stop_event = Event()
         self.dropped_by_writer = 0
 
-        
-        
-
         self.thread = Thread(target=self._worker, daemon=False)
         self.thread.start()
         self.ready.wait()
-        
+
         if self.error is not None:
             raise self.error
-
 
     def write(self, frame_bgr, frame_id, timestamp_delta):
         """
@@ -52,17 +50,16 @@ class AsyncVideoWriter:
             self.dropped_by_writer += 1
             return False
 
-
     def _worker(self):
         writer = None
         f = None
-        
+
         try:
             writer = cv2.VideoWriter(
                 self.video_file,
                 cv2.VideoWriter_fourcc(*self.fourcc),
                 self.fps,
-                (self.width, self.height)
+                (self.width, self.height),
             )
 
             if not writer.isOpened():
@@ -71,15 +68,13 @@ class AsyncVideoWriter:
             f = open(self.timestamp_file, "w")
             f.write("frame_id,timestamp\n")
             self.ready.set()
-        
+
             while not self.stop_event.is_set() or not self.q.empty():
-                
                 try:
-                    
                     frame_bgr, frame_id, timestamp_delta = self.q.get(timeout=0.1)
                 except Empty:
                     continue
-    
+
                 try:
                     writer.write(frame_bgr)
                     f.write(f"{frame_id},{round(timestamp_delta)}\n")
@@ -88,7 +83,7 @@ class AsyncVideoWriter:
         except Exception as e:
             self.error = self.ready.set()
             logger.exception(f"Async video writer failed: {e}")
-            
+
         finally:
             if f is not None:
                 f.flush()
@@ -96,27 +91,25 @@ class AsyncVideoWriter:
                 f.close()
             if writer is not None:
                 writer.release()
-                
-
 
     def close(self):
-        
+
         self.stop_event.set()
         # self.q.put(self.STOP)
         self.q.join()
         self.thread.join()
-        
+
         if self.error is not None:
-            raise self.error 
+            raise self.error
         # self.thread.join()
         # self.f.close()
         # self.writer.release()# -*- coding: utf-8 -*-
 
+
 class AsyncFFmpegGPUWriter:
     STOP = object()
 
-    def __init__(self, video_file, timestamp_file, fps, width, height,
-                 max_queue=512, qp=23):
+    def __init__(self, video_file, timestamp_file, fps, width, height, max_queue=512, qp=23):
         self.video_file = video_file
         self.timestamp_file = timestamp_file
         self.fps = fps
@@ -148,28 +141,41 @@ class AsyncFFmpegGPUWriter:
     def _worker(self):
         proc = None
         f = None
-        ffmpeg_dir: str = f"{(Path(__file__).parent.parent.parent.parent / 'library' / 'ffmpeg' / 'bin')};"
+        ffmpeg_dir: str = (
+            f"{(Path(__file__).parent.parent.parent.parent / 'library' / 'ffmpeg' / 'bin')};"
+        )
         custom_env = os.environ.copy()
         custom_env["PATH"] = str(ffmpeg_dir) + custom_env.get("PATH", "")
         cmd = [
-            "ffmpeg", "-y",
-            "-f", "rawvideo",
-            "-pix_fmt", "bgr24",
-            "-s", f"{self.width}x{self.height}",
-            "-r", str(self.fps),
-            "-i", "-",
+            "ffmpeg",
+            "-y",
+            "-f",
+            "rawvideo",
+            "-pix_fmt",
+            "bgr24",
+            "-s",
+            f"{self.width}x{self.height}",
+            "-r",
+            str(self.fps),
+            "-i",
+            "-",
             "-an",
-        
-            "-c:v", "hevc_nvenc",
-            "-preset", "p4",
-            "-profile:v", "main",
-            "-pix_fmt", "yuv420p",
-        
-            "-rc", "vbr",
-            "-cq", str(self.qp),
-            "-b:v", "0",
-        
-            "-movflags", "+faststart",
+            "-c:v",
+            "hevc_nvenc",
+            "-preset",
+            "p4",
+            "-profile:v",
+            "main",
+            "-pix_fmt",
+            "yuv420p",
+            "-rc",
+            "vbr",
+            "-cq",
+            str(self.qp),
+            "-b:v",
+            "0",
+            "-movflags",
+            "+faststart",
             self.video_file,
         ]
 
@@ -181,7 +187,7 @@ class AsyncFFmpegGPUWriter:
                 stderr=subprocess.PIPE,
                 bufsize=0,
                 env=custom_env,
-                shell=True
+                shell=True,
             )
 
             f = open(self.timestamp_file, "w")
@@ -222,9 +228,7 @@ class AsyncFFmpegGPUWriter:
                 ret = proc.wait()
 
                 if ret != 0 and self.error is None:
-                    self.error = RuntimeError(
-                        f"ffmpeg exited with code {ret}\n{stderr[-4000:]}"
-                    )
+                    self.error = RuntimeError(f"ffmpeg exited with code {ret}\n{stderr[-4000:]}")
 
             if f is not None:
                 f.flush()

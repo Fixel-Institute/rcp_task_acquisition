@@ -1,9 +1,9 @@
-# -*- coding: utf-8 -*-
 import wx
 
 from rcp_task_acquisition.panels.TrialPanel import TrialPanel
 from rcp_task_acquisition.tasks.UpdrsTap.constants import BASIC_TAPS_PATH, BASIC_TAPS_TIME
 from rcp_task_acquisition.utils.logger import get_logger
+
 logger = get_logger("./panel/UpdrsTap")
 
 
@@ -15,41 +15,85 @@ class FingerTapPanel(TrialPanel):
         self.trial_is_active = False
         vertical_sizer = wx.BoxSizer(wx.VERTICAL)
         vertical_sizer.Add(self._setup_fingertap(), 0, wx.ALIGN_LEFT | wx.ALL, self.border)
-        vertical_sizer.Add(self.setup_instruction_playback(), 0, wx.ALIGN_LEFT | wx.ALL, self.border)
+        vertical_sizer.Add(
+            self.setup_instruction_playback(), 0, wx.ALIGN_LEFT | wx.ALL, self.border
+        )
         self.instruction_paths = BASIC_TAPS_PATH
         self.start_video_button.Enable(True)
         self.SetSizer(vertical_sizer)
-        
+
     def _setup_fingertap(self):
         self.trial_text = wx.StaticText(self, label="Trial # 1")
-        
+
         self.type_text = wx.StaticText(self, label="Select Speed:")
         self.task_type_list = ["Slow and methodical", "Faster", "Fast as possible"]
         self.task_type = wx.Choice(self, id=wx.ID_ANY, choices=self.task_type_list)
         self.task_type.SetSelection(0)
-        self.hand_text = wx.StaticText(self, label='Choose which hand trial will use:')
-        self.left_radio = wx.RadioButton(self, label="Left Hand", style= wx.RB_GROUP)
+        self.hand_text = wx.StaticText(self, label="Choose which hand trial will use:")
+        self.left_radio = wx.RadioButton(self, label="Left Hand", style=wx.RB_GROUP)
         self.left_radio.Bind(wx.EVT_RADIOBUTTON, self.on_select)
         self.right_radio = wx.RadioButton(self, label="Right Hand")
         self.right_radio.Bind(wx.EVT_RADIOBUTTON, self.on_select)
         self.right_radio.SetValue(True)
-        self.seconds_text = wx.StaticText(self, label= "Time: 10 secs")
-        
-        self.continue_button = wx.ToggleButton(self, label="Begin Trial", size=(self.button_width*2, -1))
-    
+        self.seconds_text = wx.StaticText(self, label="Time: 10 secs")
+
+        self.continue_button = wx.ToggleButton(
+            self, label="Begin Trial", size=(self.button_width * 2, -1)
+        )
+
         grid_sizer = wx.GridBagSizer(5, 4)
-        
-        grid_sizer.Add(self.trial_text, pos=(0, 0), span=(0,4), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
-        
-        grid_sizer.Add(self.hand_text, pos=(1, 0), span=(0,4), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
-        grid_sizer.Add(self.left_radio, pos=(2, 0), span=(0,2), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
-        grid_sizer.Add(self.right_radio, pos=(2, 2), span=(0,2), flag=wx.ALIGN_LEFT  | wx.ALL, border=self.border)
-        grid_sizer.Add(self.type_text, pos=(3, 0), span=(0, 1), flag=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL | wx.ALL, border=self.border)
-        grid_sizer.Add(self.task_type, pos=(3, 1), span=(0, 3), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
-        grid_sizer.Add(self.seconds_text, pos=(4, 0), span=(0,2), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
-        grid_sizer.Add(self.continue_button, pos=(5, 0), span=(0,2), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
+
+        grid_sizer.Add(
+            self.trial_text,
+            pos=(0, 0),
+            span=(0, 4),
+            flag=wx.ALIGN_LEFT | wx.ALL,
+            border=self.border,
+        )
+
+        grid_sizer.Add(
+            self.hand_text, pos=(1, 0), span=(0, 4), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border
+        )
+        grid_sizer.Add(
+            self.left_radio,
+            pos=(2, 0),
+            span=(0, 2),
+            flag=wx.ALIGN_LEFT | wx.ALL,
+            border=self.border,
+        )
+        grid_sizer.Add(
+            self.right_radio,
+            pos=(2, 2),
+            span=(0, 2),
+            flag=wx.ALIGN_LEFT | wx.ALL,
+            border=self.border,
+        )
+        grid_sizer.Add(
+            self.type_text,
+            pos=(3, 0),
+            span=(0, 1),
+            flag=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL | wx.ALL,
+            border=self.border,
+        )
+        grid_sizer.Add(
+            self.task_type, pos=(3, 1), span=(0, 3), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border
+        )
+        grid_sizer.Add(
+            self.seconds_text,
+            pos=(4, 0),
+            span=(0, 2),
+            flag=wx.ALIGN_LEFT | wx.ALL,
+            border=self.border,
+        )
+        grid_sizer.Add(
+            self.continue_button,
+            pos=(5, 0),
+            span=(0, 2),
+            flag=wx.ALIGN_LEFT | wx.ALL,
+            border=self.border,
+        )
         return grid_sizer
-    
+
     def run_trial(self, number):
         # self.seconds = 10
         self.trial_is_active = True
@@ -58,22 +102,19 @@ class FingerTapPanel(TrialPanel):
         self.hand_text.Enable(False)
         self.start_video_button.Enable(False)
         # self.trial_text.SetLabel(f"Trial # {number}")
-    
-        
+
     def get_result(self):
         self.tap_hand = "left" if self.left_radio.GetValue() else "right"
         type_index = self.task_type.GetSelection()
         task_type = None
         if type_index != -1:
-            task_type= self.task_type_list[type_index]
-        
+            task_type = self.task_type_list[type_index]
+
         return self.tap_hand, task_type
-        
-    
+
     def on_select(self, event):
         self.tap_hand = "left" if self.left_radio.GetValue() else "right"
 
-    
     def reset(self, trial):
         self.trial_is_active = False
         self.seconds = 11
@@ -84,17 +125,17 @@ class FingerTapPanel(TrialPanel):
         # self.continue_button.Enable(False)
         self.continue_button.SetValue(False)
         self.continue_button.SetLabel("Begin Trial")
-        self.trial_text.SetLabel(f"Trial # {trial+1}")
+        self.trial_text.SetLabel(f"Trial # {trial + 1}")
         self.start_video_button.Enable(True)
-    
+
     def start_new_trial(self):
         self.trial_number = 0
         self.trial_text.SetLabel("Trial # 1")
-        
+
     def on_timer(self, event):
         if self.trial_is_active:
             self.seconds_text.SetLabel(f"Time: {BASIC_TAPS_TIME - self.timer.value} secs")
         else:
-            self.seconds-=1
+            self.seconds -= 1
             if self.seconds >= 0:
                 self.seconds_text.SetLabel(f"Time: {self.seconds} secs")

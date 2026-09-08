@@ -1,10 +1,12 @@
 from pathlib import Path
+
 from setuptools import setup
 
-
 # Getting path to local whl files to be downloaded
-local_path: str = (Path(__file__).parent / "library" / "spinnaker_python-4.3.0.189-cp310-cp310-win_amd64.whl").as_uri()
-main_file: str = (Path(__file__).parent / "rcp_task_acquistion" / "__main__.py")
+local_path: str = (
+    Path(__file__).parent / "library" / "spinnaker_python-4.3.0.189-cp310-cp310-win_amd64.whl"
+).as_uri()
+main_file: str = Path(__file__).parent / "rcp_task_acquistion" / "__main__.py"
 
 
 if __name__ == "__main__":
@@ -20,7 +22,6 @@ if __name__ == "__main__":
             "pyshortcuts",
             "pyaudio",
             "mss",
-            f"spinnaker_python @ {local_path}"
+            f"spinnaker_python @ {local_path}",
         ]
     )
-

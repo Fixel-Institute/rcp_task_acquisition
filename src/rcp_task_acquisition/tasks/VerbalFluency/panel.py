@@ -1,15 +1,18 @@
-# -*- coding: utf-8 -*-
-import wx
 import json
 
+import wx
+
 from rcp_task_acquisition.panels.TrialPanel import TrialPanel
-from rcp_task_acquisition.tasks.VerbalFluency.constants import (PHONEMIC_LIST, 
-                                                                SEMANTIC_LIST,
-                                                                PHONEMIC_PHRASE, 
-                                                                SEMANTIC_PHRASE,
-                                                                TRIAL_TIME)
+from rcp_task_acquisition.tasks.VerbalFluency.constants import (
+    PHONEMIC_LIST,
+    PHONEMIC_PHRASE,
+    SEMANTIC_LIST,
+    SEMANTIC_PHRASE,
+    TRIAL_TIME,
+)
 from rcp_task_acquisition.utils.logger import get_logger
-logger = get_logger("./panels/VerbalFluencyPanel") 
+
+logger = get_logger("./panels/VerbalFluencyPanel")
 
 
 class VerbalFluencyPanel(TrialPanel):
@@ -25,44 +28,84 @@ class VerbalFluencyPanel(TrialPanel):
         self.initial_list = None
         self.semantic = None
         self.trial_is_active = False
-        
+
         vertical_sizer = wx.BoxSizer(wx.VERTICAL)
-        vertical_sizer.Add(self._setup_panel(), 0, wx.ALIGN_LEFT | wx.ALL, self.border)  
-        vertical_sizer.Add(self.setup_instruction_playback(), 0, wx.ALIGN_LEFT | wx.ALL, self.border)
+        vertical_sizer.Add(self._setup_panel(), 0, wx.ALIGN_LEFT | wx.ALL, self.border)
+        vertical_sizer.Add(
+            self.setup_instruction_playback(), 0, wx.ALIGN_LEFT | wx.ALL, self.border
+        )
         self.SetSizer(vertical_sizer)
 
-
     def _setup_panel(self):
-        self.phonemic_task = wx.StaticText(self, label='Choose Phonemic Category:')
+        self.phonemic_task = wx.StaticText(self, label="Choose Phonemic Category:")
         self.initial_list = PHONEMIC_LIST
-        self.phonemic_choice= wx.Choice(self, 
-                                       id=wx.ID_ANY, 
-                                       choices=self.initial_list,
-                                       size=(200, -1))
-        
+        self.phonemic_choice = wx.Choice(
+            self, id=wx.ID_ANY, choices=self.initial_list, size=(200, -1)
+        )
+
         self.semantic_task = wx.StaticText(self, label="Choose Semantic Category:")
         self.semantic_list = SEMANTIC_LIST
-        self.semantic_choice= wx.Choice(self, 
-                                       id=wx.ID_ANY, 
-                                       choices=self.semantic_list,
-                                       size=(200, -1))
-        
-        self.continue_button= wx.ToggleButton(self, label="Begin Task", size=(150, -1))
-        
-        self.prompt_text = wx.StaticText(self, label= "", size=(300, 50))
-        self.seconds_text = wx.StaticText(self, label= "", size=(300, -1))
+        self.semantic_choice = wx.Choice(
+            self, id=wx.ID_ANY, choices=self.semantic_list, size=(200, -1)
+        )
+
+        self.continue_button = wx.ToggleButton(self, label="Begin Task", size=(150, -1))
+
+        self.prompt_text = wx.StaticText(self, label="", size=(300, 50))
+        self.seconds_text = wx.StaticText(self, label="", size=(300, -1))
 
         grid_sizer = wx.GridBagSizer(7, 6)
-        grid_sizer.Add(self.phonemic_task, pos=(0, 0), span=(0, 2),  flag=wx.ALIGN_CENTER_VERTICAL | wx.ALL, border=self.border)
-        grid_sizer.Add(self.phonemic_choice, pos=(1, 0), span=(0, 4),  flag=wx.ALIGN_CENTER_VERTICAL | wx.ALL, border=self.border)
-        grid_sizer.Add(self.semantic_task, pos=(2, 0), span=(0, 2),  flag=wx.ALIGN_CENTER_VERTICAL | wx.ALL, border=self.border)
-        grid_sizer.Add(self.semantic_choice, pos=(3, 0), span=(0,4),  flag=wx.ALIGN_CENTER_VERTICAL | wx.ALL, border=self.border)
-        grid_sizer.Add(self.seconds_text, pos=(4, 0), span=(0,4),  flag= wx.RESERVE_SPACE_EVEN_IF_HIDDEN | wx.ALIGN_CENTER_VERTICAL | wx.ALL, border=self.border)
-        grid_sizer.Add(self.prompt_text, pos=(5, 0), span=(0,5),  flag=wx.RESERVE_SPACE_EVEN_IF_HIDDEN | wx.ALIGN_CENTER_VERTICAL | wx.ALL, border=self.border)
-        grid_sizer.Add(self.continue_button, pos=(6, 0), span=(0, 3),  flag=wx.RESERVE_SPACE_EVEN_IF_HIDDEN | wx.ALIGN_CENTER_VERTICAL | wx.ALL, border=self.border)
+        grid_sizer.Add(
+            self.phonemic_task,
+            pos=(0, 0),
+            span=(0, 2),
+            flag=wx.ALIGN_CENTER_VERTICAL | wx.ALL,
+            border=self.border,
+        )
+        grid_sizer.Add(
+            self.phonemic_choice,
+            pos=(1, 0),
+            span=(0, 4),
+            flag=wx.ALIGN_CENTER_VERTICAL | wx.ALL,
+            border=self.border,
+        )
+        grid_sizer.Add(
+            self.semantic_task,
+            pos=(2, 0),
+            span=(0, 2),
+            flag=wx.ALIGN_CENTER_VERTICAL | wx.ALL,
+            border=self.border,
+        )
+        grid_sizer.Add(
+            self.semantic_choice,
+            pos=(3, 0),
+            span=(0, 4),
+            flag=wx.ALIGN_CENTER_VERTICAL | wx.ALL,
+            border=self.border,
+        )
+        grid_sizer.Add(
+            self.seconds_text,
+            pos=(4, 0),
+            span=(0, 4),
+            flag=wx.RESERVE_SPACE_EVEN_IF_HIDDEN | wx.ALIGN_CENTER_VERTICAL | wx.ALL,
+            border=self.border,
+        )
+        grid_sizer.Add(
+            self.prompt_text,
+            pos=(5, 0),
+            span=(0, 5),
+            flag=wx.RESERVE_SPACE_EVEN_IF_HIDDEN | wx.ALIGN_CENTER_VERTICAL | wx.ALL,
+            border=self.border,
+        )
+        grid_sizer.Add(
+            self.continue_button,
+            pos=(6, 0),
+            span=(0, 3),
+            flag=wx.RESERVE_SPACE_EVEN_IF_HIDDEN | wx.ALIGN_CENTER_VERTICAL | wx.ALL,
+            border=self.border,
+        )
         return grid_sizer
-    
-    
+
     def switch_panel(self):
         self.phonemic_choice.Enable(False)
         self.semantic_choice.Enable(False)
@@ -81,12 +124,11 @@ class VerbalFluencyPanel(TrialPanel):
         self.first = False
         self.Layout()
         self.Update()
-        
+
         logger.debug(f"value: {self.value}")
-        self.trial_num+=1
+        self.trial_num += 1
         self.actual_list.append(self.value)
         self.start_video_button.Enable(True)
-
 
     def update_values(self):
         logger.debug("printing update_values")
@@ -112,52 +154,42 @@ class VerbalFluencyPanel(TrialPanel):
             self.start_video_button.Enable(False)
             self.continue_button.Hide()
             return
-        self.trial_num +=1
+        self.trial_num += 1
         self.actual_list.append(self.value)
         self.video_title.SetLabel(f"Trial: {self.value}")
         self.start_video_button.SetValue(False)
         self.start_video_button.SetLabel("Play Video")
 
-        
     def get_result(self):
         return self.value
-    
-    
+
     def get_instruction(self, count):
         return self.value
-    
-    
+
     def cancel_event(self, event):
         self.cancel = True
-
 
     def reset(self, trial):
         super().reset(trial)
         self.continue_button.Enable(True)
-    
-    
+
     def add_metadata(self):
-        return {"phonemic_category": self.phonemic_list,
-                "semantic_category": self.semantic}
-  
-    
+        return {"phonemic_category": self.phonemic_list, "semantic_category": self.semantic}
+
     def on_timer(self, event):
         if self.trial_is_active:
             self.seconds_text.SetLabel(f"Time: {TRIAL_TIME - self.timer.value} secs")
-
 
     def run_trial(self, count):
         self.seconds = 60
         super().start_trial()
 
-        
     def get_trials(self):
-        logger.debug(f'get_trials: {".".join(self.phonemic_list)}, {self.semantic}, {self.value}')
-        return '.'.join(self.phonemic_list), self.semantic, self.value
-    
-    
+        logger.debug(f"get_trials: {'.'.join(self.phonemic_list)}, {self.semantic}, {self.value}")
+        return ".".join(self.phonemic_list), self.semantic, self.value
+
     def start_new_trial(self):
-        super().start_new_trial()        
+        super().start_new_trial()
         self.trial_num = 0
         self.phonemic_choice.Enable(True)
         self.semantic_choice.Enable(True)

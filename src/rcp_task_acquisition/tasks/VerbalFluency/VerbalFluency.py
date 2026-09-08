@@ -1,35 +1,33 @@
-# -*- coding: utf-8 -*-
 from psychopy import core
 
 from rcp_task_acquisition.tasks import bases
 from rcp_task_acquisition.tasks.VerbalFluency.constants import TRIAL_TIME, VERBAL_FLUENCY_PATHS
 from rcp_task_acquisition.utils.logger import get_logger
-logger = get_logger("./tasks/VerbalFluency") 
 
+logger = get_logger("./tasks/VerbalFluency")
 
 
 class VerbalFluency(bases.StimulusBase):
     def __init__(self, base_vars):
         super().__init__(**base_vars)
-        self.trial_num = 0 
+        self.trial_num = 0
         self.trial_type = None
         self.trial_name = None
         self.trial_dict = {}
         self.phonemic_list = []
         self.semantic = None
-        
-        
+
     def present(self):
         self.timer.value = 0
-        self.trial_num+=1
+        self.trial_num += 1
         self.trial_dict[f"trial_{self.trial_num}"] = self.trial
-        
+
         self.play_tone()
         self.display.switch_patch()
         self.display.draw_patch()
         self.display.flip()
-        
-        clock = core.Clock()   
+
+        clock = core.Clock()
         while clock.getTime() < TRIAL_TIME:
             self.timer.value = int(clock.getTime())
             self.display.draw_patch()
@@ -40,8 +38,7 @@ class VerbalFluency(bases.StimulusBase):
         self.display.switch_patch()
         self.display.draw_patch()
         self.display.flip()
-        self.play_tone() 
-
+        self.play_tone()
 
     def update_data(self, choices):
         logger.debug(f"choices: {choices}")
@@ -49,7 +46,7 @@ class VerbalFluency(bases.StimulusBase):
             self.trial = choices
             return
         if len(choices) == 1:
-            if choices[0] == 'None':
+            if choices[0] == "None":
                 return
             else:
                 self.trial = choices[0]
@@ -61,15 +58,10 @@ class VerbalFluency(bases.StimulusBase):
         self.instructions_dict = VERBAL_FLUENCY_PATHS[choices[0]]
         self.instructions_dict[self.semantic] = VERBAL_FLUENCY_PATHS["Semantic"][self.semantic]
         logger.debug(self.instructions_dict)
-        
+
     def get_trial(self):
         return self.trial, self.trial_type, self.trial_name
 
-        
     def saveMetadata(self, name, sessionFolder):
-        data = { "time_per_trial": TRIAL_TIME,
-                 "trials": self.trial_dict
-            }
+        data = {"time_per_trial": TRIAL_TIME, "trials": self.trial_dict}
         return data
-    
-            

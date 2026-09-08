@@ -1,73 +1,137 @@
-# -*- coding: utf-8 -*-
 import os
-from psychopy import core
-from pathlib import Path
 from enum import Enum
-import ruamel.yaml
+from pathlib import Path
 
+import ruamel.yaml
+from psychopy import core
 
 BASEDIR = Path(__file__).resolve().parent.parent.parent.parent
 CODE_DIR = Path(__file__).resolve().parent.parent
 
-STIM_CONFIG_FILE_PATH = CONFIG_FILE_PATH = os.path.join(CODE_DIR.resolve().parent.parent, 'config_files')
+STIM_CONFIG_FILE_PATH = CONFIG_FILE_PATH = os.path.join(
+    CODE_DIR.resolve().parent.parent, "config_files"
+)
 config_path = os.path.join(CONFIG_FILE_PATH, "userdata.yaml")
 ruamelFile = ruamel.yaml.YAML()
 
-with open(config_path, 'r') as config_file:
+with open(config_path, "r") as config_file:
     config = ruamelFile.load(config_file)
 
 
 RAW_DATA_DIR = Path(config["RawDataDir"])
 VIDEO_DIR = Path(config["VideoDir"])
 
-STIM_CONFIG_FILE_NAME = 'visualStimulusConfig.yaml'
+STIM_CONFIG_FILE_NAME = "visualStimulusConfig.yaml"
 SCREEN_CONFIG_FILE_NAME = "screen_config.yaml"
 
 DEFAULTS = ["Subject Mic", "PC Audio", "Trigger to DS7A"]
 PLOT_CONSTANTS = ["Camera Sync TTL", "TTL to E-Phys", "Photodetector"]
-LINE_STYLES = ["-", "-", "-", "-"] #["--", "-", ":", "-."]
-COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#8c564b',  '#9467bd', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf', '#9467bd', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf', '#7f7f7f', '#bcbd22', '#17becf']
+LINE_STYLES = ["-", "-", "-", "-"]  # ["--", "-", ":", "-."]
+COLORS = [
+    "#1f77b4",
+    "#ff7f0e",
+    "#2ca02c",
+    "#d62728",
+    "#8c564b",
+    "#9467bd",
+    "#e377c2",
+    "#7f7f7f",
+    "#bcbd22",
+    "#17becf",
+    "#9467bd",
+    "#e377c2",
+    "#7f7f7f",
+    "#bcbd22",
+    "#17becf",
+    "#7f7f7f",
+    "#bcbd22",
+    "#17becf",
+]
 PLOT_LENGTH = 80000
 
 # labjack constants
 SCANS_PER_READ = 10000
-#Hardcoded the hardware and labjack bc its much easier than pulling from somewhere for now
-CAMERA_HEADERS = ["In Use","Name", "Is Primary", "Serial Number", "Framerate Decrease", "Flip Image"]
+# Hardcoded the hardware and labjack bc its much easier than pulling from somewhere for now
+CAMERA_HEADERS = [
+    "In Use",
+    "Name",
+    "Is Primary",
+    "Serial Number",
+    "Framerate Decrease",
+    "Flip Image",
+]
 HEADERS = ["In Use", "Hardware", "Labjack Pin", "Voltage Range"]
 
 
-HARDWARE_LIST = ["Photodetector", "Subject Mic", "Experimenter Mic", "PC Audio", 
-                 "Grip Force Sensor", "Force Sensor X", "Force Sensor Y", "Force Sensor Z",
-                 "Camera Sync TTL", "Grasp Start Pad", "Extra Digital In 1", "Extra Digital In 2", 
-                 "Slow Barcode", "Return From DS7A", "Trigger to DS7A", "TTL to E-Phys", "Digital Accessory"]
+HARDWARE_LIST = [
+    "Photodetector",
+    "Subject Mic",
+    "Experimenter Mic",
+    "PC Audio",
+    "Grip Force Sensor",
+    "Force Sensor X",
+    "Force Sensor Y",
+    "Force Sensor Z",
+    "Camera Sync TTL",
+    "Grasp Start Pad",
+    "Extra Digital In 1",
+    "Extra Digital In 2",
+    "Slow Barcode",
+    "Return From DS7A",
+    "Trigger to DS7A",
+    "TTL to E-Phys",
+    "Digital Accessory",
+]
 
-LABJACK_PIN_LIST = ["AIN0", "AIN1", "AIN2", "AIN3", "AIN4", "AIN5", "AIN6", "AIN7", 
-                    "FIO0", "FIO1", "FIO2", "FIO3", "FIO4", "FIO5", "FIO6", "FIO7",
-                    "EIO0", "EIO1", "EIO2", "EIO3", "EIO4", "EIO5", "EIO6", "EIO7"]
-    
+LABJACK_PIN_LIST = [
+    "AIN0",
+    "AIN1",
+    "AIN2",
+    "AIN3",
+    "AIN4",
+    "AIN5",
+    "AIN6",
+    "AIN7",
+    "FIO0",
+    "FIO1",
+    "FIO2",
+    "FIO3",
+    "FIO4",
+    "FIO5",
+    "FIO6",
+    "FIO7",
+    "EIO0",
+    "EIO1",
+    "EIO2",
+    "EIO3",
+    "EIO4",
+    "EIO5",
+    "EIO6",
+    "EIO7",
+]
+
 ANALOG_RANGES = [11, 9.6, 4.8, 2.4, 1.2, 0.6, 0.3, 0.15, 0.075, 0.036, 0.015]
 
-#Camera val constants
+# Camera val constants
 DOWNSAMPLE_VAL = 2
 CAM_MAX_HEIGHT = 1080
 CAM_MAX_WIDTH = 1440
 
-#constants for gui layout
+# constants for gui layout
 RGB_COLOR = (54, 54, 54)
 
 # shorter name for the global clock
 GLOBAL_CLOCK = core.monotonicClock
 
 # sound constants
-VOLUME = 0.125       # range [0.0, 1.0]
-SAMPLING_RATE = 44100 # sampling rate, Hz
-DURATION = 1# in seconds, can be a float
-FREQUENCY = 750   # sine frequency, Hz, can be a float
+VOLUME = 0.125  # range [0.0, 1.0]
+SAMPLING_RATE = 44100  # sampling rate, Hz
+DURATION = 1  # in seconds, can be a float
+FREQUENCY = 750  # sine frequency, Hz, can be a float
 
 # serial constants
 BAUDRATE = 9600
 WRITE_TIMEOUT = 0.1
-
 
 
 class VideoStatus(Enum):
@@ -78,6 +142,3 @@ class VideoStatus(Enum):
     STOP = 4
     FINISHED = 5
     ERROR = 6
-    
-
-

@@ -1,12 +1,12 @@
-# -*- coding: utf-8 -*-
 import csv
-from psychopy import visual,core
 
+from psychopy import core, visual
+
+import rcp_task_acquisition.tasks.VerbGeneration.constants as c
 from rcp_task_acquisition.tasks import bases
 from rcp_task_acquisition.utils.logger import get_logger
-import rcp_task_acquisition.tasks.VerbGeneration.constants as c
-logger = get_logger("./tasks/VerbGeneration") 
 
+logger = get_logger("./tasks/VerbGeneration")
 
 
 # Sets up display window, fixation cross, text pages and image stimuli
@@ -15,22 +15,23 @@ class VerbGeneration(bases.StimulusBase):
         super().__init__(**base_vars)
         self.list_num = None
         self.words_shown = []
-        self.trial =0
+        self.trial = 0
         self.trial_list = {}
         self.lists = []
         self.stim_list = []
-        self.fixation = visual.TextStim(self.display, text="+", name="FixationCross", pos=(0, 0), height=50)
-        
+        self.fixation = visual.TextStim(
+            self.display, text="+", name="FixationCross", pos=(0, 0), height=50
+        )
+
         with open(c.CSV_PATH, "r") as f:
             reader = csv.reader(f, delimiter=",")
             for i, line in enumerate(reader):
                 self.lists.append(line[1:])
         logger.debug(self.lists)
-        
-        
+
     def present(self, test=True):
         self.timer.value = 0
-        self.trial+=1
+        self.trial += 1
         self.words_shown = []
         self.play_tone()
         timer_clock = core.Clock()
@@ -38,14 +39,14 @@ class VerbGeneration(bases.StimulusBase):
             self.timer.value = int(timer_clock.getTime())
             self.words_shown.append(self.lists[self.list_num][index])
             stim.draw()
-            
+
             self.display.switch_patch()
             self.display.draw_patch()
             self.display.flip()
             self.timer.value = int(timer_clock.getTime())
-            clock = core.Clock() 
+            clock = core.Clock()
             self.timer.value = int(timer_clock.getTime())
-            while clock.getTime() < c.SHOW_TIME:    
+            while clock.getTime() < c.SHOW_TIME:
                 stim.draw()
                 self.display.draw_patch()
                 self.display.flip()
@@ -58,10 +59,10 @@ class VerbGeneration(bases.StimulusBase):
                     return
                 self.timer.value = int(timer_clock.getTime())
             self.timer.value = int(timer_clock.getTime())
-            #turn the patch to off and flip the display to black
+            # turn the patch to off and flip the display to black
             self.display.switch_patch()
             self.display.draw_patch()
-            clock = core.Clock()  
+            clock = core.Clock()
             self.timer.value = int(timer_clock.getTime())
             while clock.getTime() < c.GENERATION_TIME:
                 self.fixation.draw()
@@ -74,8 +75,7 @@ class VerbGeneration(bases.StimulusBase):
                 self.timer.value = int(timer_clock.getTime())
         self.trial_list[f"trial_{self.trial}"] = self.words_shown
         self.display.flip()
-        
-        
+
     def saveMetadata(self, name, sessionFolder):
         # data = {f"trial_{self.trial}": list(self.words_shown),
         #         "word_time": str(c.SHOW_TIME),
@@ -83,10 +83,11 @@ class VerbGeneration(bases.StimulusBase):
         self.trial_list["word_time"] = str(c.SHOW_TIME)
         self.trial_list["fixation_time"] = str(c.GENERATION_TIME)
         return self.trial_list
-    
-    
+
     def update_data(self, list_num):
         self.stim_list = []
-        self.list_num = int(list_num[0])#-1
+        self.list_num = int(list_num[0])  # -1
         for word in self.lists[self.list_num]:
-            self.stim_list.append(visual.TextStim(self.display, text=word, name="trial", pos=(0, 0), height=100))
+            self.stim_list.append(
+                visual.TextStim(self.display, text=word, name="trial", pos=(0, 0), height=100)
+            )
