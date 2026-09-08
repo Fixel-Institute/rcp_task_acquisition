@@ -85,4 +85,5 @@ class NaturalisticSpeech(bases.StimulusBase):
             self.show_image = False
         else:
             self.photo = os.path.join(IMG_DIR, photo)
+
             self.show_image = True
