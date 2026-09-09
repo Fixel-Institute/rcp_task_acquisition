@@ -36,5 +36,5 @@ lint.ignore = [
 [tool.ruff.format]
 quote-style = "double"  # or single or preserve. prefer double.
 indent-style = "space"
-line-ending = "cr-lf"
+line-ending = "auto"  # cr-lf
 docstring-code-format = true
