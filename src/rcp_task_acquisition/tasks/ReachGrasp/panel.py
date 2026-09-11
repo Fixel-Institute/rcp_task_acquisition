@@ -26,6 +26,7 @@ class ReachGraspPanel(TrialPanel):
         self.object_text = wx.StaticText(self, label="Choose grasp apparatus:")
         self.large_object_radio = wx.RadioButton(self, label="Large", style=wx.RB_GROUP)
         self.precision_object_radio = wx.RadioButton(self, label="Precision")
+        self.poke_object_radio = wx.RadioButton(self, label="Poke")
 
         self.seconds_text = wx.StaticText(self, label="Time: 0 secs")
 
@@ -68,14 +69,21 @@ class ReachGraspPanel(TrialPanel):
         grid_sizer.Add(
             self.large_object_radio,
             pos=(4, 0),
-            span=(0, 2),
+            span=(0, 1),
             flag=wx.ALIGN_LEFT | wx.ALL,
             border=self.border,
         )
         grid_sizer.Add(
             self.precision_object_radio,
-            pos=(4, 2),
+            pos=(4, 1),
             span=(0, 2),
+            flag=wx.ALIGN_LEFT | wx.ALL,
+            border=self.border,
+        )
+        grid_sizer.Add(
+            self.poke_object_radio,
+            pos=(4, 3),
+            span=(0, 1),
             flag=wx.ALIGN_LEFT | wx.ALL,
             border=self.border,
         )
@@ -114,9 +122,9 @@ class ReachGraspPanel(TrialPanel):
         if self.large_object_radio.GetValue():
             self.grasp_object = "Large"
         elif self.precision_object_radio.GetValue():
+            self.grasp_object = "Precision"
+        elif self.poke_object_radio.GetValue():
             self.grasp_object = "Poke"
-        elif self.pinch_object_radio.GetValue():
-            self.grasp_object = "Pinch"
         else:
             self.grasp_object = "Unknown"
 
@@ -135,6 +143,7 @@ class ReachGraspPanel(TrialPanel):
         self.object_text.Enable(True)
         self.large_object_radio.Enable(True)
         self.precision_object_radio.Enable(True)
+        self.poke_object_radio.Enable(True)
         self.seconds_text.SetLabel("Time: 0 secs")
         self.continue_button.SetValue(False)
         self.continue_button.SetLabel("Begin Trial")

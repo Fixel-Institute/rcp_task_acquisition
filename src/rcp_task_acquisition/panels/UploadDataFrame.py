@@ -18,7 +18,7 @@ class DirectoryLookupPanel(wx.Panel):
         self.user_cfg = file_utils.read_config('userdata.yaml')
         self.root_directory = self.user_cfg.get('RawDataDir', "")
         self.subdirectories = []
-        self.upload_directory = ""
+        self.upload_directory = []
 
         self.layout = wx.BoxSizer(wx.VERTICAL)
 
@@ -35,7 +35,7 @@ class DirectoryLookupPanel(wx.Panel):
         
         # Subdirectory list
         self.subdir_label = wx.StaticText(self, label="Subdirectories:")
-        self.subdir_listbox = wx.ListBox(self)
+        self.subdir_listbox = wx.ListBox(self, style=wx.LB_MULTIPLE)
         self.subdir_listbox.Bind(wx.EVT_LISTBOX, self.on_subdir_select)
         
         self.layout.Add(self.subdir_label, 0, wx.ALL, 5)
@@ -59,10 +59,11 @@ class DirectoryLookupPanel(wx.Panel):
             new_root = new_root[:-1]
         self.root_directory = new_root
         self.subdirectories = []
+        self.upload_directory = []
         self.update_subdirectories()
     
     def on_subdir_select(self, event):
-        selected_index = self.subdir_listbox.GetSelection()
+        selected_index = event.GetSelection()
         if selected_index != wx.NOT_FOUND:
             selected_subdir = self.subdir_listbox.GetString(selected_index)
             if selected_subdir == ".." :
@@ -73,31 +74,40 @@ class DirectoryLookupPanel(wx.Panel):
                 if len(self.subdirectories) == 0 or not selected_subdir == self.subdirectories[-1]:
                     has_session_file = False
                     subpath = os.path.sep.join(self.subdirectories)
-                    for item in os.listdir(os.path.join(self.root_directory, subpath, selected_subdir)):
+                    this_dir = os.path.join(self.root_directory, subpath, selected_subdir)
+                    for item in os.listdir(this_dir):
                         if item.endswith(".yaml"):
                             has_session_file = True
                             break
 
                     if not has_session_file:
+                        # Keep blue highlights only for uploadable session folders.
+                        self.subdir_listbox.SetSelection(selected_index, False)
                         self.subdirectories.append(selected_subdir)
                         self.update_subdirectories()
                     else:
-                        self.upload_directory = os.path.join(self.root_directory, subpath, selected_subdir)
-    
+                        if self.subdir_listbox.IsSelected(selected_index):
+                            if this_dir not in self.upload_directory:
+                                self.upload_directory.append(this_dir)
+                        else:
+                            if this_dir in self.upload_directory:
+                                self.upload_directory.remove(this_dir)
+
     def update_subdirectories(self):
-        self.upload_directory = ""
+        self.upload_directory = []
         subpath = os.path.sep.join(self.subdirectories)
         available_subdirs = os.listdir(self.root_directory + os.path.sep + subpath)
-        
+
         self.subdir_listbox.Clear()
         self.subdir_listbox.Append("..")
         for subdir in available_subdirs:
             if os.path.isdir(os.path.join(self.root_directory, subpath, subdir)):
                 self.subdir_listbox.Append(subdir)
-    
+
     def on_upload(self, event):
-        if self.upload_directory:
-            self.uploading_worker_thread = threading.Thread(target=uploadRCPSession, args=(self.upload_directory, self.upload_directory.replace(self.root_directory + os.path.sep, "").replace(os.path.sep, "_"),
+        if len(self.upload_directory) > 0:
+            session_names = [session.replace(self.root_directory + os.path.sep, "").replace(os.path.sep, "_") for session in self.upload_directory]
+            self.uploading_worker_thread = threading.Thread(target=uploadRCPSession, args=(self.upload_directory, session_names,
                                                                                            self.on_upload_complete, self.on_upload_error), daemon=True)
             self.uploading_worker_thread.start()
             self.upload_button.Enable(False)
