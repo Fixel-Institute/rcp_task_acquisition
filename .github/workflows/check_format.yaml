@@ -1,0 +1,22 @@
+name: Check code format
+on:
+  pull_request:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure Git Line Endings
+        run: |
+          sudo git config --system core.autocrlf false
+          sudo git config --system core.eol crlf
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'
+      - name: Install check tool
+        run: |
+          pip install ruff
+      - name: Run format check
+        run: |
+          ruff --config ./pyproject.toml format --check
+        env:
+          FORCE_COLOR: "1"

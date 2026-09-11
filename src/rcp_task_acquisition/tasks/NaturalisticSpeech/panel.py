@@ -47,10 +47,7 @@ class NaturalisticSpeechPanel(TrialPanel):
                 logger.error(f"Unable to load {image}, Error: {e}")
 
         self.image_names += c.NON_IMAGE_TASKS
-        self.image_choice= wx.Choice(self, 
-                                       id=wx.ID_ANY, 
-                                       choices=self.image_names,
-                                       size=(310, -1))
+        self.image_choice = wx.Choice(self, id=wx.ID_ANY, choices=self.image_names, size=(310, -1))
 
         self.image_choice.SetSelection(self.selection)
 
