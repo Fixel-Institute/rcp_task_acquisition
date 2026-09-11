@@ -4,7 +4,7 @@ from multiprocessing import Process, Queue
 import PySpin
 import wx
 
-from rcp_task_acquisition.models.Warnings import Warning
+from rcp_task_acquisition.models.Warnings import WarningHandler, WarnCat
 from rcp_task_acquisition.utils.constants import (
     ANALOG_RANGES,
     CAMERA_HEADERS,
@@ -90,8 +90,8 @@ class HardwarePanel(wx.Panel):
         self.row_list = HARDWARE_LIST
         self.protocol = None
         self.camera_indices = []
-        self.hardware_list = []
-        self.camera_list = []
+        self.hardware_list: list[HardwareRow] = []
+        self.camera_list: list[CameraRow] = []
         self.cam_serial_numbers = []
         self.labjack_selction = LABJACK_PIN_LIST
         self.serial_selections = []
@@ -497,7 +497,7 @@ class HardwarePanel(wx.Panel):
         self.user_config["cameras"] = camera_dict
         hardware_dict = self._create_hardware_dict()
         if not hardware_dict:
-            Warning("no_hardware").display()
+            WarningHandler(WarnCat.NO_HARDWARE).display()
             return
         self.user_config["hardware"] = hardware_dict
 
@@ -527,11 +527,11 @@ class HardwarePanel(wx.Panel):
             if hardware.in_use_all:
                 labjack_pin = hardware.labjack.GetCurrentSelection()
                 if labjack_pin == -1:
-                    Warning("hardware").display()
+                    WarningHandler(WarnCat.HARDWARE).display()
                     return
                 name = self._get_name(hardware)
                 if not name:
-                    Warning("name").display()
+                    WarningHandler(WarnCat.NAME).display()
                     return
                 labjack_list = hardware.labjack.GetStrings()
                 labjack_value = labjack_list[labjack_pin]
@@ -556,7 +556,7 @@ class HardwarePanel(wx.Panel):
             if camera.in_use_all:
                 serial = camera.serial.GetCurrentSelection()
                 if serial == -1:
-                    Warning("serial").display()
+                    WarningHandler(WarnCat.SERIAL).display()
                     return
                 if self._get_name(camera) in camera_dict:
                     camera_dict[self._get_name(camera)]["ismaster"] = camera.is_primary.GetValue()
@@ -622,7 +622,7 @@ class HardwarePanel(wx.Panel):
     def _on_choice_cameras(self, event):
         self._update_lists(self.camera_list, is_labjack=False)
 
-    def _update_lists(self, item_list, is_labjack=True):
+    def _update_lists(self, item_list: list[CameraRow] | list[HardwareRow], is_labjack=True):
         selected_list = []
         primary_list = LABJACK_PIN_LIST if is_labjack else self.cam_serial_numbers
         for hardware in item_list:

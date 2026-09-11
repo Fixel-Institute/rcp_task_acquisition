@@ -1,3 +1,6 @@
+import enum
+from typing import Self
+
 import wx
 
 from rcp_task_acquisition.utils.logger import get_logger
@@ -5,10 +8,43 @@ from rcp_task_acquisition.utils.logger import get_logger
 logger = get_logger("./models/LabjackFrontend")
 
 
-class Warning:
-    def __init__(self, error_type=None, info=None):
-        self.msg = self._get_error(error_type, info)
-        self.has_warned = False
+class WarnCat(str, enum.Enum):
+    LABJACK = "Error loading labjack, please check that the labjack is plugged in."
+
+    CAMERA = "Error loading cameras, please check that both cameras are plugged in and restart the program."
+
+    PROJECTOR = (
+        "Second monitor is not being recognized. Please make sure there are 2 monitors available."
+    )
+
+    STIM_TIME = "Error in Calculating stimulus timing. We are unsure of the disk space that will be taken up and cannot guarantee that there will be sufficient space."
+
+    SPACE = "There is not enough disk space for the requested duration."
+
+    COMPRESSION = "Cannot close until previous compression completes!"
+
+    FRAMES = r"Warning! {info}."
+
+    DISPLAY = "Please make sure both monitors are installed."
+
+    HARDWARE = "Please select labjack connections before continuing."
+
+    NO_HARDWARE = "Please set up hardware before continuing."
+
+    NAME = "Please put a name in user input."
+
+    SERIAL = "Please add a serial number before continuing."
+
+    COMPRESS = "Please DO NOT close this GUI until compression is complete!!!"
+
+    VIDEO = "Video not found in current path"
+
+    FPS = r"Warning! {info}"
+
+
+class WarningHandler:
+    def __init__(self, error_type: WarnCat | None = None, info: str | None = None):
+        self.msg = "NA" if error_type is None else self._get_error(error_type, info)
 
     def display(self):
         logger.debug(self.msg)
@@ -17,47 +53,13 @@ class Warning:
         )
         warning_box.ShowModal()
         warning_box.Destroy()
-        self.has_warned = True
 
-    def update_error(self, error, info=None):
+    def update_error(self, error: WarnCat, info: str | None = None) -> Self:
         self.msg = self._get_error(error, info)
-        self.has_warned = False
+        return self
 
-    def _get_error(self, error, info=None):
-        if error == "labjack":
-            return "Error loading labjack, please check that the labjack is plugged in."
-        elif error == "camera":
-            return "Error loading cameras, please check that both cameras are plugged in and restart the program."
-        elif error == "projector":
-            return "Second monitor is not being recognized. Please make sure there are 2 monitors available."
-        elif error == "stim_time":
-            return "Error in Calculating stimulus timing. We are unsure of the disk space that will be taken up and cannot guarantee that there will be sufficient space."
-        elif error == "space":
-            return "There is not enough disk space for the requested duration."
-        elif error == "compression":
-            return "Cannot close until previous compression completes!"
-        elif error == "frames":
-            return f"Warning! {info}."
-        elif error == "display":
-            return "Please make sure both monitors are installed."
-        elif error == "hardware":
-            return "Please select labjack connections before continuing."
-        elif error == "no_hardware":
-            return "Please set up hardware before continuing."
-        elif error == "name":
-            return "Please put a name in user input."
-        elif error == "serial":
-            return "Please add a serial number before continuing."
-        elif error == "compress":
-            return "Please DO NOT close this GUI until compression is complete!!!"
-        elif error == "frames":
-            return f"Warning! {info}"
-        elif error == "video":
-            return "Video not found in current path"
-        elif error == "fps":
-            return f"Warning! {info}"
-        else:
-            return None
-
-    def get_has_warned(self):
-        return self.has_warned
+    @staticmethod
+    def _get_error(error: WarnCat, info: str | None = None):
+        err_v = error.value  # ensure gets the value
+        msg = err_v if error is None else err_v.format(info=info)
+        return msg
