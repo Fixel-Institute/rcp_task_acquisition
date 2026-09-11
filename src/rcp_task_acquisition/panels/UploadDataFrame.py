@@ -3,7 +3,7 @@ import wx
 import threading
 
 from rcp_task_acquisition.utils import file_utils
-from rcp_task_acquisition.utils.bravo_uploader import uploadRCPSession
+from rcp_task_acquisition.utils.bravo_uploader import uploadRCPSessions
 
 class UploadDataFrame(wx.Frame):
     def __init__(self, parent):
@@ -82,7 +82,7 @@ class DirectoryLookupPanel(wx.Panel):
 
                     if not has_session_file:
                         # Keep blue highlights only for uploadable session folders.
-                        self.subdir_listbox.SetSelection(selected_index, False)
+                        self.subdir_listbox.SetSelection(selected_index)
                         self.subdirectories.append(selected_subdir)
                         self.update_subdirectories()
                     else:
@@ -107,7 +107,7 @@ class DirectoryLookupPanel(wx.Panel):
     def on_upload(self, event):
         if len(self.upload_directory) > 0:
             session_names = [session.replace(self.root_directory + os.path.sep, "").replace(os.path.sep, "_") for session in self.upload_directory]
-            self.uploading_worker_thread = threading.Thread(target=uploadRCPSession, args=(self.upload_directory, session_names,
+            self.uploading_worker_thread = threading.Thread(target=uploadRCPSessions, args=(self.upload_directory, session_names,
                                                                                            self.on_upload_complete, self.on_upload_error), daemon=True)
             self.uploading_worker_thread.start()
             self.upload_button.Enable(False)

@@ -61,7 +61,7 @@ class LaunchPanel:
         self.panel.SetupScrolling(
             scroll_x=False, scroll_y=False, scrollToTop=False, scrollIntoView=False
         )
-        self.hardware_panel = HardwarePanel(task_config, self.delsys, self.panel)
+        self.hardware_panel = HardwarePanel(task_config, delsys, self.panel)
         self.hardware_panel.Hide()
         vertical_sizer = wx.BoxSizer(wx.VERTICAL)
         vertical_sizer.Add(self._setup_metadata(button_width), 0, wx.EXPAND | wx.ALL, 10)
