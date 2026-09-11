@@ -3,8 +3,11 @@ from setuptools import setup, find_packages
 
 
 # Getting path to local whl files to be downloaded
-local_path: str = (Path(__file__).parent / "library" / "spinnaker_python-4.3.0.189-cp310-cp310-win_amd64.whl").as_uri()
-main_file: str = (Path(__file__).parent / "rcp_task_acquistion" / "__main__.py")
+local_path: str = (
+    Path(__file__).parent / "library" / "spinnaker_python-4.3.0.189-cp310-cp310-win_amd64.whl"
+).as_uri()
+main_file: str = Path(__file__).parent / "rcp_task_acquistion" / "__main__.py"
+
 
 if __name__ == "__main__":
     setup(
@@ -30,4 +33,3 @@ if __name__ == "__main__":
         include_package_data=True,
         packages=find_packages(where="src") + find_packages(where=".")
     )
-

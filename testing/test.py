@@ -39,25 +39,27 @@ Note:
     For more information, see the implementation in our source code and the
     Python standard documentation.
 """
-from datetime import datetime
+
 import sys
+from datetime import datetime
 
 from labjack import ljm
-
 
 MAX_REQUESTS = 10  # The number of eStreamRead calls that will be performed.
 
 # Open first found LabJack
 # handle = ljm.openS("ANY", "ANY", "ANY")  # Any device, Any connection, Any identifier
-#handle = ljm.openS("T8", "ANY", "ANY")  # T8 device, Any connection, Any identifier
+# handle = ljm.openS("T8", "ANY", "ANY")  # T8 device, Any connection, Any identifier
 handle = ljm.openS("T7", "ANY", "ANY")  # T7 device, Any connection, Any identifier
-#handle = ljm.openS("T4", "ANY", "ANY")  # T4 device, Any connection, Any identifier
-#handle = ljm.open(ljm.constants.dtANY, ljm.constants.ctANY, "ANY")  # Any device, Any connection, Any identifier
+# handle = ljm.openS("T4", "ANY", "ANY")  # T4 device, Any connection, Any identifier
+# handle = ljm.open(ljm.constants.dtANY, ljm.constants.ctANY, "ANY")  # Any device, Any connection, Any identifier
 
 info = ljm.getHandleInfo(handle)
-print("Opened a LabJack with Device type: %i, Connection type: %i,\n"
-      "Serial number: %i, IP address: %s, Port: %i,\nMax bytes per MB: %i" %
-      (info[0], info[1], info[2], ljm.numberToIP(info[3]), info[4], info[5]))
+print(
+    "Opened a LabJack with Device type: %i, Connection type: %i,\n"
+    "Serial number: %i, IP address: %s, Port: %i,\nMax bytes per MB: %i"
+    % (info[0], info[1], info[2], ljm.numberToIP(info[3]), info[4], info[5])
+)
 
 deviceType = info[0]
 
@@ -97,8 +99,7 @@ try:
         if deviceType == ljm.constants.dtT7:
             #     Negative Channel = 199 (Single-ended)
             #     Settling = 0 (auto)
-            aNames.extend(["AIN0_NEGATIVE_CH", "STREAM_SETTLING_US",
-                           "AIN1_NEGATIVE_CH"])
+            aNames.extend(["AIN0_NEGATIVE_CH", "STREAM_SETTLING_US", "AIN1_NEGATIVE_CH"])
             aValues.extend([199, 0, 199])
 
     # Write the analog inputs' negative channels (when applicable), ranges,
@@ -108,7 +109,7 @@ try:
 
     # Configure and start stream
     scanRate = ljm.eStreamStart(handle, scansPerRead, numAddresses, aScanList, scanRate)
-    print("\nStream started with a scan rate of %0.0f Hz." % scanRate)
+    print(f"\nStream started with a scan rate of {scanRate:0.0f} Hz.")
 
     print("\nPerforming %i stream reads." % MAX_REQUESTS)
     start = datetime.now()
@@ -131,19 +132,21 @@ try:
 
         print("\neStreamRead %i" % i)
         ainStr = ""
-        for j in range(0, numAddresses):
-            ainStr += "%s = %0.5f, " % (aScanListNames[j], aData[j])
+        for j in range(numAddresses):
+            ainStr += f"{aScanListNames[j]} = {aData[j]:0.5f}, "
         print("  1st scan out of %i: %s" % (scans, ainStr))
-        print("  Scans Skipped = %0.0f, Scan Backlogs: Device = %i, LJM = "
-              "%i" % (curSkip/numAddresses, ret[1], ret[2]))
+        print(
+            "  Scans Skipped = %0.0f, Scan Backlogs: Device = %i, LJM = "
+            "%i" % (curSkip / numAddresses, ret[1], ret[2])
+        )
         i += 1
 
     end = datetime.now()
 
     print("\nTotal scans = %i" % (totScans))
     tt = (end - start).seconds + float((end - start).microseconds) / 1000000
-    print("Time taken = %f seconds" % (tt))
-    print("LJM Scan Rate = %f scans/second" % (scanRate))
+    print(f"Time taken = {tt:f} seconds")
+    print(f"LJM Scan Rate = {scanRate:f} scans/second")
     print("Timed Scan Rate = %f scans/second" % (totScans / tt))
     print("Timed Sample Rate = %f samples/second" % (totScans * numAddresses / tt))
     print("Skipped scans = %0.0f" % (totSkip / numAddresses))
@@ -165,5 +168,4 @@ except Exception:
     print(e)
 
 # Close handle
-ljm.close(handle)# -*- coding: utf-8 -*-
-
+ljm.close(handle)  # -*- coding: utf-8 -*-

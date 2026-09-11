@@ -2,7 +2,9 @@ from psychopy import core
 
 from rcp_task_acquisition.tasks import bases
 from rcp_task_acquisition.utils.logger import get_logger
-logger = get_logger("./tasks/ReachGrasp") 
+
+logger = get_logger("./tasks/ReachGrasp")
+
 
 class ReachGrasp(bases.StimulusBase):
     def __init__(self, base_vars):
@@ -12,10 +14,10 @@ class ReachGrasp(bases.StimulusBase):
         self.grasp_object = None
         self.hand_dict = {}
         self.grasp_dict = {}
-        
-    def present(self):       
+
+    def present(self):
         self.timer.value = 0
-        self.trial_count+=1
+        self.trial_count += 1
         self.trial
         self.hand_dict[f"trial_{self.trial_count}"] = self.hand
         self.grasp_dict[f"trial_{self.trial_count}"] = self.grasp_object
@@ -29,7 +31,7 @@ class ReachGrasp(bases.StimulusBase):
         clock = core.Clock()
         while self.finish.value == 0:
             self.display.draw_patch()
-            self.display.flip()        
+            self.display.flip()
             self.timer.value = int(clock.getTime())
 
         self.display.switch_patch()
@@ -38,14 +40,13 @@ class ReachGrasp(bases.StimulusBase):
         #self.play_tone()
 
     def update_data(self, data):
-        self.hand = data[0]    
-        self.grasp_object = data[1]   
-        
+        self.hand = data[0]
+        self.grasp_object = data[1]
+
     def saveMetadata(self, name, sessionFolder):
-        data = {"trial_count": self.trial_count, 
-                "hand_used": self.hand_dict,
-                "grasp_object": self.grasp_dict
-            }        
+        data = {
+            "trial_count": self.trial_count,
+            "hand_used": self.hand_dict,
+            "grasp_object": self.grasp_dict,
+        }
         return data
-            
-            

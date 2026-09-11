@@ -3,20 +3,17 @@ from psychopy import core
 from rcp_task_acquisition.tasks import bases
 
 
-
 class HardwareTest(bases.StimulusBase):
     def __init__(self, base_vars):
         super().__init__(**base_vars)
         self.flash_time = 5
-        
-        
+
     def present(self):
         self.display.switch_patch()
         self.display.draw_patch()
         self.display.flip()
-        clock = core.Clock()   
+        clock = core.Clock()
         while True:
-            
             while clock.getTime() < self.flash_time:
                 self.display.draw_patch()
                 self.display.flip()
@@ -37,7 +34,5 @@ class HardwareTest(bases.StimulusBase):
             self.display.switch_patch()
             clock.reset()
 
-        
     def saveMetadata(self, name, sessionFolder):
         pass
-            

@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
-import sys
-import subprocess
-from pathlib import Path
 import importlib.metadata as importlib_metadata
+import subprocess
+import sys
+from pathlib import Path
 
 from rcp_task_acquisition.utils.logger import get_logger
-logger = get_logger("./utils/task_acquisition_version") 
 
+logger = get_logger("./utils/task_acquisition_version")
 
 
 top_dir = Path(__file__).parent.parent.resolve()
@@ -14,7 +13,7 @@ top_dir = Path(__file__).parent.parent.resolve()
 
 def _get_from_setuptools_scm():
 
-    out = subprocess.check_output([sys.executable, '-m', 'setuptools_scm'], cwd=top_dir)
+    out = subprocess.check_output([sys.executable, "-m", "setuptools_scm"], cwd=top_dir)
 
     out = out.decode().strip()
     return out if len(out) > 0 else None
