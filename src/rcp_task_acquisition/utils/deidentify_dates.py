@@ -3,6 +3,7 @@ import os
 import shutil
 from datetime import datetime
 from pathlib import Path, PurePath
+import xml.etree.ElementTree as ET
 
 import pywintypes
 import win32con
@@ -13,6 +14,7 @@ from rcp_task_acquisition.utils.logger import get_logger
 logger = get_logger("./utils/deidentify_dates")
 
 import rcp_task_acquisition.utils.file_utils as fu
+from rcp_task_acquisition.models.DelsysProcess import DataDeidentifier as DelsysDeidentifier
 from rcp_task_acquisition.utils.constants import CONFIG_FILE_PATH
 
 
@@ -63,7 +65,6 @@ class DateDeidentification:
         self.deid_metadata = datetime(2000, 1, 1)
 
     def deidentify_one_session(self, session_path):
-
         date_original = os.path.split(os.path.split(os.path.split(session_path)[0])[0])[1]
         date_ordinal = datetime.strptime(date_original, "%Y%m%d").date().toordinal()
         session = os.path.split(session_path)[1]
@@ -81,21 +82,52 @@ class DateDeidentification:
         date_dest = os.path.split(unit_dest)[0]
 
         metafiles = glob.glob(os.path.join(session_path, "*"))
+        metafiles = sorted(metafiles)
         for m in metafiles:
             mname = PurePath(m.replace(date_original, date_deided)).name
             mdest = os.path.join(unit_dirW, mname)
-            if not os.path.isfile(mdest) or (os.path.getsize(m) != os.path.getsize(mdest)):
-                shutil.copyfile(m, mdest)
 
-            if "metadata.yaml" in mdest:
-                metadata = fu.read_metadata(mdest)
-                fields = list(metadata.keys())
-                for f in fields:
-                    if "Time" in f:
-                        del metadata[f]
-                fu.write_metadata(metadata, mdest)
+            if mname.endswith(".mat"):
+                continue  # Skip .mat files because they are not raw files
 
-            set_all_times(mdest, self.deid_metadata)
+            if os.path.isdir(m):
+                folder_name = os.path.split(m)[1]
+                if folder_name.startswith("SESSION_NAME"):
+                    # This is OculuStim Folder
+                    dest_folder = os.path.join(unit_dirW, "Oculostim")
+                    if not os.path.exists(dest_folder):
+                        os.makedirs(dest_folder)
+                    files = glob.glob(os.path.join(m, "*"))
+                    time_deid = folder_name.split("-")[-1]
+                    for f in files:
+                        f_name = PurePath(f.replace(folder_name, date_deided + time_deid)).name
+                        shutil.copyfile(f, os.path.join(dest_folder, f_name))
+                        set_all_times(os.path.join(dest_folder, f_name), self.deid_metadata)
+                        
+                        if f_name.endswith(".xml"):
+                            tree = ET.parse(os.path.join(dest_folder, f_name))
+                            root = tree.getroot()
+                            root.find("DataFolder").text = ""
+                            root.find("LastRecordedFile").text = ""
+                            tree.write(os.path.join(dest_folder, f_name), encoding="utf-8", xml_declaration=True)
+
+            else:
+                if not os.path.isfile(mdest) or (os.path.getsize(m) != os.path.getsize(mdest)):
+                    shutil.copyfile(m, mdest)
+
+                if "metadata.yaml" in mdest:
+                    metadata = fu.read_metadata(mdest)
+                    fields = list(metadata.keys())
+                    for f in fields:
+                        if "Time" in f:
+                            del metadata[f]
+                    fu.write_metadata(metadata, mdest)
+                elif ".mdat" in mdest:
+                    delsys_file = DelsysDeidentifier(m)
+                    delsys_file.deidentify(mdest)
+
+                set_all_times(mdest, self.deid_metadata)
+
         set_all_times(unit_dest, self.deid_metadata)
         set_all_times(date_dest, self.deid_metadata)
         set_all_times(unit_dirW, self.deid_metadata)
@@ -114,7 +146,6 @@ class DateDeidentification:
                     dirlist.append(os.path.join(unit_dirR, s))
                     session_path = os.path.join(unit_dirR, s)
                     self.deidentify_one_session(session_path)
-
 
 def run_all_dates():
     config_path = os.path.join(CONFIG_FILE_PATH, "userdata.yaml")

@@ -43,7 +43,7 @@ def loadDelsysData(rawBytes):
         if not b'RCPUF' == headerByte:
             print("Invalid header byte at index", currentIndex)
             break
-        timestamp = int.from_bytes(rawBytes[currentIndex+5:currentIndex+13], byteorder='little')
+        timestamp = np.frombuffer(rawBytes[currentIndex+5:currentIndex+13], dtype=np.float64)[0]
         packetNameLength = int.from_bytes(rawBytes[currentIndex+13:currentIndex+17], byteorder='little')
         dataLength = int.from_bytes(rawBytes[currentIndex+17:currentIndex+21], byteorder='little')
         packetName = rawBytes[currentIndex+21:currentIndex+21+packetNameLength].split(b'\x00', 1)[0].decode('utf-8')

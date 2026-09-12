@@ -33,6 +33,39 @@ class DataWriter():
             self.fid.close()
             self.is_opened = False
 
+class DataDeidentifier():
+    def __init__(self, filename):
+        self.filename = filename
+        self.fid = open(self.filename, 'rb')
+        self.is_opened = True
+
+    def deidentify(self, destination_filename):
+        deidentified_time = 0.0  # Replace with the desired de-identified time
+        with open(destination_filename, 'wb+') as dest_f:
+            while self.is_opened:
+                header = self.fid.read(5)
+                if not header:
+                    break
+                if header != b"RCPUF":
+                    logger.error("Invalid file format")
+                    break
+
+                time_bytes = self.fid.read(8)
+                data_length_bytes = self.fid.read(8)
+                data_type_length, data_value_length = struct.unpack("<II", data_length_bytes)
+
+                now_time = struct.unpack("<d", time_bytes)[0]
+                if deidentified_time == 0.0:
+                    deidentified_time = now_time
+                    
+                data_type_bytes = self.fid.read(data_type_length)
+                data_value_bytes = self.fid.read(data_value_length)
+                dest_f.write(header)
+                dest_f.write(struct.pack("<d", now_time-deidentified_time))
+                dest_f.write(data_length_bytes)
+                dest_f.write(data_type_bytes)
+                dest_f.write(data_value_bytes)
+
 class DelsysController():
     def __init__(self):
         super().__init__()
