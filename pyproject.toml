@@ -37,11 +37,6 @@ dev = [
 	"rcp-task-acquisition[test]",
 ]
 test = [
-	# todo: create some automated + reproducible test cases
-	# "pytest",
-	# "coverage",
-]
-test = [
 	"pytest >= 9, < 10",
 ]
 
