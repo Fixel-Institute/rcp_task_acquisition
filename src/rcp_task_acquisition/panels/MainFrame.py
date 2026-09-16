@@ -23,7 +23,7 @@ from rcp_task_acquisition.models.Crop import Crop
 from rcp_task_acquisition.models.LabjackFrontend import LabjackFrontend
 from rcp_task_acquisition.models.SerialDevice import SerialDevice
 from rcp_task_acquisition.models.StimulusThread import StimulusThread
-from rcp_task_acquisition.models.Warnings import Warning
+from rcp_task_acquisition.models.Warnings import WarningHandler, WarnCat
 from rcp_task_acquisition.panels.ControlsPanel import ControlsPanel
 from rcp_task_acquisition.panels.GraphPanel import GraphPanel
 from rcp_task_acquisition.panels.ImagePanel import ImagePanel
@@ -60,7 +60,7 @@ class MainFrame(wx.Frame):
         self.user_cfg = file_utils.read_config("userdata.yaml")
         # screen_settings = self.user_cfg["screen_settings"]
 
-        self.warning = Warning()
+        self.warning = WarningHandler()
 
         # Settting the GUI size and panels design
         displays = tuple(
@@ -72,8 +72,7 @@ class MainFrame(wx.Frame):
         logger.debug(f"screenSizes: {screenSizes}")
         # index = 1 # For display 1.
         if len(screenSizes) != 2:
-            self.warning.update_error("display")
-            self.warning.display()
+            self.warning.update_error(WarnCat.DISPLAY).display()
             sys.exit()
         index = 0
         psychopy_monitor = 1
@@ -425,8 +424,7 @@ class MainFrame(wx.Frame):
         elif self.video_status.value == VideoStatus.ERROR.value:
             self.trial_panel.stop_video()
             self.video_status.value = VideoStatus.NOT_PLAYING.value
-            self.warning.update_error("video")
-            self.warning.display()
+            self.warning.update_error(WarnCat.VIDEO).display()
         elif self.finish.value == 1 and (
             self.task != "naturalistic_speech" and self.task != "vowel_space"
         ):

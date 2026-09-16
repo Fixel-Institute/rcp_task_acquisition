@@ -171,40 +171,28 @@ class StimulusThread(Process):
             "finish": self.finish,
         }
         logger.debug(f"base vars: {base_vars}")
+        base_cls = dict(
+            n_back=N_back,
+            motor_task_finger_taps=BasicTaps,
+            naturalistic_speech=NaturalisticSpeech,
+            sara=Sara,
+            diadochokinesis=Diadochokinesis,
+            verbal_fluency=VerbalFluency,
+            vowel_space=VowelSpace,
+            reach_grasp=ReachGrasp,
+            tone_taps_closed=ToneTapsClosed,
+            verb_generation=VerbGeneration,
+        ).get(self.task, StimulusBase)
+        #
+        extra_args = []
         if self.task == "n_back":
-            self.stimulus = N_back(base_vars, self.button)
-
-        elif self.task == "motor_task_finger_taps":
-            self.stimulus = BasicTaps(base_vars)
-
-        elif self.task == "naturalistic_speech":
-            self.stimulus = NaturalisticSpeech(base_vars)
-
-        elif self.task == "sara":
-            self.stimulus = Sara(base_vars)
-
-        elif self.task == "diadochokinesis":
-            self.stimulus = Diadochokinesis(base_vars)
-
-        elif self.task == "verbal_fluency":
-            self.stimulus = VerbalFluency(base_vars)
-
-        elif self.task == "vowel_space":
-            self.stimulus = VowelSpace(base_vars)
-
-        elif self.task == "reach_grasp":
-            self.stimulus = ReachGrasp(base_vars)
-
+            extra_args.append(self.button)
         elif self.task == "tone_taps_closed":
-            self.stimulus = ToneTapsClosed(base_vars, self.press_count)
-
-        elif self.task == "verb_generation":
-            self.stimulus = VerbGeneration(base_vars)
-
-        else:
-            self.stimulus = StimulusBase(base_vars)
-
-        logger.info(f"iterable: {self.stimulus}")
+            extra_args.append(self.press_count)
+        #
+        self.stimulus = base_cls(base_vars, *extra_args)
+        #
+        logger.info(f"stimuli: {self.stimulus}")
 
     def end_stimulus(self):
         self.window.idle(time_list=[])
