@@ -1,0 +1,24 @@
+name: Enforce Target Branch
+
+on:
+  pull_request_target:
+    types: [opened]
+
+jobs:
+  auto-switch-branch:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Switch target branch if incorrect
+        # We check if the PR is targeting 'main' instead of 'develop'
+        if: github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref != 'develop'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              base: 'develop' # The branch you want to force them into
+            });
