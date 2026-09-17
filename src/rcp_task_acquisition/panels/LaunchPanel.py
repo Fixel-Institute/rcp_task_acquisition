@@ -305,29 +305,6 @@ class LaunchPanel:
                 new_index = index
         self.participant_id.SetSelection(new_index)
 
-    # def protocol_event(self, event: wx.Event) -> None:
-    #     """
-    #     Bound to select protocol event. Triggers starting the aquisition
-    #     gui.
-    #     """
-    #     participant_index = self.participant_id.GetSelection()
-    #     participant_id = self.participant_tuple[participant_index][0]
-    #     if participant_index == -1:
-    #         participant_id = ""
-    #     self.metadata = {
-    #         "task": None,
-    #         "administrator_id": None,
-    #         "participant_id": None,
-    #         "participant_detail": None,
-    #     }
-    #     self.metadata["task"] = self.task.strip()
-    #     self.metadata["administrator_id"] = self.administrator_id.GetValue()
-    #     self.metadata["participant_id"] = participant_id
-    #     self.metadata["participant_detail"] = self.participant_detail.GetValue()
-
-    #     self.is_hidden = True
-    #     self.dialog.Hide()
-
     def hardware_event(self, event):
         """
         triggers showing the hardware panel
@@ -361,14 +338,7 @@ class LaunchPanel:
         return self.dialog.Show()
 
     def get_metadata(self) -> None:
-        participant_id = self.participant_id.GetValue()  # .GetSelection()
-        # print("praticipant index", participant_index)
-        # if participant_index == -1:
-        #     participant_id = ""
-        # # else:
-        #     participant_id = (
-        #         participant_index.split(",", 1)[0].replace("Id:", "").strip()
-        #     )  # self.current_list[participant_index][0]
+        participant_id = self.participant_id.GetValue()
         self.protocol_button.Enable(False)
         self.hardware_panel.Hide()
         logger.debug(f"participant panel: {self.participant_tuple}")
