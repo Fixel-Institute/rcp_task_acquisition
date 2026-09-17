@@ -263,7 +263,7 @@ class MainFrame(wx.Frame):
             self.start_time_utc = str(f"{datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')}Z")
             self.count = 0
             self.finish.value = 0
-            self.msgq.put("init_stimulus")
+            self.msgq.put(Msg.INITIALIZE)
             self.create_file()
             is_success = self.lj.start_labjack()
             if not is_success:
@@ -281,7 +281,7 @@ class MainFrame(wx.Frame):
             self.task_button.SetLabel("End Task")
             # self.hardware_button.Enable(False)
             if self.task == "vowel_space":
-                self.msgq.put("vowel_space")
+                self.msgq.put(Msg.VOWEL_SPACE)
                 trial_info = self.resultsq.get()
                 trial, syllable, finish = trial_info.split(",")
                 trial = int(trial)
@@ -305,7 +305,7 @@ class MainFrame(wx.Frame):
             self.task_button.SetLabel("Start Task")
             self.hardware_button.Enable(True)
             self.trial_panel.hide()
-            self.msgq.put("end_stimulus")
+            self.msgq.put(Msg.END_TASK)
             self.labjack_scan_rate = self.lj.stop_labjack()
 
             self.finish.value = 0
@@ -317,7 +317,7 @@ class MainFrame(wx.Frame):
             self.end_time = str(f"{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}Z")
             self.end_time_utc = str(f"{datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')}Z")
             self.add_metadata()
-            self.msgq.put("reset_task")
+            self.msgq.put(Msg.RESET_TASK)
             self.labjack_timer.Start(200)
             self.rest_timer.Stop()
 
@@ -348,12 +348,12 @@ class MainFrame(wx.Frame):
                 self.trial_button.SetLabel("Start Trial")
                 self.trial_panel.switch_panel()
                 data = str(self.trial_panel.get_trials())
-                self.msgq.put("update_data")
+                self.msgq.put(Msg.UPDATE_DATA)
                 self.msgq.put(data)
                 logger.debug("verbal_ fluency first panel")
                 return
             try:
-                self.msgq.put("update_data")
+                self.msgq.put(Msg.UPDATE_DATA)
 
                 data = str(self.trial_panel.get_result())
                 self.msgq.put(data)
@@ -398,10 +398,10 @@ class MainFrame(wx.Frame):
             logger.debug("ending entire trial")
 
     def next_trial(self, event):
-        self.msgq.put("update_data")
+        self.msgq.put(Msg.UPDATE_DATA)
         str(self.trial_panel.get_result())
-        self.msgq.put("False")
-        self.msgq.put("vowel_space")
+        self.msgq.put("False")  ## ??
+        self.msgq.put(Msg.VOWEL_SPACE)
         trial_info = self.resultsq.get()
         trial, syllable, finish = trial_info.split(",")
         self.trial_button.SetLabel("Begin Trial")
@@ -448,7 +448,7 @@ class MainFrame(wx.Frame):
                 result = ""
             else:
                 result = self.trial_panel.get_instruction(self.count)
-            self.msgq.put("play_instructions")
+            self.msgq.put(Msg.PLAY_INSTRUCTIONS)
             self.msgq.put(result)
             self.video_status.value = VideoStatus.PLAY.value
             self.trial_panel.start_video()
@@ -513,7 +513,7 @@ class MainFrame(wx.Frame):
                 self.hardware_test_panel.Show()
                 if not self.task_active:
                     is_success = self.lj.start_labjack()
-                self.msgq.put("hardware_test")
+                self.msgq.put(Msg.HARDWARE_TEST)
                 if not is_success:
                     logger.error("Error loading labjack_stream")
                 else:
@@ -567,7 +567,7 @@ class MainFrame(wx.Frame):
         if self.hardware_button.GetValue():
             self.hardware_test = True
             self.hardware_test_panel.Show()
-            self.msgq.put("hardware_test")
+            self.msgq.put(Msg.HARDWARE_TEST)
             if not self.task_active:
                 is_success = self.lj.start_labjack()
 
@@ -762,7 +762,7 @@ class MainFrame(wx.Frame):
         """
         logger.info("Close event called")
         try:
-            self.msgq.put("close")
+            self.msgq.put(Msg.CLOSE_WINDOW)
             self.thread.join()
         except:
             logger.debug("no current stimulus thread")
@@ -903,7 +903,7 @@ class MainFrame(wx.Frame):
         self.user_cfg = file_utils.read_config("userdata.yaml")
         self.task_cfg = read_config("taskconfig.yaml")
         self.task = launch_args["task"].strip()
-        self.msgq.put("update_task")
+        self.msgq.put(Msg.UPDATE_TASK)
         self.msgq.put(launch_args["task"].strip())
         self.launch_args = launch_args
         args = {}

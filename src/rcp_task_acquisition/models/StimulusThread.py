@@ -25,12 +25,12 @@ from rcp_task_acquisition.utils.logger import get_logger
 logger = get_logger("./models/StimulusThread")
 
 
-class Msg(Enum):
+class Msg(str, Enum):
     INITIALIZE = "init_stimulus"
     UPDATE_TASK = "update_task"
     RUN_TASK = "run_stimulus"
     END_TASK = "end_stimulus"
-    ADD_INSTRUCTIONS = "create_instructions"
+    ADD_INSTRUCTIONS = "create_instructions"  # unused
     PLAY_INSTRUCTIONS = "play_instructions"
     UPDATE_DATA = "update_data"
     RESET_TASK = "reset_task"
@@ -84,15 +84,15 @@ class StimulusThread(Process):
             except Empty:
                 continue
             try:
-                if msg == Msg.INITIALIZE.value:
+                if msg == Msg.INITIALIZE:
                     self.params = {}
                     self.init_stimuli()
                 elif msg == Msg.SEND_METADATA:
                     self.send_metadata()
-                elif msg == Msg.UPDATE_TASK.value:
+                elif msg == Msg.UPDATE_TASK:
                     msg = self.msgq.get()
                     self.task = msg
-                elif msg == Msg.RUN_TASK.value:
+                elif msg == Msg.RUN_TASK:
                     self.shared.value = 0
                     # Main loop for presenting stimuli
                     tStart = time.time()
@@ -117,18 +117,17 @@ class StimulusThread(Process):
                         self.finish.value = 1
                     else:
                         self.finish.value = 0
-                elif msg == Msg.END_TASK.value:
+                elif msg == Msg.END_TASK:
                     self.end_stimulus()
-                elif Msg.PLAY_INSTRUCTIONS.value in msg:
+                elif msg == Msg.PLAY_INSTRUCTIONS:
                     msg = self.msgq.get()
-
                     logger.debug(msg)
                     self.play_video(msg)
-                elif Msg.ADD_INSTRUCTIONS.value in msg:
+                elif msg == Msg.ADD_INSTRUCTIONS:
                     msg = self.msgq.get()
                     self.setup_videos(msg)
                     # self.setup_videos(video_filename_dict)
-                elif Msg.HARDWARE_TEST.value in msg:
+                elif msg == Msg.HARDWARE_TEST:
                     base_vars = {
                         "display": self.window,
                         "frame": self.frame,
@@ -138,7 +137,7 @@ class StimulusThread(Process):
                         "finish": self.finish,
                     }
                     HardwareTest(base_vars).present()
-                elif Msg.UPDATE_DATA.value in msg:
+                elif msg == Msg.UPDATE_DATA:
                     msgq_data = self.msgq.get()
                     logger.debug(f"stim: {msgq_data}")
                     try:
@@ -151,13 +150,13 @@ class StimulusThread(Process):
                         trial_data = msgq_data
                     # trial_data = trial_data.replace("(", "")
                     self.stimulus.update_data(trial_data)
-                elif Msg.RESET_TASK.value in msg:
+                elif msg == Msg.RESET_TASK:
                     self.stimulus.reset_task()
-                elif Msg.VOWEL_SPACE.value in msg:
+                elif msg == Msg.VOWEL_SPACE:
                     results = self.stimulus.get_trial()
                     logger.debug(results)
                     self.resultsq.put(results)
-                elif Msg.CLOSE_WINDOW.value in msg:
+                elif msg == Msg.CLOSE_WINDOW:
                     self.close_window()
             except SystemExit:
                 logger.debug("interrupted stimulus")
