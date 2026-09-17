@@ -22,7 +22,7 @@ from rcp_task_acquisition.models.CameraFrontend import Camera
 from rcp_task_acquisition.models.Crop import Crop
 from rcp_task_acquisition.models.LabjackFrontend import LabjackFrontend
 from rcp_task_acquisition.models.SerialDevice import SerialDevice
-from rcp_task_acquisition.models.StimulusThread import StimulusThread
+from rcp_task_acquisition.models.StimulusThread import StimulusThread, Msg
 from rcp_task_acquisition.models.Warnings import WarningHandler, WarnCat
 from rcp_task_acquisition.panels.ControlsPanel import ControlsPanel
 from rcp_task_acquisition.panels.GraphPanel import GraphPanel
@@ -366,7 +366,9 @@ class MainFrame(wx.Frame):
                 event, self.base_dir, self.sess_dir, self.path_base, self.count
             )
             self.liveTimer.Start(150)
-            self.msgq.put("run_stimulus")
+            self.msgq.put(Msg.RUN_TASK)
+            self.msgq.put(Msg.SEND_METADATA)
+            self.add_metadata()
 
         else:
             logger.debug("stopping episode")

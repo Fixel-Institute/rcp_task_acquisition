@@ -37,6 +37,7 @@ class Msg(Enum):
     HARDWARE_TEST = "hardware_test"
     CLOSE_WINDOW = "close"
     VOWEL_SPACE = "vowel_space"
+    SEND_METADATA = "send_metadata"
 
 
 class StimulusThread(Process):
@@ -86,6 +87,8 @@ class StimulusThread(Process):
                 if msg == Msg.INITIALIZE.value:
                     self.params = {}
                     self.init_stimuli()
+                elif msg == Msg.SEND_METADATA:
+                    self.send_metadata()
                 elif msg == Msg.UPDATE_TASK.value:
                     msg = self.msgq.get()
                     self.task = msg
@@ -201,12 +204,14 @@ class StimulusThread(Process):
 
     def end_stimulus(self):
         self.window.idle(time_list=[])
-        if hasattr(self.stimulus, "saveMetadata"):
-            # logger.debug(f"{self.stimulusConfig}, {self.task}, {self.stimulus}")
-            results = self.stimulus.saveMetadata(self.stimulusConfig[self.task], None)
-            json_str = json.dumps(results)
-            logger.debug(f"jsonstr: {json_str}")
-            self.resultsq.put(json_str)
+        self.send_metadata()
+
+    def send_metadata(self):
+        # logger.debug(f"{self.stimulusConfig}, {self.task}, {self.stimulus}")
+        results = self.stimulus.saveMetadata(self.stimulusConfig[self.task], None)
+        json_str = json.dumps(results)
+        logger.debug(f"jsonstr: {json_str}")
+        self.resultsq.put(json_str)
 
     def close_window(self):
         self.alive = False
