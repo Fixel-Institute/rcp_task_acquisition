@@ -358,14 +358,18 @@ class LaunchPanel:
         return self.dialog.Show()
 
     def get_metadata(self) -> None:
-        participant_index = self.participant_id.GetSelection()
-
+        participant_index = self.participant_id.GetValue()  # .GetSelection()
+        print("praticipant index", participant_index)
         if participant_index == -1:
             participant_id = ""
         else:
-            participant_id = self.participant_tuple[participant_index][0]
+            participant_id = (
+                participant_index.split(",", 1)[0].replace("Id:", "").strip()
+            )  # self.current_list[participant_index][0]
         self.protocol_button.Enable(False)
         self.hardware_panel.Hide()
+        logger.debug(f"participant panel: {self.participant_tuple}")
+        print(f"participant panel: {self.participant_tuple}")
         self.dialog.SetSize(self.regular_size)
         self.panel.SetupScrolling(
             scroll_x=False, scroll_y=False, scrollToTop=False, scrollIntoView=False
