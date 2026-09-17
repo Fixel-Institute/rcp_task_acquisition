@@ -158,8 +158,13 @@ class StimulusThread(Process):
                     self.close_window()
             except SystemExit:
                 logger.debug("interrupted stimulus")
-                self.window.idle(time_list=[])
                 self.end_stimulus()
+                # don't see which part of the code is supposed to raise SystemExit to reach here
+                # also SystemExit is meant to exit the process. but this is continuing the main loop...
+            except Exception as err:
+                logger.exception("Error during main loop: %s", err)
+                self.end_stimulus()
+                break
 
     def init_stimuli(self):
         base_vars = {
