@@ -11,7 +11,7 @@ Code for the RCP task cart. More information to come...
 This is the outline for installing this program with the expected hardware configurations. There may be unexpected errors in the system if your hardware is different.
 
 ### Installing Windows
-1. Install Windows 11 per University standards. It will be helpful to have some level of admin acess to install programs.
+1. Install Windows 11 per University standards. It will be helpful to have some level of admin access to install programs.
     - If creating a local account instead of a university account DO NOT connect to wifi during installation. If you accidentally connect, you can press either Shift+Fn+F10 or press Shift+F10 and type `start ms-cxh:localonly`.
 2. Adjust settings
     - Set Main Display:
@@ -40,35 +40,45 @@ This is the outline for installing this program with the expected hardware confi
         - Always accept any license during installation when prompted
         - Use all default settings unless stated here
     - NVIDIA Graphics Driver (580.88-quadro-rtx-desktop-notebook-win10-win11-64bit-international-dch-whql.exe)
-    - Spinnaker SDK (SpinnakerSDK_FULL_4.3.189_x64.exe)
+    - Spinnaker SDK (4.4.0.246)
+        - Download requires create account
         - Deselect **Agree to allow analytics..** and select **next**
         - Select **Application Development** and select **next**
         - When finished the **Adapter Config Utility** menu may pop up. You can close this without modifying for right now, this is for GigE cameras
     - Anaconda (Anaconda3-2025.12-2-Windows-x86_64.exe)
     - Labjack (LabJack_2025-05-07.exe)
     - Git (Git-2.53.0.2-64-bit.exe)
+    - Git-LFS (https://github.com/git-lfs/git-lfs/releases)
+      - current: https://github.com/git-lfs/git-lfs/releases/download/v3.8.0/git-lfs-windows-v3.8.0.exe
     - VLC (vlc-3.0.23-win64.exe)
 5. Once all apps are installed, restart computer. You can now unplug the flash drive
 
 ### Installing Code
 1. In the search bar at the bottom of the screen, search for and select **Anaconda Prompt**
 2. The code can be installed in any part of computer but for following this installation, it will be installed in **Documents**
-    - `cd Documents`
-    - `conda create -n rcp-task-acquisition python=3.10`
-    - `conda activate rcp-task-acquisition` - Note: You must run this line each time before launching the program from the command line.
-    - `git clone https://github.com/mmt-rcp/rcp_task_acquisition.git`
-    - `cd rcp_task_acquisition`
-    - `pip install -e .`  # for regular use
+    - `cd Documents`  # Always
+    - `conda create -n rcp-task-acquisition python=3.12`  # only first time
+    - `conda activate rcp-task-acquisition` # Always
+    - `conda install -c conda-forge pywinhook`  # only first time
+      // other possibility is to get Visual C++ Build tools
+    - `git lfs install`  # only first time, this enables git LFS hooks
+    - `git clone https://github.com/mmt-rcp/rcp_task_acquisition.git`  # only first time
+    - `cd rcp_task_acquisition`  # Always
+    - `pip install -e . --find-links ./library`  # first time and when dependencies change
+      # NB: using --find-linds to allow search for needed wheels within the current library subdir
       - **Only for DEV**:
-        - Use `pip install -e .[dev]` to get all dev tools included
+        - Use `pip install -e .[dev] --find-links ./library` to get all dev tools included
         - `git config blame.ignoreRevsFile .git-blame-ignore-revs`  # only once/first time
         - `pre-commit install`  # only once/first time
-    - `create-shortcut`
+   Temporary fix of psychopy -> vlc dependency:
+    - `python ./library/patch_python_vlc.py`  # after python-vlc is installed
+   Finally:
+    - `create-shortcut`  # when shortcuts change
 3. The final step in the terminal (`create-shortcut`) creates an icon on the Desktop which can be selected to run the code.
     - Alternatively, to run the program from command line, use `rcp-task-acquisition` (making sure you are in the conda environment)
 
 ### First Run Setup
-Note- in order to correctly run the program, all hardware must be installed
+Note: in order to correctly run the program, all hardware must be installed
 1. In **Select Protocol** panel select **Update Hardware**
 2. Under **In Use** select each camera, assign their correct serial numbers, and select the primary/master camera
 3. Select **Save Hardware Settings** and select **Close Hardware Panel**
@@ -180,3 +190,4 @@ The code should come with the defaults in labjack already specified, however if 
    - 1
    graph: ''
    ```
+

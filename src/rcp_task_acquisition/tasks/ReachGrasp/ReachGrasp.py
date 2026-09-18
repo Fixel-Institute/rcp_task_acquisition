@@ -18,7 +18,6 @@ class ReachGrasp(bases.StimulusBase):
     def present(self):
         self.timer.value = 0
         self.trial_count += 1
-        self.trial
         self.hand_dict[f"trial_{self.trial_count}"] = self.hand
         self.grasp_dict[f"trial_{self.trial_count}"] = self.grasp_object
         # PARAMS["hand_used"][f"trial_{self.trial_count}"] = self.hand

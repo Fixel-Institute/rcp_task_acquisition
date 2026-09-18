@@ -4,7 +4,7 @@
 import numpy as np
 from psychopy import core, event, visual
 
-from . import bases
+from rcp_task_acquisition.tasks import bases
 
 # Parameters
 nslow = 3

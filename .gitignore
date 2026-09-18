@@ -2,6 +2,9 @@
 config_files/
 database/
 
+# IDEs:
+/.idea/
+
 # Distribution / packaging
 .Python
 build/
