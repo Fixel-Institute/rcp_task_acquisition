@@ -644,16 +644,17 @@ class MainFrame(wx.Frame):
         self.meta["actual_scan_rate"] = self.labjack_scan_rate
 
         for ndx, s in enumerate(self.cams.cam_dict):
-            camset = {
-                "serial": self.cam_cfg[self.cams.cam_dict[s].name]["serial"],
-                "ismaster": self.cam_cfg[self.cams.cam_dict[s].name]["ismaster"],
-                "crop": self.cam_cfg[self.cams.cam_dict[s].name]["crop"],
-                "bin": self.cam_cfg[self.cams.cam_dict[s].name]["bin"],
-                "nickname": self.cams.cam_dict[s].name,
-                "actual_framerate": self.cams.cam_dict[s].actual_framerate,
-                "actual_exposure": self.cams.cam_dict[s].exposure,
+            cam_d = self.cams.cam_dict[s]
+            cfg = self.cam_cfg[cam_d.name]
+            cameras[cam_d.name] = {
+                "serial": cfg["serial"],
+                "ismaster": cfg["ismaster"],
+                "crop": cfg["crop"],
+                "bin": cfg["bin"],
+                "nickname": cam_d.name,
+                "actual_framerate": cam_d.actual_framerate,
+                "actual_exposure": cam_d.exposure,
             }
-            cameras[self.cams.cam_dict[s].name] = camset
         self.meta["cameras"] = cameras
         self.meta["unitRef"] = self.user_cfg["unitRef"]
         self.meta["Collection"] = "info"
