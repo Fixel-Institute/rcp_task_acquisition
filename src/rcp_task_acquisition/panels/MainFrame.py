@@ -14,6 +14,7 @@ import sys
 import time
 from multiprocessing import Event, Queue, Value
 from pathlib import Path
+from ruamel.yaml import YAML
 
 import wx
 import wx.lib.dialogs
@@ -22,7 +23,7 @@ from rcp_task_acquisition.models.CameraFrontend import Camera
 from rcp_task_acquisition.models.Crop import Crop
 from rcp_task_acquisition.models.LabjackFrontend import LabjackFrontend
 from rcp_task_acquisition.models.SerialDevice import SerialDevice
-from rcp_task_acquisition.models.StimulusThread import StimulusThread
+from rcp_task_acquisition.models.StimulusThread import StimulusThread, Msg
 from rcp_task_acquisition.models.Warnings import WarningHandler, WarnCat
 from rcp_task_acquisition.panels.ControlsPanel import ControlsPanel
 from rcp_task_acquisition.panels.GraphPanel import GraphPanel
@@ -263,7 +264,7 @@ class MainFrame(wx.Frame):
             self.start_time_utc = str(f"{datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')}Z")
             self.count = 0
             self.finish.value = 0
-            self.msgq.put("init_stimulus")
+            self.msgq.put(Msg.INITIALIZE)
             self.create_file()
             is_success = self.lj.start_labjack()
             if not is_success:
@@ -281,7 +282,7 @@ class MainFrame(wx.Frame):
             self.task_button.SetLabel("End Task")
             # self.hardware_button.Enable(False)
             if self.task == "vowel_space":
-                self.msgq.put("vowel_space")
+                self.msgq.put(Msg.VOWEL_SPACE)
                 trial_info = self.resultsq.get()
                 trial, syllable, finish = trial_info.split(",")
                 trial = int(trial)
@@ -290,6 +291,7 @@ class MainFrame(wx.Frame):
                 self.trial_panel.update_trial(trial, syllable)
             self.trial_panel.start_new_trial()
             self.trial_panel.show()
+            self.create_metadata()
             # if not self.rest_timer.IsRunning():
             #     self.rest_timer.Start(1000)
         else:
@@ -305,7 +307,7 @@ class MainFrame(wx.Frame):
             self.task_button.SetLabel("Start Task")
             self.hardware_button.Enable(True)
             self.trial_panel.hide()
-            self.msgq.put("end_stimulus")
+            self.msgq.put(Msg.END_TASK)
             self.labjack_scan_rate = self.lj.stop_labjack()
 
             self.finish.value = 0
@@ -316,8 +318,8 @@ class MainFrame(wx.Frame):
             self.labjack_stream_button.Enable(True)
             self.end_time = str(f"{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}Z")
             self.end_time_utc = str(f"{datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')}Z")
-            self.add_metadata()
-            self.msgq.put("reset_task")
+            self.finalize_metadata()
+            self.msgq.put(Msg.RESET_TASK)
             self.labjack_timer.Start(200)
             self.rest_timer.Stop()
 
@@ -348,12 +350,12 @@ class MainFrame(wx.Frame):
                 self.trial_button.SetLabel("Start Trial")
                 self.trial_panel.switch_panel()
                 data = str(self.trial_panel.get_trials())
-                self.msgq.put("update_data")
+                self.msgq.put(Msg.UPDATE_DATA)
                 self.msgq.put(data)
                 logger.debug("verbal_ fluency first panel")
                 return
             try:
-                self.msgq.put("update_data")
+                self.msgq.put(Msg.UPDATE_DATA)
 
                 data = str(self.trial_panel.get_result())
                 self.msgq.put(data)
@@ -366,8 +368,7 @@ class MainFrame(wx.Frame):
                 event, self.base_dir, self.sess_dir, self.path_base, self.count
             )
             self.liveTimer.Start(150)
-            self.msgq.put("run_stimulus")
-
+            self.msgq.put(Msg.RUN_TASK)
         else:
             logger.debug("stopping episode")
             self.finish.value = 2
@@ -386,6 +387,8 @@ class MainFrame(wx.Frame):
                 self.liveTimer.Stop()
                 # self.rest_timer.Stop()
                 self.trial_panel.next_button.Enable(True)
+                self.msgq.put(Msg.SEND_METADATA)
+                self.update_task_metadata()
                 return
             self.participant_monitor.update_screen()
             self.cams.stop_recording(event)
@@ -393,13 +396,17 @@ class MainFrame(wx.Frame):
             self.trial_panel.reset(self.count)
             self.trial_panel.end_trial()
             self.liveTimer.Stop()
+
+            self.msgq.put(Msg.SEND_METADATA)
+            self.update_task_metadata()
+
             logger.debug("ending entire trial")
 
     def next_trial(self, event):
-        self.msgq.put("update_data")
+        self.msgq.put(Msg.UPDATE_DATA)
         str(self.trial_panel.get_result())
-        self.msgq.put("False")
-        self.msgq.put("vowel_space")
+        self.msgq.put("False")  ## ??
+        self.msgq.put(Msg.VOWEL_SPACE)
         trial_info = self.resultsq.get()
         trial, syllable, finish = trial_info.split(",")
         self.trial_button.SetLabel("Begin Trial")
@@ -439,6 +446,8 @@ class MainFrame(wx.Frame):
             self.trial_panel.update_values()
             self.trial_button.SetLabel("Start Trial")
             self.rest_timer.Stop()
+            self.msgq.put(Msg.SEND_METADATA)
+            self.update_task_metadata()
 
     def play_instructions(self, event):
         if event.GetEventObject().GetValue():
@@ -446,7 +455,7 @@ class MainFrame(wx.Frame):
                 result = ""
             else:
                 result = self.trial_panel.get_instruction(self.count)
-            self.msgq.put("play_instructions")
+            self.msgq.put(Msg.PLAY_INSTRUCTIONS)
             self.msgq.put(result)
             self.video_status.value = VideoStatus.PLAY.value
             self.trial_panel.start_video()
@@ -511,7 +520,7 @@ class MainFrame(wx.Frame):
                 self.hardware_test_panel.Show()
                 if not self.task_active:
                     is_success = self.lj.start_labjack()
-                self.msgq.put("hardware_test")
+                self.msgq.put(Msg.HARDWARE_TEST)
                 if not is_success:
                     logger.error("Error loading labjack_stream")
                 else:
@@ -565,7 +574,7 @@ class MainFrame(wx.Frame):
         if self.hardware_button.GetValue():
             self.hardware_test = True
             self.hardware_test_panel.Show()
-            self.msgq.put("hardware_test")
+            self.msgq.put(Msg.HARDWARE_TEST)
             if not self.task_active:
                 is_success = self.lj.start_labjack()
 
@@ -619,73 +628,100 @@ class MainFrame(wx.Frame):
             self.update_settings.Enable(True)
             self.task_button.Enable(True)
 
-    def add_metadata(self):
-        metadata = MetadataPanel()
-        deidentify = DateDeidentification(self.user_cfg)
-        params = None
-        try:
-            params = json.loads(self.resultsq.get())
-        except:
-            pass
-        if metadata.show() == wx.ID_OK:
-            self.meta, _ruamelFile = file_utils.metadata_template()
-            date_string = datetime.datetime.utcnow().strftime("%Y%m%d")
-            cameras = {}
-            self.meta["version"] = str(__version__)
-            self.meta["actual_scan_rate"] = self.labjack_scan_rate
+    def create_metadata(self):
+        self.meta, _ruamelFile = file_utils.metadata_template()
 
-            for ndx, s in enumerate(self.cams.cam_dict):
-                # framerate, exposure = self.cam[ndx].get_actual_settings()
-                camset = {
-                    "serial": self.cam_cfg[self.cams.cam_dict[s].name]["serial"],
-                    "ismaster": self.cam_cfg[self.cams.cam_dict[s].name]["ismaster"],
-                    "crop": self.cam_cfg[self.cams.cam_dict[s].name]["crop"],
-                    # 'exposure': self.cam_cfg[s]['exposure'],
-                    # 'framerate': self.cam_cfg[s]['framerate'],
-                    "bin": self.cam_cfg[self.cams.cam_dict[s].name]["bin"],
-                    "nickname": self.cams.cam_dict[s].name,
-                    "actual_framerate": self.cams.cam_dict[s].actual_framerate,
-                    "actual_exposure": self.cams.cam_dict[s].exposure,
-                }
-                cameras[self.cams.cam_dict[s].name] = camset
-            self.meta["cameras"] = cameras
-            self.meta["unitRef"] = self.user_cfg["unitRef"]
-            self.meta["Collection"] = "info"
-            self.meta["hardware"] = self.user_cfg["hardware"]
-            # self.meta['screen_settings'] = self.user_cfg['screen_settings']
-            meta_name = "{}_{}_{}_metadata.yaml".format(
-                date_string,
-                self.user_cfg["unitRef"],
-                self.sess_string,
-            )
-            self.metapath = os.path.join(self.sess_dir, meta_name)
+        date_string = datetime.datetime.utcnow().strftime("%Y%m%d")
+        # self.meta['screen_settings'] = self.user_cfg['screen_settings']
+        meta_name = "{}_{}_{}_metadata.yaml".format(
+            date_string,
+            self.user_cfg["unitRef"],
+            self.sess_string,
+        )
+        self.metapath = os.path.join(self.sess_dir, meta_name)
+        cameras = {}
+        self.meta["version"] = str(__version__)
+        self.meta["actual_scan_rate"] = self.labjack_scan_rate
 
-            self.meta["StartTime_Local"] = self.start_time
-            self.meta["StartTime_UTC"] = self.start_time_utc
-            self.meta["administrator_id"] = self.launch_args["administrator_id"]
-            self.meta["participant_id"] = self.launch_args["participant_id"]
-            self.meta["participant_details"] = self.launch_args["participant_detail"]
+        for ndx, s in enumerate(self.cams.cam_dict):
+            cam_d = self.cams.cam_dict[s]
+            cfg = self.cam_cfg[cam_d.name]
+            cameras[cam_d.name] = {
+                "serial": cfg["serial"],
+                "ismaster": cfg["ismaster"],
+                "crop": cfg["crop"],
+                "bin": cfg["bin"],
+                "nickname": cam_d.name,
+                "actual_framerate": cam_d.actual_framerate,
+                "actual_exposure": cam_d.exposure,
+            }
+        self.meta["cameras"] = cameras
+        self.meta["unitRef"] = self.user_cfg["unitRef"]
+        self.meta["Collection"] = "info"
+        self.meta["hardware"] = self.user_cfg["hardware"]
 
-            self.meta["task"] = self.task
-            self.meta["task_settings"] = self.task_cfg[self.task]["settings"]
+        self.meta["StartTime_Local"] = self.start_time
+        self.meta["StartTime_UTC"] = self.start_time_utc
+        self.meta["administrator_id"] = self.launch_args["administrator_id"]
+        self.meta["participant_id"] = self.launch_args["participant_id"]
+        self.meta["participant_details"] = self.launch_args["participant_detail"]
 
-            self.meta["trial_data"] = params
-            if self.task == "verbal_fluency":
-                self.meta["trial_data"]["categories"] = self.trial_panel.add_metadata()
-            if self.task == "sara":
-                self.meta["trial_data"] = self.trial_panel.add_metadata()
+        self.meta["task"] = self.task
+        self.meta["task_settings"] = self.task_cfg[self.task]["settings"]
 
-            for data in metadata.data:
-                self.meta[data] = metadata.data[data]
+        # if self.task == "verbal_fluency":
+        #     self.meta["trial_data"]["categories"] = self.trial_panel.add_metadata()
+        # if self.task == "sara":
+        #     self.meta["trial_data"] = self.trial_panel.add_metadata()
+
+        file_utils.write_metadata(self.meta, self.metapath)
+
+    def finalize_metadata(self):
+        metadata_notes = MetadataPanel()
+
+        if metadata_notes.show() == wx.ID_OK:
+            yaml = YAML()
+            with open(Path(self.metapath), "r", encoding="utf-8") as file:
+                metadata = yaml.load(file)
+
+            metadata["actual_scan_rate"] = self.labjack_scan_rate
+
+            for data in metadata_notes.data:
+                metadata[data] = metadata_notes.data[data]
                 logger.debug(data)
-            self.meta["EndTime_Local"] = self.end_time
-            self.meta["EndTime_UTC"] = self.end_time_utc
-            file_utils.write_metadata(self.meta, self.metapath)
+            metadata["EndTime_Local"] = self.end_time
+            metadata["EndTime_UTC"] = self.end_time_utc
+            if self.task == "sara":
+                metadata["trial_data"] = self.trial_panel.add_metadata()
+
+            with open(Path(self.metapath), "w", encoding="utf-8") as f:
+                yaml.dump(metadata, f)
+
+            deidentify = DateDeidentification(self.user_cfg)
             deidentify.deidentify_one_session(self.sess_dir)
         else:
             # remove entire directory
             logger.debug(self.sess_dir)
             shutil.rmtree(self.sess_dir)
+
+    def update_task_metadata(self):
+        yaml = YAML()
+        params = None
+        try:
+            params = json.loads(self.resultsq.get())
+        except Exception as e:
+            logger.error(f"update task metadata error: {e}")
+        with open(Path(self.metapath), "r", encoding="utf-8") as file:
+            metadata = yaml.load(file)
+
+        metadata["trial_data"] = params
+        if self.task == "verbal_fluency":
+            metadata["trial_data"]["categories"] = self.trial_panel.add_metadata()
+        if self.task == "sara":
+            metadata["trial_data"] = self.trial_panel.add_metadata()
+
+        with open(Path(self.metapath), "w", encoding="utf-8") as f:
+            yaml.dump(metadata, f)
 
     def create_file(self):
         date_string = datetime.datetime.now().strftime("%Y%m%d")
@@ -760,7 +796,7 @@ class MainFrame(wx.Frame):
         """
         logger.info("Close event called")
         try:
-            self.msgq.put("close")
+            self.msgq.put(Msg.CLOSE_WINDOW)
             self.thread.join()
         except:
             logger.debug("no current stimulus thread")
@@ -901,7 +937,7 @@ class MainFrame(wx.Frame):
         self.user_cfg = file_utils.read_config("userdata.yaml")
         self.task_cfg = read_config("taskconfig.yaml")
         self.task = launch_args["task"].strip()
-        self.msgq.put("update_task")
+        self.msgq.put(Msg.UPDATE_TASK)
         self.msgq.put(launch_args["task"].strip())
         self.launch_args = launch_args
         args = {}
