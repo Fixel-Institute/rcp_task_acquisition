@@ -2,7 +2,7 @@ from enum import Enum
 
 import wx
 
-from rcp_task_acquisition.models.Warnings import Warning
+from rcp_task_acquisition.models.Warnings import WarningHandler
 from rcp_task_acquisition.panels.LaunchPanel import LaunchPanel
 from rcp_task_acquisition.panels.MainFrame import MainFrame
 from rcp_task_acquisition.utils.logger import get_logger
@@ -20,7 +20,7 @@ class SwitchPanel:
         self.active_panel = True
         self.launch_panel = LaunchPanel()
         self.task_frame = MainFrame()
-        self.warning = Warning()
+        self.warning = WarningHandler()
 
         self.disable_timer = wx.Timer(self.launch_panel.panel, wx.ID_ANY)
 

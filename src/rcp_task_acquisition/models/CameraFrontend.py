@@ -10,7 +10,7 @@ import numpy as np
 
 import rcp_task_acquisition.models.CameraProcess as spin
 from rcp_task_acquisition.models.Crop import Crop
-from rcp_task_acquisition.models.Warnings import Warning
+from rcp_task_acquisition.models.Warnings import WarningHandler, WarnCat
 from rcp_task_acquisition.utils import file_utils
 from rcp_task_acquisition.utils.constants import CAM_MAX_HEIGHT, CAM_MAX_WIDTH, DOWNSAMPLE_VAL
 from rcp_task_acquisition.utils.logger import get_logger
@@ -65,7 +65,7 @@ class Camera:
         self.image_panel = image_panel
         self.contrast_test = contrast_test
         self.focus_test = focus_test
-        self.warning = Warning()
+        self.warning = WarningHandler()
         self.unconnected = []
         self.camStrList = []
         self.cam_settings = []
@@ -296,8 +296,7 @@ class Camera:
             )
             spaceneeded += recSize
         if spaceneeded > freespace:
-            self.warning.update_error("space")
-            self.warning.display()
+            self.warning.update_error(WarnCat.SPACE).display()
 
         logger.info(f"Total estimated run time: {totTime}")
         for ndx, s in enumerate(self.cam_dict):
@@ -397,8 +396,7 @@ class Camera:
                 error += "\n"
             error += "\n" + "\n".join(error_message)
         if error != "":
-            self.warning.update_error("frames", info=error)
-            self.warning.display()
+            self.warning.update_error(WarnCat.FRAMES, info=error).display()
 
     def updateSettings(self, event):
         self.user_cfg = file_utils.read_config("userdata.yaml")

@@ -20,7 +20,7 @@ logger = get_logger("./tasks/bases.py")
 
 
 class StimulusBase:
-    def __init__(self, display, frame, timer, video_lock, video_status=None, finish=None):
+    def __init__(self, display, frame, timer, video_lock, *, video_status=None, finish=None):
         self.display = display
         self.frame = frame
         self.prev_flip_time = None
