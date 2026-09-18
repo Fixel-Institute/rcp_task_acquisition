@@ -203,7 +203,7 @@ class StimulusThread(Process):
 
     def end_stimulus(self):
         self.window.idle(time_list=[])
-        self.send_metadata()
+        # self.send_metadata()
 
     def send_metadata(self):
         # logger.debug(f"{self.stimulusConfig}, {self.task}, {self.stimulus}")
