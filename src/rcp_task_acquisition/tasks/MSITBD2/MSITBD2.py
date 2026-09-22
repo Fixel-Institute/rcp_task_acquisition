@@ -76,6 +76,7 @@ class MSITBD2(bases.StimulusBase):
             })
             
     def present(self, test=True):
+        self.present_prep()
         self.play_tone()
         self.display.switch_patch()
         self.display.draw_patch()

@@ -396,7 +396,6 @@ class MainFrame(wx.Frame):
                 return
             try:
                 self.msgq.put(Msg.UPDATE_DATA)
-
                 data = str(self.trial_panel.get_result())
                 self.msgq.put(data)
             except:

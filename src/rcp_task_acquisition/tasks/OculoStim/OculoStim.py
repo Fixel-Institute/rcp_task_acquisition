@@ -112,6 +112,7 @@ class OculoStim(bases.StimulusBase):
         self.runner = ExperimentRunner(self.display, self.presenter, None, cfg)
         
     def present(self, test=True):
+        self.present_prep()
         self.play_tone()
         #switch the photodiode patch to be "On" while the photo is being shown
         self.display.switch_patch()
