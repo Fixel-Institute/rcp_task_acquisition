@@ -1,29 +1,49 @@
 [build-system]
-requires = ["setuptools>=61.0",
-		 "setuptools-scm>= 9.2.2, < 10"]
+requires = [
+	"setuptools >= 61.0",
+	"setuptools-scm >= 9.2.2, < 10",
+]
 build-backend = "setuptools.build_meta"
 
 
 [project]
 name = "rcp-task-acquisition"
-dynamic = ["version", "dependencies"]
+dynamic = ["version"]
 readme = "README.md"
-requires-python = ">=3.10, <3.11"
+requires-python = ">= 3.10, < 3.13, != 3.11"
+
+dependencies = [
+	"wxpython == 4.2.5 ; platform_system == 'Windows'",  # UI
+		# NB: limiting to <4.3 as current latest(4.3.1) makes laggy cam content refresh in UI
+	"wxpython >= 4.2.5, < 5 ; platform_system != 'Windows'",  # UI
+	"psychopy >= 2026.1, < 2027",  # experiments run
+	"numpy >= 2, < 3 ; python_version >= '3.12'",
+	"numpy >= 1.24, < 2 ; python_version < '3.12'",
+	"ruamel.yaml >= 0.19, < 1",  # yaml files
+	"labjack-ljm >= 1.23, < 2",  # data acquisition
+	"pyshortcuts >= 1.9.9, < 2",
+	"pyaudio >= 0.2.14, < 1",  # audio play/record
+	"mss",  # An ultra fast cross-platform multiple screenshots module in pure python using ctypes.
+	"pywin32 >= 312, < 400 ; platform_system == 'Windows'",  # 312 is available since python 3.10 already.
+	"spinnaker_python >= 4.3, < 4.5",
+	"setuptools-scm >= 9.2.2, < 10",  # normally only necessary for build of project wheel
+]
 
 [project.optional-dependencies]
 dev = [
+	"spyder >= 6.1.3, < 7",  # IDE
 	"ruff >= 0.16, < 1",
 	"pre-commit >= 4.6, < 5",
+	"rcp-task-acquisition[test]",
+]
+test = [
+	"pytest >= 9, < 10",
 ]
 
 [project.scripts]
 rcp-task-acquisition = "rcp_task_acquisition.__main__:run_app"
 create-shortcut = "rcp_task_acquisition.utils.shortcut:create_shortcut"
 deidentify-data = "rcp_task_acquisition.utils.deidentify_dates:run_all_dates"
-
-
-
-[tool.setuptools_scm]
 
 
 [tool.ruff]
@@ -36,5 +56,9 @@ lint.ignore = [
 [tool.ruff.format]
 quote-style = "double"  # or single or preserve. prefer double.
 indent-style = "space"
-line-ending = "cr-lf"
+line-ending = "auto"  # cr-lf
 docstring-code-format = true
+
+[tool.setuptools_scm]
+# section needs to be present, even if empty
+

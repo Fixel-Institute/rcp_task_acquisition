@@ -22,34 +22,37 @@ class NaturalisticSpeech(bases.StimulusBase):
         )
         self.screen_height = 1440
         self.show_image = False
-        
 
     def present(self, test=True):
         # Load and draw the photo being presented
-        
+
         self.timer.value = 0
         if self.show_image:
             if not self.photo:
                 logger.warn("No Photo is selected")
                 return
-    
-            
-            
+
             logger.debug(self.photo)
-            
+
             with Image.open(self.photo) as img:
                 width, height = img.size
                 logger.debug(f"Width: {width}, Height: {height}")
-            new_height = (self.screen_width/width)*height
+            new_height = (self.screen_width / width) * height
             new_width = self.screen_width
             if new_height > self.screen_height:
-                new_width = (self.screen_height/height)*width
+                new_width = (self.screen_height / height) * width
                 new_height = self.screen_height
             logger.debug(f"width: {new_width}, height: {new_height}")
-            stim = visual.ImageStim(self.display, image=self.photo, name=self.photo, size=[new_width, new_height], units='pix')
-        self.trial+=1
+            stim = visual.ImageStim(
+                self.display,
+                image=self.photo,
+                name=self.photo,
+                size=[new_width, new_height],
+                units="pix",
+            )
+        self.trial += 1
         self.photo_dict[f"trial_{self.trial}"] = self.photo
-        
+
         self.play_tone()
         # switch the photodiode patch to be "On" while the photo is being shown
         self.display.switch_patch()

@@ -28,18 +28,19 @@ from rcp_task_acquisition.utils.logger import get_logger
 logger = get_logger("./models/StimulusThread")
 
 
-class Msg(Enum):
+class Msg(str, Enum):
     INITIALIZE = "init_stimulus"
     UPDATE_TASK = "update_task"
     RUN_TASK = "run_stimulus"
     END_TASK = "end_stimulus"
-    ADD_INSTRUCTIONS = "create_instructions"
+    ADD_INSTRUCTIONS = "create_instructions"  # unused
     PLAY_INSTRUCTIONS = "play_instructions"
     UPDATE_DATA = "update_data"
     RESET_TASK = "reset_task"
     HARDWARE_TEST = "hardware_test"
     CLOSE_WINDOW = "close"
     VOWEL_SPACE = "vowel_space"
+    SEND_METADATA = "send_metadata"
 
 
 class StimulusThread(Process):
@@ -88,26 +89,28 @@ class StimulusThread(Process):
             except Empty:
                 continue
             try:
-                if msg.startswith(Msg.INITIALIZE.value):
+                if msg == Msg.INITIALIZE:
                     self.params = {}
                     if len(msg.split("|")) > 1:
                         self.sess_path = msg.split("|")[1]
                     else:
                         self.sess_path = ""
                     self.init_stimuli()
-                elif msg == Msg.UPDATE_TASK.value:
+                elif msg == Msg.SEND_METADATA:
+                    self.send_metadata()
+                elif msg == Msg.UPDATE_TASK:
                     msg = self.msgq.get()
                     self.task = msg
-                elif msg == Msg.RUN_TASK.value:
+                elif msg == Msg.RUN_TASK:
                     self.shared.value = 0
                     # Main loop for presenting stimuli
                     tStart = time.time()
                     logger.info(f"Presenting {self.task}")
 
-                    self.stimulus.present_prep()
-                    results = self.stimulus.saveMetadata(self.stimulusConfig[self.task], None)
-                    json_str = json.dumps(results)
-                    self.resultsq.put(json_str)
+                    #self.stimulus.present_prep()
+                    #results = self.stimulus.saveMetadata(self.stimulusConfig[self.task], None)
+                    #json_str = json.dumps(results)
+                    #self.resultsq.put(json_str)
 
                     if self.shared.value == -1:
                         break
@@ -129,18 +132,17 @@ class StimulusThread(Process):
                         self.finish.value = 1
                     else:
                         self.finish.value = 0
-                elif msg == Msg.END_TASK.value:
+                elif msg == Msg.END_TASK:
                     self.end_stimulus()
-                elif Msg.PLAY_INSTRUCTIONS.value in msg:
+                elif msg == Msg.PLAY_INSTRUCTIONS:
                     msg = self.msgq.get()
-
                     logger.debug(msg)
                     self.play_video(msg)
-                elif Msg.ADD_INSTRUCTIONS.value in msg:
+                elif msg == Msg.ADD_INSTRUCTIONS:
                     msg = self.msgq.get()
                     self.setup_videos(msg)
                     # self.setup_videos(video_filename_dict)
-                elif Msg.HARDWARE_TEST.value in msg:
+                elif msg == Msg.HARDWARE_TEST:
                     base_vars = {
                         "display": self.window,
                         "frame": self.frame,
@@ -150,7 +152,7 @@ class StimulusThread(Process):
                         "finish": self.finish,
                     }
                     HardwareTest(base_vars).present()
-                elif Msg.UPDATE_DATA.value in msg:
+                elif msg == Msg.UPDATE_DATA:
                     msgq_data = self.msgq.get()
                     logger.debug(f"stim: {msgq_data}")
                     try:
@@ -163,19 +165,24 @@ class StimulusThread(Process):
                         trial_data = msgq_data
                     # trial_data = trial_data.replace("(", "")
                     self.stimulus.update_data(trial_data)
-                elif Msg.RESET_TASK.value in msg:
+                elif msg == Msg.RESET_TASK:
                     self.stimulus.reset_task()
-                elif Msg.VOWEL_SPACE.value in msg:
+                elif msg == Msg.VOWEL_SPACE:
                     results = self.stimulus.get_trial()
                     logger.debug(results)
                     self.resultsq.put(results)
-                elif Msg.CLOSE_WINDOW.value in msg:
+                elif msg == Msg.CLOSE_WINDOW:
                     self.close_window()
             except SystemExit:
                 logger.debug("interrupted stimulus")
-                self.window.idle(time_list=[])
                 self.end_stimulus()
-                
+                # don't see which part of the code is supposed to raise SystemExit to reach here
+                # also SystemExit is meant to exit the process. but this is continuing the main loop...
+            except Exception as err:
+                logger.exception("Error during main loop: %s", err)
+                self.end_stimulus()
+                break
+
     def init_stimuli(self):
         base_vars = {
             "display": self.window,
@@ -187,59 +194,42 @@ class StimulusThread(Process):
             "finish": self.finish,
         }
         logger.debug(f"base vars: {base_vars}")
+        base_cls = dict(
+            n_back=N_back,
+            motor_task_finger_taps=BasicTaps,
+            naturalistic_speech=NaturalisticSpeech,
+            sara=Sara,
+            diadochokinesis=Diadochokinesis,
+            verbal_fluency=VerbalFluency,
+            vowel_space=VowelSpace,
+            reach_grasp=ReachGrasp,
+            tone_taps_closed=ToneTapsClosed,
+            verb_generation=VerbGeneration,
+            continuous_recording=ContinuousRecording,
+            oculostim_task=OculoStim,
+            MSITBD2=MSITBD2,
+        ).get(self.task, StimulusBase)
+        #
+        extra_args = []
         if self.task == "n_back":
-            self.stimulus = N_back(base_vars, self.button)
-
-        elif self.task == "motor_task_finger_taps":
-            self.stimulus = BasicTaps(base_vars)
-
-        elif self.task == "naturalistic_speech":
-            self.stimulus = NaturalisticSpeech(base_vars)
-
-        elif self.task == "sara":
-            self.stimulus = Sara(base_vars)
-
-        elif self.task == "diadochokinesis":
-            self.stimulus = Diadochokinesis(base_vars)
-
-        elif self.task == "verbal_fluency":
-            self.stimulus = VerbalFluency(base_vars)
-
-        elif self.task == "vowel_space":
-            self.stimulus = VowelSpace(base_vars)
-
-        elif self.task == "reach_grasp":
-            self.stimulus = ReachGrasp(base_vars)
-
+            extra_args.append(self.button)
         elif self.task == "tone_taps_closed":
-            self.stimulus = ToneTapsClosed(base_vars, self.press_count)
-
-        elif self.task == "verb_generation":
-            self.stimulus = VerbGeneration(base_vars)
-
-        elif self.task == "continuous_recording":
-            self.stimulus = ContinuousRecording(base_vars)
-        
-        elif self.task == "oculostim_task":
-            self.stimulus = OculoStim(base_vars)
-
-        elif self.task == "MSITBD2":
-            self.stimulus = MSITBD2(base_vars)
-
-        else:
-            self.stimulus = StimulusBase(base_vars)
-
-        logger.info(f"iterable: {self.stimulus}")
+            extra_args.append(self.press_count)
             
+        self.stimulus = base_cls(base_vars, *extra_args)
+        logger.info(f"stimuli: {self.stimulus}")
+
     def end_stimulus(self):
         self.window.idle(time_list=[])
-        if hasattr(self.stimulus, "saveMetadata"):
-            # logger.debug(f"{self.stimulusConfig}, {self.task}, {self.stimulus}")
-            results = self.stimulus.saveMetadata(self.stimulusConfig[self.task], None)
-            json_str = json.dumps(results)
-            self.resultsq.put(json_str)
+        # self.send_metadata()
 
-    
+    def send_metadata(self):
+        # logger.debug(f"{self.stimulusConfig}, {self.task}, {self.stimulus}")
+        results = self.stimulus.saveMetadata(self.stimulusConfig[self.task], None)
+        json_str = json.dumps(results)
+        logger.debug(f"jsonstr: {json_str}")
+        self.resultsq.put(json_str)
+
     def close_window(self):
         self.alive = False
         self.window.close()

@@ -1,0 +1,68 @@
+name: Build and test
+on:
+  pull_request:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    env:
+      FORCE_COLOR: 1
+    # The matrix defines the runners and Python versions dynamically
+    strategy: # If one job fails, GitHub will still finish the rest of the matrix
+      fail-fast: false
+      matrix:
+        os:
+          # - ubuntu-latest  TODO
+          - windows-latest
+        python-version:
+          - "3.10"
+          - "3.12"
+#    permissions:
+#      contents: write
+    steps:
+    - name: Install VLC via Winget
+      if: matrix.os == 'windows-latest'
+      run: |
+        winget install VideoLAN.VLC --silent --accept-source-agreements --accept-package-agreements
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: '0'
+        lfs: true
+    - name: Show files
+      shell: bash
+      run: |
+        ls -lt ./library
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip' # Automatically caches your packages to speed up builds
+    - name: Prepare build
+      run: pip install build
+    - name: Build wheel
+      shell: bash
+      run: |
+        rm -rf dist
+        python -m build -w -o dist .
+    - name: Build Result
+      shell: bash
+      run: |
+        ls -lth ./dist
+        unzip -l ./dist/*.whl || true
+    - name: Install as editable
+      shell: bash
+      run: |
+        # pip install --find-links ./library $(ls ./dist/*.whl)[test]
+        pip install --find-links ./library -e .[test]
+        # NB: for now need install as editable, for inline config files
+    - name: Install Result
+      run: |
+        pip list
+    - name: Patch temporary python-vlc
+      run: python library/patch_python_vlc.py
+    - name: Execute tests
+      shell: bash
+      run: |
+        pytest -v ./tests
