@@ -441,6 +441,7 @@ class N_back(bases.StimulusBase):
         return super().present_prep()
     
     def present(self, test=True, getTime=False):
+        self.present_prep()
         fixation, texts, correct_ims, incorrect_ims = self.setupWinStims(imdir)
         timeDataColumns = ['Event_Name', 'Trial_Num', 'Time_Since_Start']
         timeData = pd.DataFrame(columns=timeDataColumns)

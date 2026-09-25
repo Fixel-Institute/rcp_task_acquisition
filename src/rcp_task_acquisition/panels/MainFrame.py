@@ -306,11 +306,6 @@ class MainFrame(wx.Frame):
             if self.task == "vowel_space":
                 self.msgq.put(Msg.VOWEL_SPACE)
                 trial_info = self.resultsq.get()
-                try:
-                    trial_info = self.resultsq.get()
-                except Exception as e:
-                    print(e)
-                    trial_info = ""
                 trial, syllable, finish = trial_info.split(",")
                 trial = int(trial)
                 finish = str(finish) == "True"
