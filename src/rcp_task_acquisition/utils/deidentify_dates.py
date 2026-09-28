@@ -102,14 +102,13 @@ class DateDeidentification:
                     for f in files:
                         f_name = PurePath(f.replace(folder_name, date_deided + time_deid)).name
                         shutil.copyfile(f, os.path.join(dest_folder, f_name))
-                        set_all_times(os.path.join(dest_folder, f_name), self.deid_metadata)
-                        
                         if f_name.endswith(".xml"):
                             tree = ET.parse(os.path.join(dest_folder, f_name))
                             root = tree.getroot()
                             root.find("DataFolder").text = ""
                             root.find("LastRecordedFile").text = ""
                             tree.write(os.path.join(dest_folder, f_name), encoding="utf-8", xml_declaration=True)
+                        set_all_times(os.path.join(dest_folder, f_name), self.deid_metadata)
 
             else:
                 if not os.path.isfile(mdest) or (os.path.getsize(m) != os.path.getsize(mdest)):
