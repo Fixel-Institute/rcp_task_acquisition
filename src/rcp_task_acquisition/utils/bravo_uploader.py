@@ -123,6 +123,37 @@ def getShift_PeakBased(lj, delsys, lj_time, delsys_time):
     popt, pcov = optimize.curve_fit(scaleDelsysFs, peak_times_delsys, peak_times_lj)
     return popt[1], popt[0]
 
+def convertToBinaryFormat(Recordings):
+    pData = bytes("BRAVORecordingStructure", "utf-8")
+    pData += np.array([len(Recordings)], dtype=np.int32).tobytes()
+    for Recording in Recordings:
+        rData = bytes("BRAVORecording", "utf-8")
+        rData += np.array([Recording["SamplingRate"]], dtype=np.float64).tobytes()
+        rData += np.array([len(Recording["ChannelNames"])], dtype=np.int32).tobytes()
+        rData += np.array([len(Recording["ChannelNames"][i]) for i in range(len(Recording["ChannelNames"]))], dtype=np.int32).tobytes()
+        for channel in Recording["ChannelNames"]:
+            rData += bytes(channel, "utf-8")
+        rData += np.array([len(Recording["Time"])], dtype=np.int32).tobytes()
+        rData += Recording["Time"].astype(np.float64).tobytes()
+        for i in range(len(Recording["ChannelNames"])):
+            rData += np.array([len(Recording["Data"][:,i])], dtype=np.int32).tobytes()
+            rData += Recording["Data"][:,i].astype(np.float64).tobytes()
+        for i in range(len(Recording["ChannelNames"])):
+            rData += np.array([len(Recording["Missing"][:,i])], dtype=np.int32).tobytes()
+            rData += Recording["Missing"][:,i].astype(np.int8).tobytes()
+        rData += np.array([Recording["StartTime"]], dtype=np.float64).tobytes()
+        Descriptor = json.dumps(Recording["Descriptor"]).encode("utf-8")
+        rData += np.array([len(Descriptor)], dtype=np.int32).tobytes()
+        rData += Descriptor
+        Metadata = json.dumps(Recording["Metadata"]).encode("utf-8")
+        rData += np.array([len(Metadata)], dtype=np.int32).tobytes()
+        rData += Metadata
+        if not type(Recording["Duration"]) == int:
+            rData += np.array([len(Recording["Duration"])], dtype=np.int32).tobytes()
+            rData += Recording["Duration"].astype(np.float64).tobytes()
+        pData += rData 
+    return pData
+
 def uploadRCPSessions(session_paths, sessions, on_success=None, on_error=None):
     for i in range(len(session_paths)):
         try:
