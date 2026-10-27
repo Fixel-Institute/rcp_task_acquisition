@@ -123,37 +123,6 @@ def getShift_PeakBased(lj, delsys, lj_time, delsys_time):
     popt, pcov = optimize.curve_fit(scaleDelsysFs, peak_times_delsys, peak_times_lj)
     return popt[1], popt[0]
 
-def convertToBinaryFormat(Recordings):
-    pData = bytes("BRAVORecordingStructure", "utf-8")
-    pData += np.array([len(Recordings)], dtype=np.int32).tobytes()
-    for Recording in Recordings:
-        rData = bytes("BRAVORecording", "utf-8")
-        rData += np.array([Recording["SamplingRate"]], dtype=np.float64).tobytes()
-        rData += np.array([len(Recording["ChannelNames"])], dtype=np.int32).tobytes()
-        rData += np.array([len(Recording["ChannelNames"][i]) for i in range(len(Recording["ChannelNames"]))], dtype=np.int32).tobytes()
-        for channel in Recording["ChannelNames"]:
-            rData += bytes(channel, "utf-8")
-        rData += np.array([len(Recording["Time"])], dtype=np.int32).tobytes()
-        rData += Recording["Time"].astype(np.float64).tobytes()
-        for i in range(len(Recording["ChannelNames"])):
-            rData += np.array([len(Recording["Data"][:,i])], dtype=np.int32).tobytes()
-            rData += Recording["Data"][:,i].astype(np.float64).tobytes()
-        for i in range(len(Recording["ChannelNames"])):
-            rData += np.array([len(Recording["Missing"][:,i])], dtype=np.int32).tobytes()
-            rData += Recording["Missing"][:,i].astype(np.int8).tobytes()
-        rData += np.array([Recording["StartTime"]], dtype=np.float64).tobytes()
-        Descriptor = json.dumps(Recording["Descriptor"]).encode("utf-8")
-        rData += np.array([len(Descriptor)], dtype=np.int32).tobytes()
-        rData += Descriptor
-        Metadata = json.dumps(Recording["Metadata"]).encode("utf-8")
-        rData += np.array([len(Metadata)], dtype=np.int32).tobytes()
-        rData += Metadata
-        if not type(Recording["Duration"]) == int:
-            rData += np.array([len(Recording["Duration"])], dtype=np.int32).tobytes()
-            rData += Recording["Duration"].astype(np.float64).tobytes()
-        pData += rData 
-    return pData
-
 def uploadRCPSessions(session_paths, sessions, on_success=None, on_error=None):
     for i in range(len(session_paths)):
         try:
@@ -228,19 +197,21 @@ def uploadRCPSession(session_path, session_info):
     time_scale = 1
     time_offset = 0
     if not LJData.empty:
-        sio.savemat(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_LabJack.mat"), {
-            "Channels": ChannelNames,
-            "Fs": np.ones((len(ChannelNames), 1)) * LabJack_SamplingRate,
+        RecordingData = {
+            "ChannelNames": ChannelNames,
+            "SamplingRate": np.ones((len(ChannelNames), 1)) * LabJack_SamplingRate,
             "Data": LJData.values.T,
             "DataType": "CustomizedStreamingData",
-            "Metadata": json.dumps({**SessionMetadata,
-                                    **{"DataType": "LabJack", "StartTime": SessionDate, "Timezone": timezone,
-                                    "RecordingName": SessionMetadata.get("task", "")}}),
-        }, do_compression=True)
-        with open(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_LabJack.mat"), "rb") as file:
-            requester.UploadMATFile(ParticipantInfo['Id'], file, {**SessionMetadata,
-                                                                **{"DataType": "LabJack", "StartTime": SessionDate,
-                                                                    "Timezone": timezone}})
+            "Metadata": {**SessionMetadata,
+                        **{"DataType": "LabJack", "StartTime": SessionDate, "Timezone": timezone,
+                        "RecordingName": SessionMetadata.get("task", "")}}
+        }
+        rData = requester.GenerateBRAVOBinary(RecordingData)
+        with open(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_LabJack.bdat"), "wb") as file:
+            file.write(rData)
+
+        with open(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_LabJack.bdat"), "rb") as file:
+            requester.UploadBRAVOStructure(ParticipantInfo['Id'], file, RecordingData["Metadata"])
 
     if len(DSData.keys()) > 0:
         # Delsys Save
@@ -255,7 +226,7 @@ def uploadRCPSession(session_path, session_info):
         for fs in unique_fs:
             indices = [i for i, f in enumerate(Delsys_Fs) if f == fs]
             if np.abs(fs - 74) < 2:
-                sio.savemat(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysImpedance.mat"), {
+                RecordingData = {
                     "Channels": [Delsys_ChannelNames[i] for i in indices],
                     "Fs": np.ones((len(indices), 1)) * fs,
                     "Data": np.array([DSData["Data"][DSData["ChannelNames"][i]] for i in indices]),
@@ -264,14 +235,16 @@ def uploadRCPSession(session_path, session_info):
                                             **{"DataType": "Delsys_Impedance", "StartTime": SessionDate + time_offset,
                                             "Timezone": timezone, "SamplingRateScale": 1/time_scale,
                                             "RecordingName": SessionMetadata.get("task", "")}}),
-                }, do_compression=True)
-                with open(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysImpedance.mat"), "rb") as file:
-                    requester.UploadMATFile(ParticipantInfo['Id'], file, {**SessionMetadata,
-                                                                        **{"DataType": "Delsys", "StartTime": SessionDate + time_offset,
-                                                                            "Timezone": timezone, "SamplingRateScale": 1/time_scale}})
+                }
+                rData = requester.GenerateBRAVOBinary(RecordingData)
+                with open(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysImpedance.bdat"), "wb") as file:
+                    file.write(rData)
+
+                with open(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysImpedance.bdat"), "rb") as file:
+                    requester.UploadBRAVOStructure(ParticipantInfo['Id'], file, RecordingData["Metadata"])
 
             elif np.abs(fs - 148) < 2:
-                sio.savemat(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysIMU.mat"), {
+                RecordingData = {
                     "Channels": [Delsys_ChannelNames[i] for i in indices],
                     "Fs": np.ones((len(indices), 1)) * fs,
                     "Data": np.array([DSData["Data"][DSData["ChannelNames"][i]] for i in indices]),
@@ -280,14 +253,16 @@ def uploadRCPSession(session_path, session_info):
                                             **{"DataType": "Delsys_IMU", "StartTime": SessionDate + time_offset,
                                             "Timezone": timezone, "SamplingRateScale": 1/time_scale,
                                             "RecordingName": SessionMetadata.get("task", "")}}),
-                }, do_compression=True)
-                with open(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysIMU.mat"), "rb") as file:
-                    requester.UploadMATFile(ParticipantInfo['Id'], file, {**SessionMetadata,
-                                                                        **{"DataType": "Delsys", "StartTime": SessionDate + time_offset,
-                                                                            "Timezone": timezone, "SamplingRateScale": 1/time_scale}})
+                }
+                rData = requester.GenerateBRAVOBinary(RecordingData)
+                with open(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysIMU.bdat"), "wb") as file:
+                    file.write(rData)
+
+                with open(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysIMU.bdat"), "rb") as file:
+                    requester.UploadBRAVOStructure(ParticipantInfo['Id'], file, RecordingData["Metadata"])
 
             elif np.abs(fs - 370) < 2:
-                sio.savemat(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysFSR.mat"), {
+                RecordingData = {
                     "Channels": [Delsys_ChannelNames[i] for i in indices],
                     "Fs": np.ones((len(indices), 1)) * fs,
                     "Data": np.array([DSData["Data"][DSData["ChannelNames"][i]] for i in indices]),
@@ -296,14 +271,16 @@ def uploadRCPSession(session_path, session_info):
                                             **{"DataType": "Delsys_FSR", "StartTime": SessionDate + time_offset,
                                             "Timezone": timezone, "SamplingRateScale": 1/time_scale,
                                             "RecordingName": SessionMetadata.get("task", "")}}),
-                }, do_compression=True)
-                with open(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysFSR.mat"), "rb") as file:
-                    requester.UploadMATFile(ParticipantInfo['Id'], file, {**SessionMetadata,
-                                                                        **{"DataType": "Delsys", "StartTime": SessionDate + time_offset,
-                                                                            "Timezone": timezone, "SamplingRateScale": 1/time_scale}})
+                }
+                rData = requester.GenerateBRAVOBinary(RecordingData)
+                with open(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysFSR.bdat"), "wb") as file:
+                    file.write(rData)
+
+                with open(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysFSR.bdat"), "rb") as file:
+                    requester.UploadBRAVOStructure(ParticipantInfo['Id'], file, RecordingData["Metadata"])
 
             elif np.abs(fs - 1259) < 2:
-                sio.savemat(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysEMG.mat"), {
+                RecordingData = {
                     "Channels": [Delsys_ChannelNames[i] for i in indices],
                     "Fs": np.ones((len(indices), 1)) * fs,
                     "Data": np.array([DSData["Data"][DSData["ChannelNames"][i]] for i in indices]),
@@ -312,14 +289,16 @@ def uploadRCPSession(session_path, session_info):
                                             **{"DataType": "Delsys_EMG", "StartTime": SessionDate + time_offset,
                                             "Timezone": timezone, "SamplingRateScale": 1/time_scale,
                                             "RecordingName": SessionMetadata.get("task", "")}}),
-                }, do_compression=True)
-                with open(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysEMG.mat"), "rb") as file:
-                    requester.UploadMATFile(ParticipantInfo['Id'], file, {**SessionMetadata,
-                                                                        **{"DataType": "Delsys", "StartTime": SessionDate + time_offset,
-                                                                            "Timezone": timezone, "SamplingRateScale": 1/time_scale}})
+                }
+                rData = requester.GenerateBRAVOBinary(RecordingData)
+                with open(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysEMG.bdat"), "wb") as file:
+                    file.write(rData)
+
+                with open(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysEMG.bdat"), "rb") as file:
+                    requester.UploadBRAVOStructure(ParticipantInfo['Id'], file, RecordingData["Metadata"])
 
             elif np.abs(fs - 2222) < 2:
-                sio.savemat(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysAnalog.mat"), {
+                RecordingData = {
                     "Channels": [Delsys_ChannelNames[i] for i in indices],
                     "Fs": np.ones((len(indices), 1)) * fs,
                     "Data": np.array([DSData["Data"][DSData["ChannelNames"][i]] for i in indices]),
@@ -328,9 +307,10 @@ def uploadRCPSession(session_path, session_info):
                                             **{"DataType": "Delsys_Analog", "StartTime": SessionDate + time_offset,
                                             "Timezone": timezone, "SamplingRateScale": 1/time_scale,
                                             "RecordingName": SessionMetadata.get("task", "")}}),
-                }, do_compression=True)
-                with open(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysAnalog.mat"), "rb") as file:
-                    requester.UploadMATFile(ParticipantInfo['Id'], file, {**SessionMetadata,
-                                                                        **{"DataType": "Delsys", "StartTime": SessionDate + time_offset,
-                                                                            "Timezone": timezone, "SamplingRateScale": 1/time_scale}})
-                        
+                }
+                rData = requester.GenerateBRAVOBinary(RecordingData)
+                with open(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysAnalog.bdat"), "wb") as file:
+                    file.write(rData)
+
+                with open(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysAnalog.bdat"), "rb") as file:
+                    requester.UploadBRAVOStructure(ParticipantInfo['Id'], file, RecordingData["Metadata"])
