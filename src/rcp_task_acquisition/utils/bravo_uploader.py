@@ -8,7 +8,7 @@ import yaml
 import json
 import datetime
 
-from library.BRAVO.BRAVORequestAPI import BRAVOPlatformRequest
+from BRAVOClient import BRAVOPlatformRequest
 
 def getTimestamp(text):
     return datetime.datetime.fromisoformat(text[0:4] + "-" + text[4:6] + "-" + text[6:8] + "T" + text[8:10] + ":" + text[10:12] + ":" + text[12:14] + "+00:00").timestamp()
@@ -124,16 +124,19 @@ def getShift_PeakBased(lj, delsys, lj_time, delsys_time):
     return popt[1], popt[0]
 
 def uploadRCPSessions(session_paths, sessions, on_success=None, on_error=None):
+    success = True
     for i in range(len(session_paths)):
         try:
             uploadRCPSession(session_paths[i], sessions[i])
         except Exception as e:
             if on_error:
-                on_error(traceback.format_exc())
+                on_error(sessions[i] + " Session Failed: " + traceback.format_exc())
             else:
-                print(traceback.format_exc())
+                print(sessions[i] + " Session Failed: " + traceback.format_exc())
+            success = False
+            break
 
-    if on_success:
+    if success and on_success:
         on_success(f"Sessions processed and uploaded successfully.")
 
 def uploadRCPSession(session_path, session_info):
@@ -199,14 +202,14 @@ def uploadRCPSession(session_path, session_info):
     if not LJData.empty:
         RecordingData = {
             "ChannelNames": ChannelNames,
-            "SamplingRate": np.ones((len(ChannelNames), 1)) * LabJack_SamplingRate,
+            "SamplingRate": LabJack_SamplingRate,
             "Data": LJData.values.T,
             "DataType": "CustomizedStreamingData",
             "Metadata": {**SessionMetadata,
                         **{"DataType": "LabJack", "StartTime": SessionDate, "Timezone": timezone,
                         "RecordingName": SessionMetadata.get("task", "")}}
         }
-        rData = requester.GenerateBRAVOBinary(RecordingData)
+        rData = requester.GenerateBRAVOStructure(RecordingData)
         with open(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_LabJack.bdat"), "wb") as file:
             file.write(rData)
 
@@ -227,16 +230,16 @@ def uploadRCPSession(session_path, session_info):
             indices = [i for i, f in enumerate(Delsys_Fs) if f == fs]
             if np.abs(fs - 74) < 2:
                 RecordingData = {
-                    "Channels": [Delsys_ChannelNames[i] for i in indices],
-                    "Fs": np.ones((len(indices), 1)) * fs,
+                    "ChannelNames": [Delsys_ChannelNames[i] for i in indices],
+                    "SamplingRate": fs,
                     "Data": np.array([DSData["Data"][DSData["ChannelNames"][i]] for i in indices]),
                     "DataType": "CustomizedStreamingData",
-                    "Metadata": json.dumps({**SessionMetadata,
+                    "Metadata": {**SessionMetadata,
                                             **{"DataType": "Delsys_Impedance", "StartTime": SessionDate + time_offset,
                                             "Timezone": timezone, "SamplingRateScale": 1/time_scale,
-                                            "RecordingName": SessionMetadata.get("task", "")}}),
+                                            "RecordingName": SessionMetadata.get("task", "")}},
                 }
-                rData = requester.GenerateBRAVOBinary(RecordingData)
+                rData = requester.GenerateBRAVOStructure(RecordingData)
                 with open(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysImpedance.bdat"), "wb") as file:
                     file.write(rData)
 
@@ -245,16 +248,16 @@ def uploadRCPSession(session_path, session_info):
 
             elif np.abs(fs - 148) < 2:
                 RecordingData = {
-                    "Channels": [Delsys_ChannelNames[i] for i in indices],
-                    "Fs": np.ones((len(indices), 1)) * fs,
+                    "ChannelNames": [Delsys_ChannelNames[i] for i in indices],
+                    "SamplingRate": fs,
                     "Data": np.array([DSData["Data"][DSData["ChannelNames"][i]] for i in indices]),
                     "DataType": "CustomizedStreamingData",
-                    "Metadata": json.dumps({**SessionMetadata,
+                    "Metadata": {**SessionMetadata,
                                             **{"DataType": "Delsys_IMU", "StartTime": SessionDate + time_offset,
                                             "Timezone": timezone, "SamplingRateScale": 1/time_scale,
-                                            "RecordingName": SessionMetadata.get("task", "")}}),
+                                            "RecordingName": SessionMetadata.get("task", "")}},
                 }
-                rData = requester.GenerateBRAVOBinary(RecordingData)
+                rData = requester.GenerateBRAVOStructure(RecordingData)
                 with open(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysIMU.bdat"), "wb") as file:
                     file.write(rData)
 
@@ -263,16 +266,16 @@ def uploadRCPSession(session_path, session_info):
 
             elif np.abs(fs - 370) < 2:
                 RecordingData = {
-                    "Channels": [Delsys_ChannelNames[i] for i in indices],
-                    "Fs": np.ones((len(indices), 1)) * fs,
+                    "ChannelNames": [Delsys_ChannelNames[i] for i in indices],
+                    "SamplingRate": fs,
                     "Data": np.array([DSData["Data"][DSData["ChannelNames"][i]] for i in indices]),
                     "DataType": "CustomizedStreamingData",
-                    "Metadata": json.dumps({**SessionMetadata,
+                    "Metadata": {**SessionMetadata,
                                             **{"DataType": "Delsys_FSR", "StartTime": SessionDate + time_offset,
                                             "Timezone": timezone, "SamplingRateScale": 1/time_scale,
-                                            "RecordingName": SessionMetadata.get("task", "")}}),
+                                            "RecordingName": SessionMetadata.get("task", "")}},
                 }
-                rData = requester.GenerateBRAVOBinary(RecordingData)
+                rData = requester.GenerateBRAVOStructure(RecordingData)
                 with open(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysFSR.bdat"), "wb") as file:
                     file.write(rData)
 
@@ -281,16 +284,16 @@ def uploadRCPSession(session_path, session_info):
 
             elif np.abs(fs - 1259) < 2:
                 RecordingData = {
-                    "Channels": [Delsys_ChannelNames[i] for i in indices],
-                    "Fs": np.ones((len(indices), 1)) * fs,
+                    "ChannelNames": [Delsys_ChannelNames[i] for i in indices],
+                    "SamplingRate": fs,
                     "Data": np.array([DSData["Data"][DSData["ChannelNames"][i]] for i in indices]),
                     "DataType": "CustomizedStreamingData",
-                    "Metadata": json.dumps({**SessionMetadata,
+                    "Metadata": {**SessionMetadata,
                                             **{"DataType": "Delsys_EMG", "StartTime": SessionDate + time_offset,
                                             "Timezone": timezone, "SamplingRateScale": 1/time_scale,
-                                            "RecordingName": SessionMetadata.get("task", "")}}),
+                                            "RecordingName": SessionMetadata.get("task", "")}},
                 }
-                rData = requester.GenerateBRAVOBinary(RecordingData)
+                rData = requester.GenerateBRAVOStructure(RecordingData)
                 with open(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysEMG.bdat"), "wb") as file:
                     file.write(rData)
 
@@ -299,16 +302,16 @@ def uploadRCPSession(session_path, session_info):
 
             elif np.abs(fs - 2222) < 2:
                 RecordingData = {
-                    "Channels": [Delsys_ChannelNames[i] for i in indices],
-                    "Fs": np.ones((len(indices), 1)) * fs,
+                    "ChannelNames": [Delsys_ChannelNames[i] for i in indices],
+                    "SamplingRate": fs,
                     "Data": np.array([DSData["Data"][DSData["ChannelNames"][i]] for i in indices]),
                     "DataType": "CustomizedStreamingData",
-                    "Metadata": json.dumps({**SessionMetadata,
+                    "Metadata": {**SessionMetadata,
                                             **{"DataType": "Delsys_Analog", "StartTime": SessionDate + time_offset,
                                             "Timezone": timezone, "SamplingRateScale": 1/time_scale,
-                                            "RecordingName": SessionMetadata.get("task", "")}}),
+                                            "RecordingName": SessionMetadata.get("task", "")}},
                 }
-                rData = requester.GenerateBRAVOBinary(RecordingData)
+                rData = requester.GenerateBRAVOStructure(RecordingData)
                 with open(os.path.join(session_path, f"{session_info.replace(os.path.sep,'_')}_DelsysAnalog.bdat"), "wb") as file:
                     file.write(rData)
 
