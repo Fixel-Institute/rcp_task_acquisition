@@ -20,6 +20,10 @@ Eye movement stimulus controller using PsychoPy for frame-accurate rendering.
 #       motion, or at the start of the pursuit's own fixation;
 #       now 2 flips per trial (fixation onset, motion onset)
 #       like the other tasks.
+#   11.18.26: the .NET OpenIris DLL is loaded only in main()
+#     (standalone use), not on import. Loading it on import
+#     crashed rcp_task_acquisition at startup ("Internal CLR
+#     error") because Delsys had already started .NET 8.
 #   Every changed line is marked with its date below. The
 #   original file is oculostim_source_before_pursuit_fix.py.
 # ============================================================
@@ -35,16 +39,23 @@ from datetime import datetime
 from pathlib import Path
 from tkinter import Tk, filedialog
 import os, sys
-import clr
 import time
 
-from importlib import resources
-with resources.path("rcp_task_acquisition.tasks.OculoStim", "OpenIrisRemoteClient.dll") as dll_path:
-    clr.AddReference(str(dll_path))
-    #unfortunately, this will throw error because DELSYS uses Core CLR but OpenIRIS require legacy CLR.
-    #clr.AddReference("System.ServiceModel")
-
-from OpenIris import OpenIrisClient
+# 11.18.26: the .NET OpenIris client (OpenIrisRemoteClient.dll, built for
+# .NET Framework 4.8) is now loaded only when this file is run on its own
+# (main()). It used to load on import, so inside rcp_task_acquisition it was
+# loaded into the .NET 8 runtime that Delsys starts, and the app died at
+# startup with "Fatal error. Internal CLR error. (0x80131506)". The rig code
+# never used it: OculoStim talks to OpenIris over UDP (OpenIrisPythonClient).
+def _load_dotnet_openiris_client():
+    import clr
+    from importlib import resources
+    with resources.path("rcp_task_acquisition.tasks.OculoStim", "OpenIrisRemoteClient.dll") as dll_path:
+        clr.AddReference(str(dll_path))
+        #unfortunately, this will throw error because DELSYS uses Core CLR but OpenIRIS require legacy CLR.
+        #clr.AddReference("System.ServiceModel")
+    from OpenIris import OpenIrisClient
+    return OpenIrisClient
 
 logging.console.setLevel(logging.WARNING)
 
@@ -1312,6 +1323,7 @@ def main():
         d.show()
         return
 
+    OpenIrisClient = _load_dotnet_openiris_client()   # 11.18.26: was loaded at import (see top)
     oi = OpenIrisClient(cfg["oi_host"], cfg["oi_port"])
 
     if cfg["oi_connect"]:
