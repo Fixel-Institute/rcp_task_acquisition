@@ -92,11 +92,13 @@ This is the outline for installing this program with the expected hardware confi
         - `pre-commit install`  # only once/first time
    Temporary fix of psychopy -> vlc dependency:
     - `python ./library/patch_python_vlc.py`  # after python-vlc is installed
+   Fix of pyglet text on Python 3.12 (otherwise any on-screen text crashes a task):
+    - `python ./library/patch_pyglet_py312.py`  # after every `pip install -e .`
    Finally:
     - `create-shortcut`  # when shortcuts change
 
 To update an existing install: `cd` into the folder, `conda activate ucsf-rcp-task-acquisition`,
-`git pull`, then `pip install -e . --find-links ./library`.
+`git pull`, `pip install -e . --find-links ./library`, then `python ./library/patch_pyglet_py312.py`.
 
 ### First Run Setup
 Note: in order to correctly run the program, all hardware must be installed
@@ -181,6 +183,7 @@ A photodiode square flips at each fixation onset and target onset (two flips per
 | `No module named 'library'`, `pythonnet`, `BRAVOClient` or `dotenv` | Installed from an older version. Run `git pull`, then `pip install -e . --find-links ./library`. |
 | `Fatal error. Internal CLR error. (0x80131506)` | Two .NET versions loaded in one program. Check that .NET 8 is installed and that the code is up to date (OculoStim no longer loads the old OpenIris .NET DLL). |
 | `No module named 'Aero'` | The Delsys DLL was loaded after another .NET runtime had started; same cause as above. |
+| `expected LP_c_ubyte instance instead of c_byte_Array_...` (from `pyglet\font\win32.py`) | pyglet 1.4.11 on Python 3.12. Run `python ./library/patch_pyglet_py312.py`. |
 | OculoStim: `no reply from OpenIris` | OpenIris isn't running, is a stock build, or UDP port 9003 is blocked. |
 
 ## Defaults
