@@ -1,12 +1,20 @@
 # RCP Task Acquisition
 
 * [Overview](#overview)
-* [Updates and Changes to Original Python Scripts](#Updates-and-Changes-to-Original-Python-Scripts)
-* [Installation instructions](#installation)
+* [Installation](#installation)
+* [Running the program](#running-the-program)
+* [Optional settings (.env)](#optional-settings-env)
+* [Where data is saved](#where-data-is-saved)
+* [OculoStim (eye tracking task)](#oculostim-eye-tracking-task)
+* [Troubleshooting](#troubleshooting)
 * [Labjack Defaults](#defaults)
 
 ## Overview
-Code for the RCP task cart. More information to come...
+Code for the RCP task cart. A wxPython control window runs the tasks while a
+separate PsychoPy process draws the stimuli on the participant screen. During
+each task it records the cameras (Spinnaker), LabJack signals (photodiode,
+microphones, force sensors, TTLs), and, if present, Delsys sensors and the
+OpenIris eye tracker.
 
 ## Installation
 This is the outline for installing this program with the expected hardware configurations. There may be unexpected errors in the system if your hardware is different.
@@ -52,10 +60,18 @@ This is the outline for installing this program with the expected hardware confi
     - Git-LFS (https://github.com/git-lfs/git-lfs/releases)
       - current: https://github.com/git-lfs/git-lfs/releases/download/v3.8.0/git-lfs-windows-v3.8.0.exe
     - VLC (vlc-3.0.23-win64.exe)
+    - .NET 8 Desktop Runtime, Windows x64 (from Microsoft, dotnet.microsoft.com). Needed
+      by the Delsys code, which starts .NET 8 when the program opens. Check with
+      `dotnet --list-runtimes` (look for `Microsoft.NETCore.App 8.`).
+    - Eye tracking carts only: OpenIris, the Fixel build in this repo,
+      `library/OpenIris_Win_Release_0.2.0_SpinnakerMod.zip`. Unzip it and run
+      OpenIris from there. Stock OpenIris does not have the remote commands
+      OculoStim uses (SETDATAFOLDER, STARTTRACKING, STOPTRACKING).
 5. Once all apps are installed, restart computer. You can now unplug the flash drive
 
 ### Installing Code
-1. In the search bar at the bottom of the screen, search for and select **Anaconda Prompt**
+1. In the search bar at the bottom of the screen, search for and select **Anaconda Prompt**.
+   All commands below are run there (not in a plain Command Prompt or PowerShell).
 2. The code can be installed in any part of computer but for following this installation, it will be installed in **Documents**
     - `cd Documents`  # Always
     - `conda create -n ucsf-rcp-task-acquisition python=3.12`  # only first time
@@ -65,8 +81,11 @@ This is the outline for installing this program with the expected hardware confi
     - `git lfs install`  # only first time, this enables git LFS hooks
     - `git clone https://github.com/Fixel-Institute/rcp_task_acquisition.git`
     - `cd rcp_task_acquisition`  # Always
-    - `pip install -e . --find-links ./library`  # first time and when dependencies change
-      # NB: using --find-linds to allow search for needed wheels within the current library subdir
+    - `pip install -e . --find-links ./library`  # first time, and after every `git pull` that changes pyproject.toml
+      # NB: --find-links lets pip use the wheels in the library subdir (Spinnaker)
+      # This also installs pythonnet and python-dotenv, and makes the top-level
+      # `library` folder (Delsys, BRAVO) importable, so the program can be started
+      # from any folder.
       - **Only for DEV**:
         - Use `pip install -e .[dev] --find-links ./library` to get all dev tools included
         - `git config blame.ignoreRevsFile .git-blame-ignore-revs`  # only once/first time
@@ -75,15 +94,94 @@ This is the outline for installing this program with the expected hardware confi
     - `python ./library/patch_python_vlc.py`  # after python-vlc is installed
    Finally:
     - `create-shortcut`  # when shortcuts change
-3. The final step in the terminal (`create-shortcut`) creates an icon on the Desktop which can be selected to run the code.
-    - Alternatively, to run the program from command line, use `rcp-task-acquisition` (making sure you are in the conda environment)
+
+To update an existing install: `cd` into the folder, `conda activate ucsf-rcp-task-acquisition`,
+`git pull`, then `pip install -e . --find-links ./library`.
 
 ### First Run Setup
 Note: in order to correctly run the program, all hardware must be installed
 1. In **Select Protocol** panel select **Update Hardware**
 2. Under **In Use** select each camera, assign their correct serial numbers, and select the primary/master camera
 3. Select **Save Hardware Settings** and select **Close Hardware Panel**
-4. On first run, a folder will be created (RawLocalData) to store logs and session data. This folder will be in "C:\Users\Public\Documents".
+4. Check `RawDataDir` (where session data goes) and `VideoDir` in `config_files/userdata.yaml`. The default `RawDataDir` is `D:\RawDataLocal`.
+
+## Running the program
+There is no .exe. Either:
+- double-click the Desktop icon made by `create-shortcut` (**UCSF-UF RCP Task Acquisition**), or
+- in the Anaconda Prompt: `conda activate ucsf-rcp-task-acquisition`, then `rcp-task-acquisition`.
+
+Running from the Anaconda Prompt shows all messages, which helps when something goes wrong.
+
+On a cart without a Delsys license these lines at startup are expected, and the program keeps going:
+```
+DelsysAPI: Failed to validate key/license
+ERROR | ./models/DelsysProcess | Error connecting to Delsys device
+ERROR | ./panels/SwitchPanel | Delsys NOT CONNECTED
+```
+
+## Optional settings (.env)
+Keys that should not be in git go in a file named `.env` in the repo folder (it is in `.gitignore`).
+It is read when the program starts. Leave out what you don't use.
+```
+DelsysKey=...
+DelsysLicense=...
+BRAVOAccessKey=...
+BRAVOServer=...
+```
+- `DelsysKey` / `DelsysLicense`: Delsys Trigno sensors. Without them Delsys is skipped (see above).
+- `BRAVOAccessKey` / `BRAVOServer`: only for uploading sessions to BRAVO (Upload Data).
+
+## Where data is saved
+Each task run gets its own session folder:
+```
+<RawDataDir>\<YYYYMMDD>\<unitRef>\sessionNNN (<task name>)
+```
+`RawDataDir` and `unitRef` are set in `config_files/userdata.yaml`.
+
+## OculoStim (eye tracking task)
+Select the OculoStim task, then start a block with one of the buttons on its panel:
+**Calibrate**, **Saccades**, **Smooth Pursuit** or **Fixation**. Each button picks the
+block and presses Begin Trial for you. The radio buttons with **Begin Trial** still work.
+While a block runs the other buttons are disabled; **Stop Trial** ends it early.
+
+Start OpenIris (0.2.0 SpinnakerMod build, see above) before the block. OculoStim controls it
+over UDP on `127.0.0.1:9003`: it tells OpenIris to save into the session folder, starts
+tracking and recording, and reads live gaze for calibration. In the Anaconda Prompt
+you should see `Session path set to: ...` when a block starts.
+
+**Calibrate** runs on its own, without a keypress:
+1. 9 calibration dots. A per-eye fit maps pupil position to degrees.
+2. 5 check dots: (0,0), (±10,0) and (0,±5) degrees.
+3. A result screen for 8 s with the error for each eye. It passes if the mean error is
+   ≤ 2° and the worst dot is ≤ 3°; otherwise it says to press Calibrate to redo.
+
+If OpenIris sends no live gaze within 5 s, it falls back to the older dot sequence that
+is calibrated afterwards (offline).
+
+Files written to the session folder:
+
+| File | What it is |
+|---|---|
+| `SESSION_NAME-<date>-<time>\` | OpenIris recording for that block (one per block) |
+| `oculostim_onlinecal_<timestamp>.json` | Online calibration: fit, check-dot errors, pass/fail |
+| `oculostim_calibration_<timestamp>.json` | Calibration dot positions and times (same format as before) |
+| `oculostim_targets_<block>_<timestamp>.csv` | Every change of what was on screen: target position (degrees and pixels) with its frame time |
+
+If the program has no session folder, OculoStim saves to
+`D:\RawDataLocal\oculostim_no_session\<YYYYMMDD>` (or the home folder if there is no D: drive).
+
+Block settings (eccentricities, number of trials, fixation durations, pursuit amplitude and
+speed) are the defaults in `src/rcp_task_acquisition/tasks/OculoStim/OculoStim.py`.
+A photodiode square flips at each fixation onset and target onset (two flips per pursuit trial).
+
+## Troubleshooting
+| Message | Cause and fix |
+|---|---|
+| `rcp-task-acquisition` is not recognized | The conda environment isn't active, or `pip install -e . --find-links ./library` wasn't run in it. |
+| `No module named 'library'`, `pythonnet`, `BRAVOClient` or `dotenv` | Installed from an older version. Run `git pull`, then `pip install -e . --find-links ./library`. |
+| `Fatal error. Internal CLR error. (0x80131506)` | Two .NET versions loaded in one program. Check that .NET 8 is installed and that the code is up to date (OculoStim no longer loads the old OpenIris .NET DLL). |
+| `No module named 'Aero'` | The Delsys DLL was loaded after another .NET runtime had started; same cause as above. |
+| OculoStim: `no reply from OpenIris` | OpenIris isn't running, is a stock build, or UDP port 9003 is blocked. |
 
 ## Defaults
 The code should come with the defaults in labjack already specified, however if you change them and need to set them back this is the default configuration:
