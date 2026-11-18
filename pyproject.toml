@@ -27,6 +27,10 @@ dependencies = [
 	"pywin32 >= 312, < 400 ; platform_system == 'Windows'",  # 312 is available since python 3.10 already.
 	"spinnaker_python >= 4.3, < 4.5",
 	"setuptools-scm >= 9.2.2, < 10",  # normally only necessary for build of project wheel
+	# 11.18.26: added - imported by the code but not installed by psychopy or
+	# anything above, so a fresh install failed at startup.
+	"pythonnet >= 3, < 4 ; platform_system == 'Windows'",  # library/Delsys (clr), OculoStim (clr)
+	"python-dotenv >= 1, < 2",  # __main__.py load_dotenv
 ]
 
 [project.optional-dependencies]
@@ -61,4 +65,16 @@ docstring-code-format = true
 
 [tool.setuptools_scm]
 # section needs to be present, even if empty
+
+# 11.18.26: added - also install the top-level "library" folder as a package.
+# The code does "from library.Delsys.AeroPy import ..." (models/DelsysProcess.py)
+# but only src/ was installed, so "No module named 'library'" unless Python
+# happened to start in the repo folder (the Desktop shortcut does not).
+[tool.setuptools.packages.find]
+where = ["src", "."]
+include = ["rcp_task_acquisition*", "library*"]
+
+# 11.18.26: added - keep the large OpenIris installer zips out of non-editable builds
+[tool.setuptools.exclude-package-data]
+library = ["*.zip"]
 
