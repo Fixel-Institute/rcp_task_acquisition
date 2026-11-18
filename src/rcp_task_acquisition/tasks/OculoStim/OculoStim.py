@@ -43,6 +43,13 @@
 #             the outcome is saved with the block. The OpenIris
 #             address can be changed with OpenIrisHost /
 #             OpenIrisPort in .env (default 127.0.0.1:9003).
+#   11.18.26: tracking for the whole task, recording per block.
+#             STARTTRACKING is sent when the task starts (Start
+#             Task), so the eye images can be checked in OpenIris
+#             before any block. Each block only starts and stops
+#             recording (one SESSION_NAME folder per block, as
+#             before). STOPTRACKING is sent when the task ends
+#             (Stop Task -> reset_task).
 #   Every changed line is marked with its date below (11.11.26
 #   also removed trailing spaces on blank lines, no effect). The
 #   original file is OculoStim_before_online_cal.py.
@@ -502,6 +509,9 @@ class OculoStim(bases.StimulusBase):
         if self.session_path:
             self.openiris.set_recording_path(self.session_path)
             print(f"Session path set to: {self.session_path} (OpenIris records here)")
+            # 11.18.26: added - track from task start so the setup can be checked
+            self.openiris.start_tracking()
+            print("OPENIRIS: STARTTRACKING sent at task start - check the eye images in OpenIris.")
         else:
             print("No session path yet; OculoStim files will go to the fallback folder if none arrives.")
 
@@ -548,13 +558,16 @@ class OculoStim(bases.StimulusBase):
                 print("OPENIRIS: " + msg)
                 logger.error(msg)
 
-            # 2. Folder, then tracking
+            # 2. Folder; tracking normally already runs since task start
+            #    (11.18.26), so STARTTRACKING is only re-sent if no frames come in
             if self.session_path:
                 self.openiris.set_recording_path(self.session_path)
-            self.openiris.start_tracking()
+            seen, _ = frames(0.5) if st["reachable"] else (set(), False)
+            if len(seen) < 2:
+                self.openiris.start_tracking()
 
-            # 3. Wait for frames (new frame numbers = cameras running)
-            seen, _ = frames(OI_TRACK_WAIT_S)
+                # 3. Wait for frames (new frame numbers = cameras running)
+                seen, _ = frames(OI_TRACK_WAIT_S)
             st["tracking"] = len(seen) >= 2
             if st["tracking"]:
                 print(f"OPENIRIS: tracking ({addr}).")
@@ -679,7 +692,9 @@ class OculoStim(bases.StimulusBase):
         self.play_tone()
 
         self.openiris.stop_recording()
-        self.openiris.stop_tracking()
+        # 11.18.26: tracking keeps running between blocks (was stop_tracking
+        # here); it stops when the task ends, see reset_task
+        print("OPENIRIS: STOPRECORDING sent (tracking continues until Stop Task).")
 
     # --------------------------------------------------------
     # CALIBRATION - 11.11.26: added (all methods down to
@@ -973,6 +988,12 @@ class OculoStim(bases.StimulusBase):
 
     def saveMetadata(self, name, sessionFolder):
         return self.result_data
+
+    # 11.18.26: added - Stop Task ends tracking (StimulusThread calls this on RESET_TASK)
+    def reset_task(self):
+        self.openiris.stop_recording()      # in case a block was cut short
+        self.openiris.stop_tracking()
+        print("OPENIRIS: STOPTRACKING sent (task ended).")
 
     def update_data(self, trial_data):
         self.trial_type = trial_data[1]

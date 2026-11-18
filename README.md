@@ -151,14 +151,22 @@ Select the OculoStim task, then start a block with one of the buttons on its pan
 block and presses Begin Trial for you. The radio buttons with **Begin Trial** still work.
 While a block runs the other buttons are disabled; **Stop Trial** ends it early.
 
-Start OpenIris (0.2.0 SpinnakerMod build, see above) before the block. OculoStim controls it
-over UDP on `127.0.0.1:9003`: it tells OpenIris to save into the session folder, starts
-tracking, waits until camera frames come in, then starts recording, and reads live gaze
-for calibration. In the Anaconda Prompt you should see, when a block starts:
+Start OpenIris (0.2.0 SpinnakerMod build, see above) before **Start Task**. OculoStim
+controls it over UDP on `127.0.0.1:9003`:
+- **Start Task**: sets the session folder and starts tracking, so you can check the eye
+  images in OpenIris and adjust the setup before running any block.
+- **Each block**: checks camera frames are coming in, starts recording, and stops
+  recording when the block ends (one `SESSION_NAME-...` folder per block).
+- **Stop Task**: stops tracking.
+
+In the Anaconda Prompt you should see:
 ```
 Session path set to: ...
+OPENIRIS: STARTTRACKING sent at task start - check the eye images in OpenIris.
+(each block)
 OPENIRIS: tracking (127.0.0.1:9003).
 OPENIRIS: STARTRECORDING sent; recording folder: ...
+OPENIRIS: STOPRECORDING sent (tracking continues until Stop Task).
 ```
 If OpenIris isn't reachable, or no frames come in, an `OPENIRIS:` line says which. The
 block still runs, but check OpenIris before the next one. The result is also saved with
