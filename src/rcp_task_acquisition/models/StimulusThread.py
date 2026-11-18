@@ -5,6 +5,9 @@
 #             got the session folder). See the dated comment in
 #             run(). The original file is
 #             StimulusThread_before_path_fix.py.
+#   11.18.26: _fix_pyglet_text_on_py312() runs before the PsychoPy
+#             window opens, so on-screen text no longer crashes
+#             tasks on Python 3.12 (see the function).
 # ============================================================
 import ast
 import json
@@ -34,6 +37,30 @@ from rcp_task_acquisition.utils.displays import Window
 from rcp_task_acquisition.utils.logger import get_logger
 
 logger = get_logger("./models/StimulusThread")
+
+
+# 11.18.26: added. PsychoPy pins pyglet 1.4.11 on Windows. In Python 3.12
+# ctypes.wintypes.BYTE became unsigned, and pyglet 1.4.11's font renderer
+# passes a signed byte buffer to GdipCreateBitmapFromScan0, whose argtypes it
+# declares as POINTER(BYTE). Any TextStim then crashed the task with
+# "expected LP_c_ubyte instance instead of c_byte_Array_..." (OculoStim died
+# before starting OpenIris or drawing a dot). Declaring that argument as
+# c_void_p accepts the buffer; the memory passed is the same.
+def _fix_pyglet_text_on_py312():
+    import sys
+    if sys.platform != "win32":
+        return
+    try:
+        import ctypes
+        from pyglet.image.codecs import gdiplus as _gp
+        fn = _gp.gdiplus.GdipCreateBitmapFromScan0
+        args = list(fn.argtypes or [])
+        if len(args) == 6 and args[4] is not ctypes.c_void_p:
+            args[4] = ctypes.c_void_p
+            fn.argtypes = args
+            logger.info("pyglet text fix applied (GdipCreateBitmapFromScan0)")
+    except Exception as err:
+        logger.warning(f"pyglet text fix not applied: {err}")
 
 
 class Msg(str, Enum):
@@ -88,6 +115,7 @@ class StimulusThread(Process):
         
 
     def run(self):
+        _fix_pyglet_text_on_py312()         # 11.18.26: added, see the function
         self.window = Window(screen=self.screenConfig, fullScreen=True)
 
         while self.alive:
