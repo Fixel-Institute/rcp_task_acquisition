@@ -1,3 +1,8 @@
+# ============================================================
+# CHANGE LOG
+#   11.18.26: DelsysPreviewPanel.on_resize can no longer call
+#             itself endlessly (startup crash). See dated comment.
+# ============================================================
 import wx
 import numpy as np 
 import time
@@ -173,14 +178,26 @@ class DelsysPreviewPanel(wx.Panel):
         return imu_signal
 
     def on_resize(self, event):
-        self.Layout()
-        self.canvas.Refresh()
-        width, height = self.canvas.GetClientSize()
-        emg_canvas = [width * 0.05, height * 0.35, width * 0.9, height * 0.35]
-        imu_canvas = [width * 0.05, height * 0.90, width * 0.9, height * 0.50]
+        # 11.18.26: re-entry guard. self.Layout() resizes self.canvas, which
+        # fires this EVT_SIZE handler again before it returns; on some
+        # displays that never settled and recursed until the stack overflowed
+        # ("Windows fatal exception: access violation" at startup, even with
+        # no Delsys connected). Now a nested call just lets wx handle it.
+        if getattr(self, "_in_resize", False):
+            event.Skip()
+            return
+        self._in_resize = True
+        try:
+            self.Layout()
+            self.canvas.Refresh()
+            width, height = self.canvas.GetClientSize()
+            emg_canvas = [width * 0.05, height * 0.35, width * 0.9, height * 0.35]
+            imu_canvas = [width * 0.05, height * 0.90, width * 0.9, height * 0.50]
 
-        self.emg_x = np.array(np.arange(len(self.emg_x), dtype=int) / len(self.emg_x) * emg_canvas[2] + emg_canvas[0], dtype=int)
-        self.imu_x = np.array(np.arange(len(self.imu_x), dtype=int) / len(self.imu_x) * imu_canvas[2] + imu_canvas[0], dtype=int)
+            self.emg_x = np.array(np.arange(len(self.emg_x), dtype=int) / len(self.emg_x) * emg_canvas[2] + emg_canvas[0], dtype=int)
+            self.imu_x = np.array(np.arange(len(self.imu_x), dtype=int) / len(self.imu_x) * imu_canvas[2] + imu_canvas[0], dtype=int)
+        finally:
+            self._in_resize = False
         event.Skip()
 
     def on_paint(self, event):
