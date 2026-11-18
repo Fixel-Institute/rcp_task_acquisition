@@ -34,6 +34,15 @@
 #             empty, OculoStim's files go to a fallback folder
 #             (oculostim_no_session) instead of failing to save, as
 #             the calibration file did in an earlier session.
+#   11.18.26: OpenIris start is checked. Before each block
+#             OculoStim asks OpenIris for data (GETDATA) to see
+#             that it is reachable, sends STARTTRACKING, waits
+#             until frames are coming in, and only then sends
+#             STARTRECORDING (it used to send both at once and
+#             never check). Each step is printed and logged, and
+#             the outcome is saved with the block. The OpenIris
+#             address can be changed with OpenIrisHost /
+#             OpenIrisPort in .env (default 127.0.0.1:9003).
 #   Every changed line is marked with its date below (11.11.26
 #   also removed trailing spaces on blank lines, no effect). The
 #   original file is OculoStim_before_online_cal.py.
@@ -42,6 +51,7 @@
 from datetime import datetime
 import csv                  # 11.11.26: added (target log)
 import json
+import os                   # 11.18.26: added (OpenIris address from .env)
 import math                 # 11.11.26: added
 import random               # 11.11.26: added (validation order)
 import socket               # 11.11.26: added (live gaze over UDP)
@@ -120,7 +130,10 @@ PASS_MAX_DEG = 3.0          # validation: worst dot
 CAL_RESULT_SHOW_S = 8.0     # 11.18.26: added - how long the result stays on screen
 
 GAZE_WAIT_S = 5.0           # 11.18.26: added - wait for tracking to start (was 1 s)
-OPENIRIS_UDP = ("127.0.0.1", 9003)    # same address OpenIrisPythonClient sends commands to
+# 11.18.26: address can be set in .env (OpenIrisHost, OpenIrisPort); was fixed
+OPENIRIS_UDP = (os.getenv("OpenIrisHost", "127.0.0.1"), int(os.getenv("OpenIrisPort", "9003")))
+OI_REPLY_WAIT_S = 2.0       # 11.18.26: added - wait for OpenIris to answer GETDATA
+OI_TRACK_WAIT_S = 8.0       # 11.18.26: added - wait for frames after STARTTRACKING
 
 
 def _f(v):
@@ -475,7 +488,8 @@ class OculoStim(bases.StimulusBase):
         self.trial_data = []
         self.result_data = []
 
-        self.openiris = OpenIrisPythonClient()
+        self.openiris = OpenIrisPythonClient(*OPENIRIS_UDP)   # 11.18.26: was OpenIrisPythonClient() (same default address)
+        self.oi_status = {}         # 11.18.26: added - outcome of the last OpenIris start
         self.set_session_path(self.session_path)    # 11.18.26: was self.openiris.set_recording_path(self.session_path)
 
         self.target_log = None      # 11.11.26: added (target logging)
@@ -501,12 +515,71 @@ class OculoStim(bases.StimulusBase):
         logger.error(f"No session path; saving OculoStim files to {d}")
         return d
 
+    # 11.18.26: added. Start OpenIris and check each step (UDP commands get no
+    # reply, so before this a missing or idle OpenIris went unnoticed).
+    def _start_openiris(self):
+        gaze = LiveGaze(self.openiris)
+        addr = f"{OPENIRIS_UDP[0]}:{OPENIRIS_UDP[1]}"
+        st = {"address": addr, "reachable": False, "tracking": False, "recording_sent": False,
+              "data_folder": self.session_path or None}
+
+        def frames(wait_s):
+            """Frame numbers seen within wait_s, plus whether any reply came."""
+            seen, replied = set(), False
+            t_end = time.time() + wait_s
+            while time.time() < t_end:
+                s = gaze.read()
+                if s is not None:
+                    replied = True
+                    for k in ("l_frame", "r_frame"):
+                        if s.get(k):
+                            seen.add(s[k])
+                    if len(seen) >= 3:
+                        break
+                time.sleep(0.05)
+            return seen, replied
+
+        try:
+            # 1. Is OpenIris there?
+            _, st["reachable"] = frames(OI_REPLY_WAIT_S)
+            if not st["reachable"]:
+                msg = (f"OpenIris did not answer at {addr}. Start OpenIris (the 0.2.0 SpinnakerMod "
+                       f"build) before the block, and check its remote port. Eye data will NOT be recorded.")
+                print("OPENIRIS: " + msg)
+                logger.error(msg)
+
+            # 2. Folder, then tracking
+            if self.session_path:
+                self.openiris.set_recording_path(self.session_path)
+            self.openiris.start_tracking()
+
+            # 3. Wait for frames (new frame numbers = cameras running)
+            seen, _ = frames(OI_TRACK_WAIT_S)
+            st["tracking"] = len(seen) >= 2
+            if st["tracking"]:
+                print(f"OPENIRIS: tracking ({addr}).")
+            elif st["reachable"]:
+                msg = (f"OpenIris answered but no frames came in within {OI_TRACK_WAIT_S:.0f} s of "
+                       f"STARTTRACKING. Check the cameras in OpenIris (press Start there if needed).")
+                print("OPENIRIS: " + msg)
+                logger.error(msg)
+
+            # 4. Record (sent even if the checks failed, in case only the check is wrong)
+            self.openiris.start_recording()
+            st["recording_sent"] = True
+            print(f"OPENIRIS: STARTRECORDING sent; recording folder: {self.session_path or 'OpenIris default'}")
+        except Exception as e:
+            print(f"OPENIRIS: start failed: {e}")
+            logger.error(f"OpenIris start failed: {e}")
+        finally:
+            gaze.close()
+        self.oi_status = st
+        return st
+
     def present_prep(self):
-        # 11.18.26: added - re-send the session folder before each block
-        if self.session_path:
-            self.openiris.set_recording_path(self.session_path)
-        self.openiris.start_tracking()
-        self.openiris.start_recording()
+        # 11.18.26: was set_recording_path + start_tracking + start_recording
+        # sent back to back with no check; see _start_openiris
+        self._start_openiris()
 
         cfg = get_default_config()
 
@@ -530,7 +603,8 @@ class OculoStim(bases.StimulusBase):
             cfg["mode"] = "Calibration"
             self.trial_data = []
 
-        self.result_data.append({"trial_type": self.trial_type, "trial_data": self.trial_data})
+        self.result_data.append({"trial_type": self.trial_type, "trial_data": self.trial_data,
+                                 "openiris": self.oi_status})       # 11.18.26: added openiris
         self.geometry = ScreenGeometry(self.display)            # 11.11.26: added
         self.presenter = LoggingPresenter(self.display)         # 11.11.26: was StimulusPresenter
         self.runner = ExperimentRunner(self.display, self.presenter, None, cfg)

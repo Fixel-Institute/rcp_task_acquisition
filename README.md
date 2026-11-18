@@ -129,9 +129,14 @@ DelsysKey=...
 DelsysLicense=...
 BRAVOAccessKey=...
 BRAVOServer=...
+OpenIrisHost=127.0.0.1
+OpenIrisPort=9003
 ```
 - `DelsysKey` / `DelsysLicense`: Delsys Trigno sensors. Without them Delsys is skipped (see above).
 - `BRAVOAccessKey` / `BRAVOServer`: only for uploading sessions to BRAVO (Upload Data).
+- `OpenIrisHost` / `OpenIrisPort`: where OculoStim sends OpenIris commands. The default
+  `127.0.0.1:9003` is right when OpenIris runs on the same PC with its default port
+  (OpenIris listens on its ServiceListeningPort + 3).
 
 ## Where data is saved
 Each task run gets its own session folder:
@@ -148,8 +153,16 @@ While a block runs the other buttons are disabled; **Stop Trial** ends it early.
 
 Start OpenIris (0.2.0 SpinnakerMod build, see above) before the block. OculoStim controls it
 over UDP on `127.0.0.1:9003`: it tells OpenIris to save into the session folder, starts
-tracking and recording, and reads live gaze for calibration. In the Anaconda Prompt
-you should see `Session path set to: ...` when a block starts.
+tracking, waits until camera frames come in, then starts recording, and reads live gaze
+for calibration. In the Anaconda Prompt you should see, when a block starts:
+```
+Session path set to: ...
+OPENIRIS: tracking (127.0.0.1:9003).
+OPENIRIS: STARTRECORDING sent; recording folder: ...
+```
+If OpenIris isn't reachable, or no frames come in, an `OPENIRIS:` line says which. The
+block still runs, but check OpenIris before the next one. The result is also saved with
+the block (`openiris` in the metadata).
 
 **Calibrate** runs on its own, without a keypress:
 1. 9 calibration dots. A per-eye fit maps pupil position to degrees.
@@ -184,7 +197,8 @@ A photodiode square flips at each fixation onset and target onset (two flips per
 | `Fatal error. Internal CLR error. (0x80131506)` | Two .NET versions loaded in one program. Check that .NET 8 is installed and that the code is up to date (OculoStim no longer loads the old OpenIris .NET DLL). |
 | `No module named 'Aero'` | The Delsys DLL was loaded after another .NET runtime had started; same cause as above. |
 | `expected LP_c_ubyte instance instead of c_byte_Array_...` (from `pyglet\font\win32.py`) | pyglet 1.4.11 on Python 3.12. Run `python ./library/patch_pyglet_py312.py`. |
-| OculoStim: `no reply from OpenIris` | OpenIris isn't running, is a stock build, or UDP port 9003 is blocked. |
+| OculoStim: `no reply from OpenIris` / `OpenIris did not answer` | OpenIris isn't running, or its remote port isn't 9003 (set `OpenIrisPort` in `.env`). |
+| OculoStim: `answered but no frames came in` | OpenIris got the commands but the cameras aren't streaming. Check them in OpenIris; a stock (non-Fixel) build ignores STARTTRACKING. |
 
 ## Defaults
 The code should come with the defaults in labjack already specified, however if you change them and need to set them back this is the default configuration:
