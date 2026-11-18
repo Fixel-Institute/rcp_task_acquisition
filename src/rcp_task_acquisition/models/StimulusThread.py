@@ -1,3 +1,11 @@
+# ============================================================
+# CHANGE LOG
+#   11.18.26: the "init_stimulus|<session folder>" message is now
+#             handled (it was silently dropped, so OculoStim never
+#             got the session folder). See the dated comment in
+#             run(). The original file is
+#             StimulusThread_before_path_fix.py.
+# ============================================================
 import ast
 import json
 import math
@@ -96,6 +104,20 @@ class StimulusThread(Process):
                     else:
                         self.sess_path = ""
                     self.init_stimuli()
+                # 11.18.26: added. MainFrame.run_task sends "init_stimulus"
+                # and then "init_stimulus|<session folder>". The second one
+                # never matched the line above (it isn't equal to
+                # "init_stimulus"), so it was dropped and the stimulus kept
+                # an empty session path: in an earlier session OculoStim's
+                # file failed to save ('\\oculostim_calibration_...json',
+                # permission denied) and OpenIris recorded to its default
+                # folder. Now the path is stored and handed to the stimulus
+                # if it can take it (OculoStim.set_session_path); other
+                # tasks are unaffected.
+                elif isinstance(msg, str) and msg.startswith(f"{Msg.INITIALIZE.value}|"):
+                    self.sess_path = msg.split("|", 1)[1]
+                    if self.stimulus is not None and hasattr(self.stimulus, "set_session_path"):
+                        self.stimulus.set_session_path(self.sess_path)
                 elif msg == Msg.SEND_METADATA:
                     self.send_metadata()
                 elif msg == Msg.UPDATE_TASK:
