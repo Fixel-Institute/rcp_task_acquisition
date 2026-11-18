@@ -63,10 +63,15 @@ This is the outline for installing this program with the expected hardware confi
     - .NET 8 Desktop Runtime, Windows x64 (from Microsoft, dotnet.microsoft.com). Needed
       by the Delsys code, which starts .NET 8 when the program opens. Check with
       `dotnet --list-runtimes` (look for `Microsoft.NETCore.App 8.`).
-    - Eye tracking carts only: OpenIris, the Fixel build in this repo,
-      `library/OpenIris_Win_Release_0.2.0_SpinnakerMod.zip`. Unzip it and run
-      OpenIris from there. Stock OpenIris does not have the remote commands
-      OculoStim uses (SETDATAFOLDER, STARTTRACKING, STOPTRACKING).
+    - Eye tracking carts only: OpenIris, Fixel's build in this repo,
+      `library/OpenIris_Win_Release_0.1.5_SpinnakerMod.zip`. Unzip it somewhere permanent
+      and run `Release\OpenIris.exe`. It has the Spinnaker (FLIR) camera plugin
+      (eye tracker system "Spinnaker Dual Camera") and the remote commands OculoStim uses
+      (SETDATAFOLDER, STARTTRACKING, STOPTRACKING, GETDATA), on UDP port 9003.
+      - Stock OpenIris answers `Unknown command 'STARTTRACKING'` (in its log); recording
+        still works but tracking and the data folder can't be set remotely.
+      - `OpenIris_Win_Release_0.2.0_SpinnakerMod.zip` has the remote commands but no
+        Spinnaker plugin (only `Plugins/BasicPlugins.dll`), so the cameras don't show up.
 5. Once all apps are installed, restart computer. You can now unplug the flash drive
 
 ### Installing Code
@@ -151,7 +156,7 @@ Select the OculoStim task, then start a block with one of the buttons on its pan
 panel shows which one, the other buttons are disabled, and a **Stop Block** button ends it
 early.
 
-Start OpenIris (0.2.0 SpinnakerMod build, see above) before **Start Task**. OculoStim
+Start OpenIris (0.1.5 SpinnakerMod build, see above) before **Start Task**. OculoStim
 controls it over UDP on `127.0.0.1:9003`:
 - **Start Task**: sets the session folder and starts tracking, so you can check the eye
   images in OpenIris and adjust the setup before running any block.
