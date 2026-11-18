@@ -13,6 +13,12 @@
 #   11.18.26: "Run Gaze Calibration" radio is now disabled
 #             during a block and re-enabled after, like the
 #             others (it was left enabled).
+#   11.18.26 (later): the radio buttons are removed; the four
+#             block buttons are the only way to pick a block.
+#             The chosen block is kept in self.selection (was
+#             read from the radios). Begin Trial is hidden until
+#             a block runs, and then shows as "Stop Block" to end
+#             it early. A label shows which block is running.
 #   Every changed line is marked with its date below. The
 #   original file is panel_before_buttons.py.
 # ============================================================
@@ -36,7 +42,7 @@ class OculoStimPanel(TrialPanel):
         self.button_width = 76
         self.border = 5
         self.photo = None
-        self.selection = ""
+        self.selection = "Saccade"     # 11.18.26: was "" (the Saccade radio was selected by default)
         self.image_list = []
 
         wx.Panel.__init__(self, parent, -1, size=wx.Size(-1,-1))
@@ -51,70 +57,73 @@ class OculoStimPanel(TrialPanel):
     def _setup_oculostim_controls(self):
         self.trial_text = wx.StaticText(self, label="Trial # 1")
         
-        self.hand_text = wx.StaticText(self, label='Choose which paradigm to run:')
-        self.saccade_radio = wx.RadioButton(self, label="Saccade", style= wx.RB_GROUP)
-        self.pursuit_radio = wx.RadioButton(self, label="Smooth Pursuit")
-        self.fixation_radio = wx.RadioButton(self, label="Fixation")
-        self.calibration_radio = wx.RadioButton(self, label="Run Gaze Calibration")
+        # 11.18.26: removed the paradigm radio buttons ('Choose which
+        # paradigm to run:'); the block buttons below replace them.
+        self.hand_text = wx.StaticText(self, label="Start a block:")      # 11.18.26: was 'Choose which paradigm to run:'
         
         self.seconds_text = wx.StaticText(self, label= "Time: 0 secs")
         self.continue_button = wx.ToggleButton(self, label="Begin Trial", size=(self.button_width*2, -1))
+        self.continue_button.Hide()         # 11.18.26: added - shown only while a block runs (as "Stop Block")
+        self.block_status = wx.StaticText(self, label="No block running")  # 11.18.26: added
 
-        # 11.18.26: added - one-click block buttons. Each selects its
-        # radio button, then presses Begin Trial (see _start_block).
-        self.block_text = wx.StaticText(self, label="Or start a block directly:")
+        # 11.18.26: added - one-click block buttons. Each sets the
+        # selection, then presses Begin Trial (see _start_block).
         self.block_buttons = {}
-        for name, radio in [("Calibrate", self.calibration_radio),
-                            ("Saccades", self.saccade_radio),
-                            ("Smooth Pursuit", self.pursuit_radio),
-                            ("Fixation", self.fixation_radio)]:
+        for name, selection in [("Calibrate", "Calibration"),
+                                ("Saccades", "Saccade"),
+                                ("Smooth Pursuit", "Pursuit"),
+                                ("Fixation", "Fixation")]:
             b = wx.Button(self, label=name, size=(self.button_width*2, -1))
-            b.Bind(wx.EVT_BUTTON, lambda event, r=radio: self._start_block(r))
+            b.Bind(wx.EVT_BUTTON, lambda event, s=selection, n=name: self._start_block(s, n))
             self.block_buttons[name] = b
     
         grid_sizer = wx.GridBagSizer(6, 6)
         grid_sizer.Add(self.trial_text, pos=(0, 0), span=(0,6), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
         grid_sizer.Add(self.hand_text, pos=(1, 0), span=(0,6), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
-        grid_sizer.Add(self.saccade_radio, pos=(2, 0), span=(0,2), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
-        grid_sizer.Add(self.pursuit_radio, pos=(2, 2), span=(0,2), flag=wx.ALIGN_LEFT  | wx.ALL, border=self.border)
-        grid_sizer.Add(self.fixation_radio, pos=(2, 4), span=(0,2), flag=wx.ALIGN_LEFT  | wx.ALL, border=self.border)
-        grid_sizer.Add(self.calibration_radio, pos=(3, 4), span=(0,2), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
-        grid_sizer.Add(self.seconds_text, pos=(4, 0), span=(0,6), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
-        grid_sizer.Add(self.continue_button, pos=(5, 0), span=(0,3), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
-
-        # 11.18.26: added - block buttons below Begin Trial, two per row
-        grid_sizer.Add(self.block_text, pos=(6, 0), span=(0,6), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
+        # 11.18.26: block buttons, two per row (rows 2-3)
         for k, b in enumerate(self.block_buttons.values()):
-            grid_sizer.Add(b, pos=(7 + k // 2, 3 * (k % 2)), span=(0,3), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
+            grid_sizer.Add(b, pos=(2 + k // 2, 3 * (k % 2)), span=(0,3), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
+        grid_sizer.Add(self.block_status, pos=(4, 0), span=(0,6), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)  # 11.18.26: added
+        grid_sizer.Add(self.seconds_text, pos=(5, 0), span=(0,6), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
+        grid_sizer.Add(self.continue_button, pos=(6, 0), span=(0,3), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
         return grid_sizer
 
     # 11.18.26: added
-    def _start_block(self, radio):
+    def _start_block(self, selection, name):
         """
-        Select the paradigm and press Begin Trial. MainFrame binds
+        Set the block and press Begin Trial. MainFrame binds
         EVT_TOGGLEBUTTON on continue_button to trial_event, so
         posting that event starts the block the same way a click
         on Begin Trial does.
         """
         if self.trial_is_active or self.continue_button.GetValue():
             return                          # a block is already running
-        radio.SetValue(True)
+        self.selection = selection          # 11.18.26: was radio.SetValue(True)
         self.continue_button.SetValue(True)
         evt = wx.CommandEvent(wx.wxEVT_TOGGLEBUTTON, self.continue_button.GetId())
         evt.SetEventObject(self.continue_button)
         evt.SetInt(1)
         wx.PostEvent(self.continue_button.GetEventHandler(), evt)
 
-    # 11.18.26: added - enable/disable every way of picking a block
+    # 11.18.26: added - enable/disable the block buttons; the Stop
+    # button is shown only while a block runs
     def _enable_choices(self, on):
-        for w in (self.saccade_radio, self.pursuit_radio, self.fixation_radio, self.calibration_radio):
-            w.Enable(on)
         for b in self.block_buttons.values():
             b.Enable(on)
+        self.continue_button.Show(not on)
+        if on:
+            self.block_status.SetLabel("No block running")
+        else:
+            names = {"Calibration": "Calibrate", "Saccade": "Saccades",
+                     "Pursuit": "Smooth Pursuit", "Fixation": "Fixation"}
+            self.block_status.SetLabel(f"Running: {names.get(self.selection, self.selection)}")
+            # MainFrame labels it "Stop Trial" right after run_trial
+            wx.CallAfter(self.continue_button.SetLabel, "Stop Block")
+        self.Layout()
 
     def run_trial(self, number):
         self.seconds = 0
-        self._enable_choices(False)          # 11.18.26: was saccade/pursuit/fixation radios only
+        self._enable_choices(False)          # 11.18.26: was saccade/pursuit/fixation radios only (radios now removed)
         self.trial_text.SetLabel(f"Trial # {number}")
         self.trial_is_active = True
     
@@ -122,19 +131,12 @@ class OculoStimPanel(TrialPanel):
         self.trial_number = number
         
     def get_result(self):
-        if self.fixation_radio.GetValue():
-            self.selection = "Fixation"
-        elif self.saccade_radio.GetValue():
-            self.selection = "Saccade"
-        elif self.pursuit_radio.GetValue():
-            self.selection = "Pursuit"
-        elif self.calibration_radio.GetValue():
-            self.selection = "Calibration"
+        # 11.18.26: selection is set by the block button (was read from the radios)
         return "OculoStim",self.selection,self.trial_number
 
     def reset(self, number):
         self.seconds = 5
-        self._enable_choices(True)           # 11.18.26: was saccade/pursuit/fixation radios only
+        self._enable_choices(True)           # 11.18.26: was saccade/pursuit/fixation radios only (radios now removed)
         self.seconds_text.SetLabel(f"Time: 0 secs")
         self.continue_button.SetValue(False)
         self.continue_button.SetLabel("Begin Trial")

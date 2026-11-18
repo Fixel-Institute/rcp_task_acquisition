@@ -147,9 +147,9 @@ Each task run gets its own session folder:
 
 ## OculoStim (eye tracking task)
 Select the OculoStim task, then start a block with one of the buttons on its panel:
-**Calibrate**, **Saccades**, **Smooth Pursuit** or **Fixation**. Each button picks the
-block and presses Begin Trial for you. The radio buttons with **Begin Trial** still work.
-While a block runs the other buttons are disabled; **Stop Trial** ends it early.
+**Calibrate**, **Saccades**, **Smooth Pursuit** or **Fixation**. While a block runs, the
+panel shows which one, the other buttons are disabled, and a **Stop Block** button ends it
+early.
 
 Start OpenIris (0.2.0 SpinnakerMod build, see above) before **Start Task**. OculoStim
 controls it over UDP on `127.0.0.1:9003`:
