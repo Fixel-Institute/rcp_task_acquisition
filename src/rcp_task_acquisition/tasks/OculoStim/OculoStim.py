@@ -50,6 +50,11 @@
 #             recording (one SESSION_NAME folder per block, as
 #             before). STOPTRACKING is sent when the task ends
 #             (Stop Task -> reset_task).
+#   11.18.26: task-start tracking is checked. STARTTRACKING is
+#             sent 0.5 s after SETDATAFOLDER (they used to go out
+#             together), frames are checked in the background
+#             (the GUI isn't held up), STARTTRACKING is re-sent
+#             once if none arrive, and the result is printed.
 #   Every changed line is marked with its date below (11.11.26
 #   also removed trailing spaces on blank lines, no effect). The
 #   original file is OculoStim_before_online_cal.py.
@@ -62,6 +67,7 @@ import os                   # 11.18.26: added (OpenIris address from .env)
 import math                 # 11.11.26: added
 import random               # 11.11.26: added (validation order)
 import socket               # 11.11.26: added (live gaze over UDP)
+import threading            # 11.18.26: added (task-start tracking check)
 import time                 # 11.11.26: added (unix timestamps)
 from pathlib import Path
 
@@ -510,8 +516,8 @@ class OculoStim(bases.StimulusBase):
             self.openiris.set_recording_path(self.session_path)
             print(f"Session path set to: {self.session_path} (OpenIris records here)")
             # 11.18.26: added - track from task start so the setup can be checked
-            self.openiris.start_tracking()
-            print("OPENIRIS: STARTTRACKING sent at task start - check the eye images in OpenIris.")
+            # (checked in the background, see _track_at_task_start)
+            threading.Thread(target=self._track_at_task_start, daemon=True).start()
         else:
             print("No session path yet; OculoStim files will go to the fallback folder if none arrives.")
 
@@ -524,6 +530,50 @@ class OculoStim(bases.StimulusBase):
         d.mkdir(parents=True, exist_ok=True)
         logger.error(f"No session path; saving OculoStim files to {d}")
         return d
+
+    # 11.18.26: added. Start tracking at task start and check frames arrive.
+    # Runs in a thread so the stimulus process keeps reading messages.
+    def _track_at_task_start(self):
+        addr = f"{OPENIRIS_UDP[0]}:{OPENIRIS_UDP[1]}"
+        gaze = LiveGaze(self.openiris)
+
+        def frames(wait_s):
+            seen, replied = set(), False
+            t_end = time.time() + wait_s
+            while time.time() < t_end and len(seen) < 3:
+                s = gaze.read()
+                if s is not None:
+                    replied = True
+                    seen.update(s[k] for k in ("l_frame", "r_frame") if s.get(k))
+                time.sleep(0.05)
+            return len(seen) >= 2, replied
+
+        try:
+            time.sleep(0.5)                         # let SETDATAFOLDER go through first
+            running, replied = frames(0.5)
+            if running:
+                print(f"OPENIRIS: already tracking at task start ({addr}).")
+                return
+            for attempt in (1, 2):
+                self.openiris.start_tracking()
+                print(f"OPENIRIS: STARTTRACKING sent at task start (try {attempt}).")
+                running, replied = frames(OI_TRACK_WAIT_S)
+                if running:
+                    print("OPENIRIS: tracking - check the eye images in OpenIris.")
+                    return
+            if not replied:
+                msg = (f"OpenIris did not answer at {addr}; tracking not started. Is OpenIris open, "
+                       f"and is its remote port {OPENIRIS_UDP[1]}?")
+            else:
+                msg = ("OpenIris answered but did not start tracking. Look in OpenIris's log for "
+                       "\"remote command 'STARTTRACKING' failed\" (the reason is on that line), "
+                       "or press Start in OpenIris.")
+            print("OPENIRIS: " + msg)
+            logger.error(msg)
+        except Exception as e:
+            print(f"OPENIRIS: task-start tracking check failed: {e}")
+        finally:
+            gaze.close()
 
     # 11.18.26: added. Start OpenIris and check each step (UDP commands get no
     # reply, so before this a missing or idle OpenIris went unnoticed).

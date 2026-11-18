@@ -162,7 +162,8 @@ controls it over UDP on `127.0.0.1:9003`:
 In the Anaconda Prompt you should see:
 ```
 Session path set to: ...
-OPENIRIS: STARTTRACKING sent at task start - check the eye images in OpenIris.
+OPENIRIS: STARTTRACKING sent at task start (try 1).
+OPENIRIS: tracking - check the eye images in OpenIris.
 (each block)
 OPENIRIS: tracking (127.0.0.1:9003).
 OPENIRIS: STARTRECORDING sent; recording folder: ...
@@ -206,6 +207,7 @@ A photodiode square flips at each fixation onset and target onset (two flips per
 | `No module named 'Aero'` | The Delsys DLL was loaded after another .NET runtime had started; same cause as above. |
 | `expected LP_c_ubyte instance instead of c_byte_Array_...` (from `pyglet\font\win32.py`) | pyglet 1.4.11 on Python 3.12. Run `python ./library/patch_pyglet_py312.py`. |
 | OculoStim: `no reply from OpenIris` / `OpenIris did not answer` | OpenIris isn't running, or its remote port isn't 9003 (set `OpenIrisPort` in `.env`). |
+| OculoStim: `answered but did not start tracking` | OpenIris got STARTTRACKING twice and refused it. Its log has a line `ERROR: remote command 'STARTTRACKING' failed: ...` with the reason. Pressing Start in OpenIris works too; blocks still record. |
 | OculoStim: `answered but no frames came in` | OpenIris got the commands but the cameras aren't streaming. Check them in OpenIris; a stock (non-Fixel) build ignores STARTTRACKING. |
 
 ## Defaults
