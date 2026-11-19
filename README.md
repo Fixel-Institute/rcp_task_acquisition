@@ -152,7 +152,8 @@ Each task run gets its own session folder:
 
 ## OculoStim (eye tracking task)
 Select the OculoStim task, then start a block with one of the buttons on its panel:
-**Calibrate**, **Saccades**, **Smooth Pursuit** or **Fixation**. While a block runs, the
+**Calibrate (online)**, **Calibrate (offline)**, **Saccades**, **Smooth Pursuit** or
+**Fixation**. While a block runs, the
 panel shows which one, the other buttons are disabled, and a **Stop Block** button ends it
 early.
 
@@ -181,11 +182,15 @@ If OpenIris isn't reachable, or no frames come in, an `OPENIRIS:` line says whic
 block still runs, but check OpenIris before the next one. The result is also saved with
 the block (`openiris` in the metadata).
 
-**Calibrate** runs on its own, without a keypress:
+**Calibrate (offline)** runs the original timed 9-dot sequence (no live gaze, nothing to
+check during the session); the dot positions and times are saved in
+`oculostim_calibration_<timestamp>.json` and OpenIris records the block as usual.
+
+**Calibrate (online)** runs on its own, without a keypress:
 1. 9 calibration dots. A per-eye fit maps pupil position to degrees.
 2. 5 check dots: (0,0), (±10,0) and (0,±5) degrees.
 3. A result screen for 8 s with the error for each eye. It passes if the mean error is
-   ≤ 2° and the worst dot is ≤ 3°; otherwise it says to press Calibrate to redo.
+   ≤ 2° and the worst dot is ≤ 3°; otherwise it says to press Calibrate (online) to redo.
 
 If OpenIris sends no live gaze within 5 s, it falls back to the older dot sequence that
 is calibrated afterwards (offline).

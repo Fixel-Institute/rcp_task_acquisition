@@ -55,6 +55,10 @@
 #             together), frames are checked in the background
 #             (the GUI isn't held up), STARTTRACKING is re-sent
 #             once if none arrive, and the result is printed.
+#   11.19.26: new trial type "CalibrationOffline" (panel button
+#             "Calibrate (offline)"): runs only the old timed
+#             9-dot routine, no live gaze, as before 11.11.26.
+#             "Calibration" is still online with offline fallback.
 #   Every changed line is marked with its date below (11.11.26
 #   also removed trailing spaces on blank lines, no effect). The
 #   original file is OculoStim_before_online_cal.py.
@@ -662,7 +666,7 @@ class OculoStim(bases.StimulusBase):
             cfg["mode"] = "Pursuit Block"
             config = get_pursuit_config()
             self.trial_data = build_pursuit_trials(config)
-        elif self.trial_type == "Calibration":
+        elif self.trial_type in ("Calibration", "CalibrationOffline"):     # 11.19.26: was == "Calibration"
             cfg["mode"] = "Calibration"
             self.trial_data = []
 
@@ -690,7 +694,12 @@ class OculoStim(bases.StimulusBase):
         self.display.flip()
 
         internal_data = []
-        if self.trial_type == "Calibration":
+        if self.trial_type == "CalibrationOffline":
+            # 11.19.26: added - offline only (old timed 9-dot routine)
+            print("Running offline gaze calibration (no live gaze)...")
+            internal_data = [self.run_offline_calibration()]
+
+        elif self.trial_type == "Calibration":
             # 11.11.26: online calibration, falling back to the old
             # offline routine (was: run_gaze_calibration + save JSON here)
             print("Running online gaze calibration...")
@@ -964,7 +973,7 @@ class OculoStim(bases.StimulusBase):
         # now an overall verdict and how to redo
         lines += ["", f"Target: mean <= {PASS_MEAN_DEG:.0f} deg, worst <= {PASS_MAX_DEG:.0f} deg", "",
                   "OVERALL: PASS - continue with the tasks" if a.get("passed")
-                  else "OVERALL: NOT PASSED - press Calibrate to redo"]
+                  else "OVERALL: NOT PASSED - press Calibrate (online) to redo"]   # 11.19.26: button renamed
         return "\n".join(lines)
 
     def run_online_calibration(self):

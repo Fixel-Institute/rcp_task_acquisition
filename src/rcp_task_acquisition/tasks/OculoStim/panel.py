@@ -19,6 +19,10 @@
 #             read from the radios). Begin Trial is hidden until
 #             a block runs, and then shows as "Stop Block" to end
 #             it early. A label shows which block is running.
+#   11.19.26: Calibrate split into "Calibrate (online)" (trial
+#             type "Calibration", online with offline fallback)
+#             and "Calibrate (offline)" (trial type
+#             "CalibrationOffline", old timed 9-dot routine only).
 #   Every changed line is marked with its date below. The
 #   original file is panel_before_buttons.py.
 # ============================================================
@@ -69,7 +73,8 @@ class OculoStimPanel(TrialPanel):
         # 11.18.26: added - one-click block buttons. Each sets the
         # selection, then presses Begin Trial (see _start_block).
         self.block_buttons = {}
-        for name, selection in [("Calibrate", "Calibration"),
+        for name, selection in [("Calibrate (online)", "Calibration"),           # 11.19.26: was "Calibrate"
+                                ("Calibrate (offline)", "CalibrationOffline"),  # 11.19.26: added
                                 ("Saccades", "Saccade"),
                                 ("Smooth Pursuit", "Pursuit"),
                                 ("Fixation", "Fixation")]:
@@ -80,12 +85,13 @@ class OculoStimPanel(TrialPanel):
         grid_sizer = wx.GridBagSizer(6, 6)
         grid_sizer.Add(self.trial_text, pos=(0, 0), span=(0,6), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
         grid_sizer.Add(self.hand_text, pos=(1, 0), span=(0,6), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
-        # 11.18.26: block buttons, two per row (rows 2-3)
+        # 11.18.26: block buttons, two per row from row 2 (11.19.26: rows follow the button count)
         for k, b in enumerate(self.block_buttons.values()):
             grid_sizer.Add(b, pos=(2 + k // 2, 3 * (k % 2)), span=(0,3), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
-        grid_sizer.Add(self.block_status, pos=(4, 0), span=(0,6), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)  # 11.18.26: added
-        grid_sizer.Add(self.seconds_text, pos=(5, 0), span=(0,6), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
-        grid_sizer.Add(self.continue_button, pos=(6, 0), span=(0,3), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
+        r = 2 + (len(self.block_buttons) + 1) // 2     # 11.19.26: first free row (was fixed at 4)
+        grid_sizer.Add(self.block_status, pos=(r, 0), span=(0,6), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)  # 11.18.26: added
+        grid_sizer.Add(self.seconds_text, pos=(r + 1, 0), span=(0,6), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
+        grid_sizer.Add(self.continue_button, pos=(r + 2, 0), span=(0,3), flag=wx.ALIGN_LEFT | wx.ALL, border=self.border)
         return grid_sizer
 
     # 11.18.26: added
@@ -114,7 +120,8 @@ class OculoStimPanel(TrialPanel):
         if on:
             self.block_status.SetLabel("No block running")
         else:
-            names = {"Calibration": "Calibrate", "Saccade": "Saccades",
+            names = {"Calibration": "Calibrate (online)", "CalibrationOffline": "Calibrate (offline)",  # 11.19.26: offline added
+                     "Saccade": "Saccades",
                      "Pursuit": "Smooth Pursuit", "Fixation": "Fixation"}
             self.block_status.SetLabel(f"Running: {names.get(self.selection, self.selection)}")
             # MainFrame labels it "Stop Trial" right after run_trial
