@@ -156,6 +156,9 @@ Select the OculoStim task, then start a block with one of the buttons on its pan
 panel shows which one, the other buttons are disabled, and a **Stop Block** button ends it
 early.
 
+OculoStim always records the face cameras only (`leftCamFace`, `rightCamFace`, plus the
+master camera if it is a different one), whatever `config_files/taskconfig.yaml` lists.
+
 Start OpenIris (0.1.5 SpinnakerMod build, see above) before **Start Task**. OculoStim
 controls it over UDP on `127.0.0.1:9003`:
 - **Start Task**: sets the session folder and starts tracking, so you can check the eye

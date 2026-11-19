@@ -1,3 +1,11 @@
+# ============================================================
+# CHANGE LOG
+#   11.19.26: the OculoStim task uses only the face cameras
+#             (plus the master camera if it isn't one), whatever
+#             config_files/taskconfig.yaml lists. See
+#             _face_cams_only and its use in show(). The config
+#             file itself is not changed; other tasks unaffected.
+# ============================================================
 """
 file_utils toolbox
 https://github.com/wryanw/file_utils
@@ -39,6 +47,25 @@ from rcp_task_acquisition.utils.logger import get_logger
 from rcp_task_acquisition.utils.task_acquisistion_version import __version__
 
 logger = get_logger("./panels/MainFrame")
+
+OCULOSTIM_TASK = "oculostim_task"   # 11.19.26: added
+
+
+# 11.19.26: added. Face cameras only for OculoStim. Non-camera items (LabJack
+# channels etc.) are kept as listed. The master camera is kept even if it is
+# not a face camera, because it sends the trigger the others record on.
+def _face_cams_only(settings, cameras):
+    def usable(name):
+        return name in cameras and cameras[name].get("in_use", True)
+
+    out = [s for s in settings if s not in cameras]
+    keep = [c for c in cameras if "face" in c.lower() and usable(c)]
+    for c in cameras:
+        if cameras[c].get("ismaster") and usable(c) and c not in keep:
+            keep.append(c)
+            logger.warning(f"OculoStim: keeping {c} because it is the master camera")
+    return out + keep
+
 
 
 class MainFrame(wx.Frame):
@@ -981,6 +1008,13 @@ class MainFrame(wx.Frame):
         self.user_cfg = file_utils.read_config("userdata.yaml")
         self.task_cfg = read_config("taskconfig.yaml")
         self.task = launch_args["task"].strip()
+        # 11.19.26: added - OculoStim uses the face cameras only (in memory;
+        # taskconfig.yaml is not rewritten)
+        if self.task == OCULOSTIM_TASK and self.task in self.task_cfg:
+            self.task_cfg[self.task]["settings"] = _face_cams_only(
+                list(self.task_cfg[self.task]["settings"]), self.user_cfg["cameras"]
+            )
+            logger.info(f"OculoStim cameras: {[c for c in self.task_cfg[self.task]['settings'] if c in self.user_cfg['cameras']]}")
         self.msgq.put(Msg.UPDATE_TASK)
         self.msgq.put(launch_args["task"].strip())
         self.launch_args = launch_args
