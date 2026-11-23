@@ -89,7 +89,7 @@ This is the outline for installing this program with the expected hardware confi
     - `conda install -c conda-forge pywinhook`  # only first time
       // other possibility is to get Visual C++ Build tools
     - `git lfs install`  # only first time, this enables git LFS hooks
-    - `git clone https://github.com/Fixel-Institute/rcp_task_acquisition.git`
+    - `git clone https://github.com/zigsK/rcp_task_acquisition.git`
     - `cd rcp_task_acquisition`  # Always
     - `pip install -e . --find-links ./library`  # first time, and after every `git pull` that changes pyproject.toml
       # NB: --find-links lets pip use the wheels in the library subdir (Spinnaker)
