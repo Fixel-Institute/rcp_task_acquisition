@@ -63,15 +63,20 @@ This is the outline for installing this program with the expected hardware confi
     - .NET 8 Desktop Runtime, Windows x64 (from Microsoft, dotnet.microsoft.com). Needed
       by the Delsys code, which starts .NET 8 when the program opens. Check with
       `dotnet --list-runtimes` (look for `Microsoft.NETCore.App 8.`).
-    - Eye tracking carts only: OpenIris, Fixel's build in this repo,
-      `library/OpenIris_Win_Release_0.1.5_SpinnakerMod.zip`. Unzip it somewhere permanent
-      and run `Release\OpenIris.exe`. It has the Spinnaker (FLIR) camera plugin
-      (eye tracker system "Spinnaker Dual Camera") and the remote commands OculoStim uses
-      (SETDATAFOLDER, STARTTRACKING, STOPTRACKING, GETDATA), on UDP port 9003.
+    - Eye tracking carts only: OpenIris, one of Fixel's builds in this repo. Unzip it somewhere
+      permanent and run `Release\OpenIris.exe`. Both builds have the Spinnaker (FLIR) camera
+      plugin (`Plugins/SpinnakerInterface.dll`, eye tracker system "Spinnaker Dual Camera") and
+      the remote commands OculoStim uses (SETDATAFOLDER, STARTTRACKING, STOPTRACKING, GETDATA)
+      on UDP port 9003 (OpenIris's ServiceListeningPort + 3).
+      - `library/OpenIris_Win_Release_0.1.5_SpinnakerMod.zip`: tested with OculoStim on the
+        UCSF cart.
+      - `library/OpenIris_Win_Release_0.2.0_SpinnakerMod.zip`: has the Spinnaker plugin since
+        the 11/20/2026 update (the earlier 0.2.0 zip did not, so no cameras appeared). Not yet
+        tested with OculoStim.
       - Stock OpenIris answers `Unknown command 'STARTTRACKING'` (in its log); recording
         still works but tracking and the data folder can't be set remotely.
-      - `OpenIris_Win_Release_0.2.0_SpinnakerMod.zip` has the remote commands but no
-        Spinnaker plugin (only `Plugins/BasicPlugins.dll`), so the cameras don't show up.
+      - Camera orientation is set in OpenIris (LeftEyeOrientation / RightEyeOrientation in the
+        eye tracking system settings); OpenIris overrides flips set in SpinView.
 5. Once all apps are installed, restart computer. You can now unplug the flash drive
 
 ### Installing Code
@@ -160,7 +165,7 @@ early.
 OculoStim always records the face cameras only (`leftCamFace`, `rightCamFace`, plus the
 master camera if it is a different one), whatever `config_files/taskconfig.yaml` lists.
 
-Start OpenIris (0.1.5 SpinnakerMod build, see above) before **Start Task**. OculoStim
+Start OpenIris (Fixel SpinnakerMod build, see above) before **Start Task**. OculoStim
 controls it over UDP on `127.0.0.1:9003`:
 - **Start Task**: sets the session folder and starts tracking, so you can check the eye
   images in OpenIris and adjust the setup before running any block.
