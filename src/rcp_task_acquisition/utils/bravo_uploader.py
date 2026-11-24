@@ -1,3 +1,8 @@
+# ============================================================
+# CHANGE LOG
+#   11.18.26: BRAVOClient import falls back to library/BRAVO
+#             (see dated comment at the import).
+# ============================================================
 import os, sys
 import traceback
 import numpy as np
@@ -8,7 +13,13 @@ import yaml
 import json
 import datetime
 
-from BRAVOClient import BRAVOPlatformRequest
+# 11.18.26: BRAVOClient is not on pip and is missing on new machines, which
+# stopped the whole program from starting (this module is imported by the
+# Upload Data panel). Fall back to the copy of the same class in the repo.
+try:
+    from BRAVOClient import BRAVOPlatformRequest
+except ImportError:
+    from library.BRAVO.BRAVORequestAPI import BRAVOPlatformRequest
 
 def getTimestamp(text):
     return datetime.datetime.fromisoformat(text[0:4] + "-" + text[4:6] + "-" + text[6:8] + "T" + text[8:10] + ":" + text[10:12] + ":" + text[12:14] + "+00:00").timestamp()

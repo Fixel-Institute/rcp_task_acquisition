@@ -1,3 +1,17 @@
+# ============================================================
+# CHANGE LOG
+#   11.19.26: the OculoStim task uses only the face cameras
+#             (plus the master camera if it isn't one), whatever
+#             config_files/taskconfig.yaml lists. See
+#             _face_cams_only and its use in show(). The config
+#             file itself is not changed; other tasks unaffected.
+#   11.24.26: for OculoStim, the session folder is sent to the
+#             stimulus process only once the LabJack file is being
+#             written (was: before the LabJack started). OculoStim
+#             starts OpenIris tracking when the folder arrives, so
+#             the first eye-camera sync pulses now always land in
+#             the LabJack file. See _wait_for_labjack_file.
+# ============================================================
 """
 file_utils toolbox
 https://github.com/wryanw/file_utils
@@ -39,6 +53,25 @@ from rcp_task_acquisition.utils.logger import get_logger
 from rcp_task_acquisition.utils.task_acquisistion_version import __version__
 
 logger = get_logger("./panels/MainFrame")
+
+OCULOSTIM_TASK = "oculostim_task"   # 11.19.26: added
+
+
+# 11.19.26: added. Face cameras only for OculoStim. Non-camera items (LabJack
+# channels etc.) are kept as listed. The master camera is kept even if it is
+# not a face camera, because it sends the trigger the others record on.
+def _face_cams_only(settings, cameras):
+    def usable(name):
+        return name in cameras and cameras[name].get("in_use", True)
+
+    out = [s for s in settings if s not in cameras]
+    keep = [c for c in cameras if "face" in c.lower() and usable(c)]
+    for c in cameras:
+        if cameras[c].get("ismaster") and usable(c) and c not in keep:
+            keep.append(c)
+            logger.warning(f"OculoStim: keeping {c} because it is the master camera")
+    return out + keep
+
 
 
 class MainFrame(wx.Frame):
@@ -287,7 +320,9 @@ class MainFrame(wx.Frame):
             self.finish.value = 0
             self.msgq.put(Msg.INITIALIZE)
             self.create_file()
-            self.msgq.put(f"init_stimulus|{self.sess_dir}")
+            # 11.24.26: OculoStim gets the folder after the LabJack file starts (below)
+            if self.task != OCULOSTIM_TASK:
+                self.msgq.put(f"init_stimulus|{self.sess_dir}")
             is_success = self.lj.start_labjack()
             if not is_success:
                 self.task_button.SetValue(False)
@@ -300,6 +335,11 @@ class MainFrame(wx.Frame):
             lj_path = os.path.join(self.sess_dir, self.path_base + "_labjack.txt")
             msg = f"P{self.path_base}x"
             self.lj.add_csv(lj_path, self.serial_device, msg)
+            # 11.24.26: added - OculoStim starts OpenIris tracking when it gets the
+            # folder, so wait until the LabJack file is being written first
+            if self.task == OCULOSTIM_TASK:
+                self._wait_for_labjack_file()
+                self.msgq.put(f"init_stimulus|{self.sess_dir}")
             self.startingSession = True
             self.task_button.SetLabel("End Task")
             # self.hardware_button.Enable(False)
@@ -357,6 +397,20 @@ class MainFrame(wx.Frame):
             self.msgq.put(Msg.RESET_TASK)
             self.labjack_timer.Start(200)
             self.rest_timer.Stop()
+
+    # 11.24.26: added. True once the LabJack stream runs and the stream process
+    # has taken the file path (it then writes from its next read on). Waits at
+    # most timeout_s; the GUI is held for that time (normally well under 1 s).
+    def _wait_for_labjack_file(self, timeout_s=5.0):
+        t0 = time.time()
+        while time.time() - t0 < timeout_s:
+            if self.lj.stream_started.value and not self.lj.labjack_is_csv.value:
+                time.sleep(0.1)     # let the first block of samples be written
+                logger.info(f"LabJack file started after {time.time() - t0:.2f} s; starting OpenIris tracking")
+                return True
+            time.sleep(0.02)
+        logger.warning(f"LabJack file not confirmed within {timeout_s:.0f} s; starting OpenIris tracking anyway")
+        return False
 
     def trial_event(self, event):
         logger.debug(f"in trial_event: {self.video_status.value}")
@@ -981,6 +1035,13 @@ class MainFrame(wx.Frame):
         self.user_cfg = file_utils.read_config("userdata.yaml")
         self.task_cfg = read_config("taskconfig.yaml")
         self.task = launch_args["task"].strip()
+        # 11.19.26: added - OculoStim uses the face cameras only (in memory;
+        # taskconfig.yaml is not rewritten)
+        if self.task == OCULOSTIM_TASK and self.task in self.task_cfg:
+            self.task_cfg[self.task]["settings"] = _face_cams_only(
+                list(self.task_cfg[self.task]["settings"]), self.user_cfg["cameras"]
+            )
+            logger.info(f"OculoStim cameras: {[c for c in self.task_cfg[self.task]['settings'] if c in self.user_cfg['cameras']]}")
         self.msgq.put(Msg.UPDATE_TASK)
         self.msgq.put(launch_args["task"].strip())
         self.launch_args = launch_args

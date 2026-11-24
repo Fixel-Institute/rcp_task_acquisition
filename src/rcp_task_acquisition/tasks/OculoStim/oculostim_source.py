@@ -3,6 +3,31 @@ OculoStim - PsychoPy Edition
 Eye movement stimulus controller using PsychoPy for frame-accurate rendering.
 """
 
+# ============================================================
+# CHANGE LOG
+#   11.17.26: run_trial and _run_trial
+#     - fixation duration: uses the trial's fix_dur_ms (from
+#       the config: fix_dur_ms + 0..fix_jitter_ms) instead of a
+#       hard-coded random 800-1200 ms. OculoStim.py defaults set
+#       to 800 + 0-400 ms, so the timing is unchanged.
+#     - pursuit sinusoid amplitude: uses the trial's amplitude
+#       instead of a hard-coded 10 deg (the metadata said 12).
+#       OculoStim.py default set to 10, so the stimulus is
+#       unchanged.
+#     - pursuit_freq_hz added to the trial record.
+#   11.17.26: run_trial only (pursuit)
+#     - photodiode: no longer flipped on every frame of the
+#       motion, or at the start of the pursuit's own fixation;
+#       now 2 flips per trial (fixation onset, motion onset)
+#       like the other tasks.
+#   11.18.26: the .NET OpenIris DLL is loaded only in main()
+#     (standalone use), not on import. Loading it on import
+#     crashed rcp_task_acquisition at startup ("Internal CLR
+#     error") because Delsys had already started .NET 8.
+#   Every changed line is marked with its date below. The
+#   original file is oculostim_source_before_pursuit_fix.py.
+# ============================================================
+
 from psychopy import visual, core, event, gui, monitors, logging
 import csv
 import json
@@ -14,16 +39,23 @@ from datetime import datetime
 from pathlib import Path
 from tkinter import Tk, filedialog
 import os, sys
-import clr
 import time
 
-from importlib import resources
-with resources.path("rcp_task_acquisition.tasks.OculoStim", "OpenIrisRemoteClient.dll") as dll_path:
-    clr.AddReference(str(dll_path))
-    #unfortunately, this will throw error because DELSYS uses Core CLR but OpenIRIS require legacy CLR.
-    #clr.AddReference("System.ServiceModel")
-
-from OpenIris import OpenIrisClient
+# 11.18.26: the .NET OpenIris client (OpenIrisRemoteClient.dll, built for
+# .NET Framework 4.8) is now loaded only when this file is run on its own
+# (main()). It used to load on import, so inside rcp_task_acquisition it was
+# loaded into the .NET 8 runtime that Delsys starts, and the app died at
+# startup with "Fatal error. Internal CLR error. (0x80131506)". The rig code
+# never used it: OculoStim talks to OpenIris over UDP (OpenIrisPythonClient).
+def _load_dotnet_openiris_client():
+    import clr
+    from importlib import resources
+    with resources.path("rcp_task_acquisition.tasks.OculoStim", "OpenIrisRemoteClient.dll") as dll_path:
+        clr.AddReference(str(dll_path))
+        #unfortunately, this will throw error because DELSYS uses Core CLR but OpenIRIS require legacy CLR.
+        #clr.AddReference("System.ServiceModel")
+    from OpenIris import OpenIrisClient
+    return OpenIrisClient
 
 logging.console.setLevel(logging.WARNING)
 
@@ -511,13 +543,18 @@ class ExperimentRunner:
         n = i + 1
         ecc = trial.get("eccentricity", "")
 
-        fix_dur = random.uniform(0.8, 1.2)
-        fix_dur_ms_actual = round(fix_dur * 1000)
+        # 11.17.26: fixation duration from the trial (config:
+        # fix_dur_ms + 0..fix_jitter_ms, drawn in the build_*_trials
+        # functions). Was: fix_dur = random.uniform(0.8, 1.2), which
+        # ignored the config.
+        fix_dur_ms_actual = int(trial.get("fix_dur_ms", 1000))
+        fix_dur = fix_dur_ms_actual / 1000.0
         gap_dur = trial.get("gap_dur_ms", 0) / 1000.0
         stim_dur = trial.get("stim_dur_ms", 0) / 1000.0
 
         resp_key = ""
         rt_ms = ""
+        pursuit_freq = ""          # 11.17.26: added (saved in the record)
         clock = core.Clock()
 
         event.clearEvents()
@@ -692,8 +729,11 @@ class ExperimentRunner:
             # --------------------------------------------------
             else:
 
-                amp = 10.0
+                # 11.17.26: amplitude from the config (was hard-coded
+                # to 10.0, so the metadata's amplitude_deg was wrong)
+                amp = float(trial.get("amplitude", 10.0))
                 freq = 0.4
+                pursuit_freq = freq         # 11.17.26: added (saved in the record)
                 fixation_dur = 1.0
                 ramp_dur = 1.0
 
@@ -709,7 +749,10 @@ class ExperimentRunner:
 
                 fix_clock = core.Clock()
                 
-                flip_sync()
+                # 11.17.26: removed flip_sync() here - the trial's
+                # fixation onset already flipped it, so pursuit trials
+                # now flip twice (fixation, motion onset) like the
+                # other tasks.
                 draw_sync()
 
                 start_dir = "right" if (i % 2 == 0) else "left"
@@ -749,7 +792,9 @@ class ExperimentRunner:
 
                     win.color = 0.0
                     stim.draw_dot(x, 0)
-                    flip_sync()
+                    # 11.17.26: removed flip_sync() here - it toggled
+                    # the photodiode on every frame. It now flips once
+                    # at fixation onset and once at motion onset.
                     draw_sync()
                     #stim.draw_status()
                     win.flip()
@@ -778,6 +823,7 @@ class ExperimentRunner:
             "pursuit_start_ecc_deg": trial.get("start_ecc", ""),
             "amplitude_deg": trial.get("amplitude", ""),
             "speed_deg_s": trial.get("speed", ""),
+            "pursuit_freq_hz": pursuit_freq,     # 11.17.26: added
             "pursuit_mode": trial.get("pursuit_mode", ""),
             "fix_dur_ms": fix_dur_ms_actual,
             "gap_dur_ms": trial.get("gap_dur_ms", 0),
@@ -796,13 +842,18 @@ class ExperimentRunner:
         n = i + 1
         ecc = trial.get("eccentricity", "")
 
-        fix_dur = random.uniform(0.8, 1.2)
-        fix_dur_ms_actual = round(fix_dur * 1000)
+        # 11.17.26: fixation duration from the trial (config:
+        # fix_dur_ms + 0..fix_jitter_ms, drawn in the build_*_trials
+        # functions). Was: fix_dur = random.uniform(0.8, 1.2), which
+        # ignored the config.
+        fix_dur_ms_actual = int(trial.get("fix_dur_ms", 1000))
+        fix_dur = fix_dur_ms_actual / 1000.0
         gap_dur = trial.get("gap_dur_ms", 0) / 1000.0
         stim_dur = trial.get("stim_dur_ms", 0) / 1000.0
 
         resp_key = ""
         rt_ms = ""
+        pursuit_freq = ""          # 11.17.26: added (saved in the record)
         clock = core.Clock()
 
         event.clearEvents()
@@ -973,8 +1024,11 @@ class ExperimentRunner:
             # --------------------------------------------------
             else:
 
-                amp = 10.0
+                # 11.17.26: amplitude from the config (was hard-coded
+                # to 10.0, so the metadata's amplitude_deg was wrong)
+                amp = float(trial.get("amplitude", 10.0))
                 freq = 0.4
+                pursuit_freq = freq         # 11.17.26: added (saved in the record)
                 fixation_dur = 1.0
                 ramp_dur = 1.0
 
@@ -1053,6 +1107,7 @@ class ExperimentRunner:
             "pursuit_start_ecc_deg": trial.get("start_ecc", ""),
             "amplitude_deg": trial.get("amplitude", ""),
             "speed_deg_s": trial.get("speed", ""),
+            "pursuit_freq_hz": pursuit_freq,     # 11.17.26: added
             "pursuit_mode": trial.get("pursuit_mode", ""),
             "fix_dur_ms": fix_dur_ms_actual,
             "gap_dur_ms": trial.get("gap_dur_ms", 0),
@@ -1268,6 +1323,7 @@ def main():
         d.show()
         return
 
+    OpenIrisClient = _load_dotnet_openiris_client()   # 11.18.26: was loaded at import (see top)
     oi = OpenIrisClient(cfg["oi_host"], cfg["oi_port"])
 
     if cfg["oi_connect"]:
