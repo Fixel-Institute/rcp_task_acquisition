@@ -5,6 +5,12 @@
 #             config_files/taskconfig.yaml lists. See
 #             _face_cams_only and its use in show(). The config
 #             file itself is not changed; other tasks unaffected.
+#   11.24.26: for OculoStim, the session folder is sent to the
+#             stimulus process only once the LabJack file is being
+#             written (was: before the LabJack started). OculoStim
+#             starts OpenIris tracking when the folder arrives, so
+#             the first eye-camera sync pulses now always land in
+#             the LabJack file. See _wait_for_labjack_file.
 # ============================================================
 """
 file_utils toolbox
@@ -314,7 +320,9 @@ class MainFrame(wx.Frame):
             self.finish.value = 0
             self.msgq.put(Msg.INITIALIZE)
             self.create_file()
-            self.msgq.put(f"init_stimulus|{self.sess_dir}")
+            # 11.24.26: OculoStim gets the folder after the LabJack file starts (below)
+            if self.task != OCULOSTIM_TASK:
+                self.msgq.put(f"init_stimulus|{self.sess_dir}")
             is_success = self.lj.start_labjack()
             if not is_success:
                 self.task_button.SetValue(False)
@@ -327,6 +335,11 @@ class MainFrame(wx.Frame):
             lj_path = os.path.join(self.sess_dir, self.path_base + "_labjack.txt")
             msg = f"P{self.path_base}x"
             self.lj.add_csv(lj_path, self.serial_device, msg)
+            # 11.24.26: added - OculoStim starts OpenIris tracking when it gets the
+            # folder, so wait until the LabJack file is being written first
+            if self.task == OCULOSTIM_TASK:
+                self._wait_for_labjack_file()
+                self.msgq.put(f"init_stimulus|{self.sess_dir}")
             self.startingSession = True
             self.task_button.SetLabel("End Task")
             # self.hardware_button.Enable(False)
@@ -384,6 +397,20 @@ class MainFrame(wx.Frame):
             self.msgq.put(Msg.RESET_TASK)
             self.labjack_timer.Start(200)
             self.rest_timer.Stop()
+
+    # 11.24.26: added. True once the LabJack stream runs and the stream process
+    # has taken the file path (it then writes from its next read on). Waits at
+    # most timeout_s; the GUI is held for that time (normally well under 1 s).
+    def _wait_for_labjack_file(self, timeout_s=5.0):
+        t0 = time.time()
+        while time.time() - t0 < timeout_s:
+            if self.lj.stream_started.value and not self.lj.labjack_is_csv.value:
+                time.sleep(0.1)     # let the first block of samples be written
+                logger.info(f"LabJack file started after {time.time() - t0:.2f} s; starting OpenIris tracking")
+                return True
+            time.sleep(0.02)
+        logger.warning(f"LabJack file not confirmed within {timeout_s:.0f} s; starting OpenIris tracking anyway")
+        return False
 
     def trial_event(self, event):
         logger.debug(f"in trial_event: {self.video_status.value}")

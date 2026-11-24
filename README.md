@@ -167,8 +167,10 @@ master camera if it is a different one), whatever `config_files/taskconfig.yaml`
 
 Start OpenIris (Fixel SpinnakerMod build, see above) before **Start Task**. OculoStim
 controls it over UDP on `127.0.0.1:9003`:
-- **Start Task**: sets the session folder and starts tracking, so you can check the eye
-  images in OpenIris and adjust the setup before running any block.
+- **Start Task**: once the LabJack file is being written, sets the session folder and
+  starts tracking, so you can check the eye images in OpenIris and adjust the setup before
+  running any block. Because the LabJack is already recording, the first eye-camera sync
+  pulses are in the LabJack file (the face-camera sync starts with each block).
 - **Each block**: checks camera frames are coming in, starts recording, and stops
   recording when the block ends (one `SESSION_NAME-...` folder per block).
 - **Stop Task**: stops tracking.
